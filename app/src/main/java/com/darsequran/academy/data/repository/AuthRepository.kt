@@ -20,6 +20,7 @@ sealed class NetworkResult<out T> {
     object Loading : NetworkResult<Nothing>()
 }
 
+@Suppress("unused")
 class AuthRepository(
     private val authApi: AuthApi,
     private val tokenManager: TokenManager
@@ -41,10 +42,10 @@ class AuthRepository(
                 val errorMsg = parseErrorMessage(response.errorBody()?.string())
                 NetworkResult.Error(errorMsg ?: "Login failed. Please check your credentials.")
             }
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             NetworkResult.Error("Network error. Please check your internet connection.")
-        } catch (e: Exception) {
-            NetworkResult.Error(e.localizedMessage ?: "An unexpected error occurred.")
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "An unexpected error occurred.")
         }
     }
 
@@ -71,10 +72,10 @@ class AuthRepository(
                 val errorMsg = parseErrorMessage(response.errorBody()?.string())
                 NetworkResult.Error(errorMsg ?: "Registration failed. Please try again.")
             }
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             NetworkResult.Error("Network error. Please check your internet connection.")
-        } catch (e: Exception) {
-            NetworkResult.Error(e.localizedMessage ?: "An unexpected error occurred.")
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "An unexpected error occurred.")
         }
     }
 
@@ -91,10 +92,10 @@ class AuthRepository(
                 val errorMsg = parseErrorMessage(response.errorBody()?.string())
                 NetworkResult.Error(errorMsg ?: "Google Sign-In failed.")
             }
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             NetworkResult.Error("Network error. Please check your internet connection.")
-        } catch (e: Exception) {
-            NetworkResult.Error(e.localizedMessage ?: "An unexpected error occurred.")
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "An unexpected error occurred.")
         }
     }
 
@@ -107,8 +108,8 @@ class AuthRepository(
                 val errorMsg = parseErrorMessage(response.errorBody()?.string())
                 NetworkResult.Error(errorMsg ?: "Failed to fetch profile.")
             }
-        } catch (e: Exception) {
-            NetworkResult.Error(e.localizedMessage ?: "Network error.")
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
         }
     }
 
@@ -120,8 +121,8 @@ class AuthRepository(
             } else {
                 NetworkResult.Error("Failed to fetch daily inspiration.")
             }
-        } catch (e: Exception) {
-            NetworkResult.Error(e.localizedMessage ?: "Network error.")
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
         }
     }
 
@@ -134,8 +135,8 @@ class AuthRepository(
                 val errorMsg = parseErrorMessage(response.errorBody()?.string())
                 NetworkResult.Error(errorMsg ?: "Failed to fetch enrollments.")
             }
-        } catch (e: Exception) {
-            NetworkResult.Error(e.localizedMessage ?: "Network error.")
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
         }
     }
 
@@ -147,8 +148,8 @@ class AuthRepository(
             } else {
                 NetworkResult.Error("Failed to fetch courses.")
             }
-        } catch (e: Exception) {
-            NetworkResult.Error(e.localizedMessage ?: "Network error.")
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
         }
     }
 
@@ -161,7 +162,7 @@ class AuthRepository(
             if (errorBody.isNullOrEmpty()) return null
             val parsed = Gson().fromJson(errorBody, AuthResponse::class.java)
             parsed.error ?: parsed.message
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
