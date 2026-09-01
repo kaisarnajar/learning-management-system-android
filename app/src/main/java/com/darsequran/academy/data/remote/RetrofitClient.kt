@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
 
-    const val PRODUCTION_BASE_URL = "https://darsequranacademy.com/api/v1/"
+    const val PRODUCTION_BASE_URL = "https://staging-learning-management-system-teal-ten.vercel.app/api/v1/"
     const val EMULATOR_BASE_URL = "http://10.0.2.2:3000/api/v1/"
 
     // Default active base URL (Can be changed to EMULATOR_BASE_URL during local testing)
