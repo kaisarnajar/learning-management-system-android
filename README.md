@@ -6,7 +6,7 @@ Official native Android application for **Darse Quran Academy** ([darsequranacad
 
 ## 🚀 Key Features
 
-- 🔐 **Student Authentication**: Email & Password login, Google Sign-In support, password visibility toggle, and error handling.
+- 🔐 **Student Authentication & Registration**: Complete Sign-In and Sign-Up flows (Email & Password registration, Google Sign-In support, form validation, password visibility toggle).
 - 💾 **Secure JWT Session Management**: Persistent login state using **AndroidX Preferences DataStore** and auto-attaching Bearer token headers via OkHttp `AuthInterceptor`.
 - 🌅 **Student Home Dashboard**:
   - **Daily Wisdom**: Quranic verses / Hadith cards with Arabic typography and English translations.

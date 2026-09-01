@@ -1,7 +1,5 @@
 package com.darsequran.academy.ui.auth
 
-import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,7 +25,6 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.outlined.Chat
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -69,6 +66,7 @@ import com.darsequran.academy.ui.theme.GoldDark
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel,
+    onNavigateToRegister: () -> Unit,
     onLoginSuccess: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -326,41 +324,25 @@ fun LoginScreen(
                 }
             }
 
-            // WhatsApp Support Footer
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Column(
+            // Bottom Navigation Link: Don't have an account? Sign Up
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Need help signing in or registering for a course?",
+                    text = "Don't have an account?",
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-                        textAlign = TextAlign.Center
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
                     )
                 )
-
-                TextButton(
-                    onClick = {
-                        val whatsappUri = Uri.parse("https://wa.me/919622966911?text=Assalamu%20Alaikum%2C%20I%20need%20assistance%20with%20Darse%20Quran%20Academy%20Android%20App")
-                        val intent = Intent(Intent.ACTION_VIEW, whatsappUri)
-                        context.startActivity(intent)
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Chat,
-                        contentDescription = "WhatsApp Icon",
-                        tint = EmeraldPrimary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
+                TextButton(onClick = onNavigateToRegister) {
                     Text(
-                        text = "Contact Support on WhatsApp (+91 96229 66911)",
+                        text = "Sign Up / Register",
                         color = EmeraldPrimary,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
