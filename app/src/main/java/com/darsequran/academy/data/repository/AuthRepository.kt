@@ -2,10 +2,13 @@ package com.darsequran.academy.data.repository
 
 import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.data.model.AuthResponse
+import com.darsequran.academy.data.model.CoursesResponse
+import com.darsequran.academy.data.model.DailyInspirationResponse
+import com.darsequran.academy.data.model.EnrollmentsResponse
 import com.darsequran.academy.data.model.GoogleLoginRequest
 import com.darsequran.academy.data.model.LoginRequest
 import com.darsequran.academy.data.model.RegisterRequest
-import com.darsequran.academy.data.remote.AuthApi
+import com.darsequran.academy.data.model.UserProfileResponse
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 import java.io.IOException
@@ -91,6 +94,60 @@ class AuthRepository(
             NetworkResult.Error("Network error. Please check your internet connection.")
         } catch (e: Exception) {
             NetworkResult.Error(e.localizedMessage ?: "An unexpected error occurred.")
+        }
+    }
+
+    suspend fun getProfile(): NetworkResult<UserProfileResponse> {
+        return try {
+            val response = authApi.getProfile()
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                val errorMsg = parseErrorMessage(response.errorBody()?.string())
+                NetworkResult.Error(errorMsg ?: "Failed to fetch profile.")
+            }
+        } catch (e: Exception) {
+            NetworkResult.Error(e.localizedMessage ?: "Network error.")
+        }
+    }
+
+    suspend fun getDailyInspiration(): NetworkResult<DailyInspirationResponse> {
+        return try {
+            val response = authApi.getDailyInspiration()
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Error("Failed to fetch daily inspiration.")
+            }
+        } catch (e: Exception) {
+            NetworkResult.Error(e.localizedMessage ?: "Network error.")
+        }
+    }
+
+    suspend fun getEnrollments(): NetworkResult<EnrollmentsResponse> {
+        return try {
+            val response = authApi.getEnrollments()
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                val errorMsg = parseErrorMessage(response.errorBody()?.string())
+                NetworkResult.Error(errorMsg ?: "Failed to fetch enrollments.")
+            }
+        } catch (e: Exception) {
+            NetworkResult.Error(e.localizedMessage ?: "Network error.")
+        }
+    }
+
+    suspend fun getCourses(page: Int = 1, pageSize: Int = 20, search: String? = null): NetworkResult<CoursesResponse> {
+        return try {
+            val response = authApi.getCourses(page, pageSize, search)
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Error("Failed to fetch courses.")
+            }
+        } catch (e: Exception) {
+            NetworkResult.Error(e.localizedMessage ?: "Network error.")
         }
     }
 

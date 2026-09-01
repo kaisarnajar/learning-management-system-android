@@ -29,6 +29,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,11 +62,13 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    viewModel: HomeViewModel,
     tokenManager: TokenManager,
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val uiState by viewModel.uiState.collectAsState()
     val userName by tokenManager.userNameFlow.collectAsState(initial = "Student")
     val userEmail by tokenManager.userEmailFlow.collectAsState(initial = "")
 
@@ -167,7 +170,7 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Daily Wisdom Quran Verse Card
+            // Daily Wisdom Quran Verse Card (Live API with fallback)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = EmeraldDark),
@@ -197,30 +200,38 @@ fun HomeScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    Text(
-                        text = "وَٱسْتَغْفِرُوا۟ رَبَّكُمْ ثُمَّ تُوبُوٓا۟ إِلَيْهِ ۚ إِنَّ رَبِّى رَحِيمٌۭ وَدُودٌۭ",
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            color = Color.White,
-                            textAlign = TextAlign.Center
+                    if (uiState.isLoadingInspiration) {
+                        CircularProgressIndicator(color = GoldAccent, modifier = Modifier.size(24.dp))
+                    } else {
+                        val arabicText = uiState.inspiration?.arabicText ?: "وَٱسْتَغْفِرُوا۟ رَبَّكُمْ ثُمَّ تُوبُوٓا۟ إِلَيْهِ ۚ إِنَّ رَبِّى رَحِيمٌۭ وَدُودٌۭ"
+                        val translation = uiState.inspiration?.englishTranslation ?: "“Seek forgiveness from your Lord, then turn towards Him in repentance. Surely, my Lord is very merciful, most loving.”"
+                        val reference = uiState.inspiration?.reference ?: "Surah Hud 11:90"
+
+                        Text(
+                            text = arabicText,
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                color = Color.White,
+                                textAlign = TextAlign.Center
+                            )
                         )
-                    )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                    Text(
-                        text = "“Seek forgiveness from your Lord, then turn towards Him in repentance. Surely, my Lord is very merciful, most loving.”",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = Color.White.copy(alpha = 0.9f),
-                            textAlign = TextAlign.Center
+                        Text(
+                            text = translation,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = Color.White.copy(alpha = 0.9f),
+                                textAlign = TextAlign.Center
+                            )
                         )
-                    )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                    Text(
-                        text = "— Surah Hud 11:90",
-                        style = MaterialTheme.typography.labelLarge.copy(color = GoldAccent)
-                    )
+                        Text(
+                            text = "— $reference",
+                            style = MaterialTheme.typography.labelLarge.copy(color = GoldAccent)
+                        )
+                    }
                 }
             }
 
@@ -295,7 +306,7 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Enrolled Courses Preview Section
+            // Enrolled Courses Live Section
             Text(
                 text = "My Enrolled Courses",
                 style = MaterialTheme.typography.titleLarge.copy(
@@ -306,36 +317,81 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+            if (uiState.isLoadingEnrollments) {
+                Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = EmeraldPrimary)
+                }
+            } else if (uiState.enrollments.isEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Book,
-                        contentDescription = "Course Icon",
-                        tint = EmeraldPrimary,
-                        modifier = Modifier.size(36.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Tajweed E Quran (Boys Batch)",
-                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Book,
+                            contentDescription = "Course Icon",
+                            tint = EmeraldPrimary,
+                            modifier = Modifier.size(36.dp)
                         )
-                        Text(
-                            text = "Instructor: Rayeess Ahmad Magray",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Tajweed E Quran (Boys Batch 3)",
+                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
                             )
-                        )
+                            Text(
+                                text = "Instructor: Rayeess Ahmad Magray",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                            )
+                        }
+                    }
+                }
+            } else {
+                uiState.enrollments.forEach { enrollment ->
+                    val courseTitle = enrollment.course?.title ?: "Enrolled Course"
+                    val teacherName = enrollment.course?.teacher?.name ?: "Darse Quran Academy Instructor"
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Book,
+                                contentDescription = "Course Icon",
+                                tint = EmeraldPrimary,
+                                modifier = Modifier.size(36.dp)
+                            )
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = courseTitle,
+                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                                )
+                                Text(
+                                    text = "Instructor: $teacherName",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                    )
+                                )
+                            }
+                        }
                     }
                 }
             }
