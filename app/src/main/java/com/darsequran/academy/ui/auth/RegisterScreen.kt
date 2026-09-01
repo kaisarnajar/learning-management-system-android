@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -88,14 +90,16 @@ fun RegisterScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
         ) {
-            // Header Banner
+            // Header Banner with status bars inset padding for clock/battery alignment
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(EmeraldDark)
-                    .padding(vertical = 28.dp, horizontal = 24.dp),
+                    .statusBarsPadding()
+                    .padding(top = 16.dp, bottom = 28.dp, start = 24.dp, end = 24.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -392,11 +396,11 @@ fun RegisterScreen(
                 }
             }
 
-            // Bottom Link: Already have an account? Sign In
+            // Bottom Navigation Link with ample spacing from system bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 24.dp),
+                    .padding(top = 8.dp, bottom = 32.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -414,6 +418,8 @@ fun RegisterScreen(
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

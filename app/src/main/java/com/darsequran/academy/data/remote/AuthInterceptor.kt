@@ -14,7 +14,7 @@ class AuthInterceptor(private val tokenManager: TokenManager) : Interceptor {
         // Synchronously fetch token from DataStore for OkHttp interceptor
         val token = runBlocking { tokenManager.authTokenFlow.firstOrNull() }
 
-        if (!token.isNull_or_Empty()) {
+        if (!token.isNullOrEmpty()) {
             requestBuilder.addHeader("Authorization", "Bearer $token")
         }
 
@@ -30,6 +30,4 @@ class AuthInterceptor(private val tokenManager: TokenManager) : Interceptor {
 
         return response
     }
-
-    private fun String?.isNull_or_Empty(): Boolean = this.isNullOrEmpty()
 }
