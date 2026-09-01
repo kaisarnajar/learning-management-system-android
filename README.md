@@ -74,7 +74,7 @@ The application is pre-configured to toggle between Production and Local Emulato
 
 ```kotlin
 // Production API
-const val PRODUCTION_BASE_URL = "https://darsequranacademy.com/api/v1/"
+const val PRODUCTION_BASE_URL = "https://staging-learning-management-system-teal-ten.vercel.app/api/v1/"
 
 // Local Android Emulator API
 const val EMULATOR_BASE_URL = "http://10.0.2.2:3000/api/v1/"

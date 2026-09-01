@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Darse Quran Academy API Contract (v1)",
   "baseUrl": {
-    "production": "https://darsequranacademy.com/api/v1",
+    "production": "https://staging-learning-management-system-teal-ten.vercel.app/api/v1",
     "emulator": "http://10.0.2.2:3000/api/v1"
   },
   "authentication": {
