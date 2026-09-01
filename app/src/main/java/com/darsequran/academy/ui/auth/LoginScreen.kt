@@ -24,7 +24,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -45,6 +44,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -73,7 +74,9 @@ fun LoginScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
+    val googleAuthHelper = remember { GoogleAuthHelper(context) }
 
     LaunchedEffect(uiState.isLoggedIn) {
         if (uiState.isLoggedIn) {
@@ -294,14 +297,18 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Google Sign-In Option
+                    // Google Sign-In Option via Credential Manager
                     OutlinedButton(
                         onClick = {
-                            Toast.makeText(
-                                context,
-                                "Google Sign-In integration ready via Credential Manager.",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            googleAuthHelper.launchGoogleSignIn(
+                                scope = scope,
+                                onTokenReceived = { idToken ->
+                                    viewModel.loginWithGoogleIdToken(idToken)
+                                },
+                                onError = { errorMsg ->
+                                    Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
+                                }
+                            )
                         },
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier
@@ -312,16 +319,18 @@ fun LoginScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.MenuBook,
+                            Image(
+                                painter = painterResource(id = R.drawable.logo),
                                 contentDescription = "Google Icon",
-                                tint = GoldDark,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Sign in with Google",
-                                style = MaterialTheme.typography.labelLarge
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    color = GoldDark,
+                                    fontWeight = FontWeight.SemiBold
+                                )
                             )
                         }
                     }
