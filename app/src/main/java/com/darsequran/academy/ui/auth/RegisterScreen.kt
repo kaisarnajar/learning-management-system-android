@@ -24,7 +24,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -46,6 +45,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -74,7 +75,9 @@ fun RegisterScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
+    val googleAuthHelper = remember { GoogleAuthHelper(context) }
 
     LaunchedEffect(uiState.isRegistered) {
         if (uiState.isRegistered) {
@@ -362,14 +365,18 @@ fun RegisterScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Google Sign-Up Option
+                    // Google Sign-Up Option via Credential Manager
                     OutlinedButton(
                         onClick = {
-                            Toast.makeText(
-                                context,
-                                "Google Sign-Up ready via Credential Manager.",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            googleAuthHelper.launchGoogleSignIn(
+                                scope = scope,
+                                onTokenReceived = { idToken ->
+                                    Toast.makeText(context, "Authenticating with Google...", Toast.LENGTH_SHORT).show()
+                                },
+                                onError = { errorMsg ->
+                                    Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
+                                }
+                            )
                         },
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier
@@ -380,16 +387,18 @@ fun RegisterScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.MenuBook,
+                            Image(
+                                painter = painterResource(id = R.drawable.logo),
                                 contentDescription = "Google Icon",
-                                tint = GoldDark,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Sign up with Google",
-                                style = MaterialTheme.typography.labelLarge
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    color = GoldDark,
+                                    fontWeight = FontWeight.SemiBold
+                                )
                             )
                         }
                     }
