@@ -19,6 +19,9 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Expose Google Web Client ID via BuildConfig
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"1056581177651-darsequran.apps.googleusercontent.com\"")
     }
 
     buildTypes {
@@ -42,6 +45,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {

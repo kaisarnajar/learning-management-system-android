@@ -6,6 +6,7 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
+import com.darsequran.academy.BuildConfig
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.CoroutineScope
@@ -13,7 +14,7 @@ import kotlinx.coroutines.launch
 
 class GoogleAuthHelper(
     private val context: Context,
-    private val webClientId: String = "1056581177651-darsequran.apps.googleusercontent.com"
+    private val webClientId: String = BuildConfig.GOOGLE_WEB_CLIENT_ID
 ) {
 
     private val credentialManager = CredentialManager.create(context)
