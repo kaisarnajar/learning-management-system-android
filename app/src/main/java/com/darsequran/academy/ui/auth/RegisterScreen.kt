@@ -24,7 +24,6 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -242,38 +241,11 @@ fun RegisterScreen(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    // Phone Number Field (Optional)
-                    OutlinedTextField(
-                        value = uiState.phone,
-                        onValueChange = { viewModel.onPhoneChanged(it) },
-                        label = { Text("Phone Number (Optional)") },
-                        placeholder = { Text("+91 96229 66911") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Phone,
-                                contentDescription = "Phone Icon",
-                                tint = EmeraldPrimary
-                            )
-                        },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Phone,
-                            imeAction = ImeAction.Next
-                        ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = EmeraldPrimary,
-                            focusedLabelColor = EmeraldPrimary
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
                     // Password Field
                     OutlinedTextField(
                         value = uiState.password,
                         onValueChange = { viewModel.onPasswordChanged(it) },
-                        label = { Text("Password") },
+                        label = { Text("Password (Min 8 chars)") },
                         placeholder = { Text("••••••••") },
                         leadingIcon = {
                             Icon(
