@@ -8,11 +8,10 @@ data class LoginRequest(
 )
 
 data class RegisterRequest(
-    @SerializedName("name") val name: String,
+    @SerializedName("name") val name: String?,
     @SerializedName("email") val email: String,
     @SerializedName("password") val password: String,
-    @SerializedName("phone") val phone: String? = null,
-    @SerializedName("role") val role: String = "student"
+    @SerializedName("acceptPolicies") val acceptPolicies: Boolean = true
 )
 
 data class GoogleLoginRequest(
@@ -24,12 +23,15 @@ data class UserDto(
     @SerializedName("name") val name: String?,
     @SerializedName("email") val email: String?,
     @SerializedName("role") val role: String?,
-    @SerializedName("avatar") val avatar: String?
+    @SerializedName("image") val image: String?,
+    @SerializedName("registrationNumber") val registrationNumber: String?,
+    @SerializedName("emailVerified") val emailVerified: String?
 )
 
 data class AuthResponse(
     @SerializedName("success") val success: Boolean = true,
     @SerializedName("message") val message: String? = null,
+    @SerializedName("error") val error: String? = null,
     @SerializedName("token") val token: String? = null,
     @SerializedName("user") val user: UserDto? = null
 )

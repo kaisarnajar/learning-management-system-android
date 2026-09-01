@@ -16,7 +16,6 @@ data class RegisterUiState(
     val nameError: String? = null,
     val email: String = "",
     val emailError: String? = null,
-    val phone: String = "",
     val password: String = "",
     val passwordError: String? = null,
     val confirmPassword: String = "",
@@ -42,10 +41,6 @@ class RegisterViewModel(
         _uiState.update { it.copy(email = email, emailError = null, errorMessage = null) }
     }
 
-    fun onPhoneChanged(phone: String) {
-        _uiState.update { it.copy(phone = phone, errorMessage = null) }
-    }
-
     fun onPasswordChanged(password: String) {
         _uiState.update { it.copy(password = password, passwordError = null, errorMessage = null) }
     }
@@ -61,7 +56,6 @@ class RegisterViewModel(
     fun register() {
         val name = _uiState.value.name.trim()
         val email = _uiState.value.email.trim()
-        val phone = _uiState.value.phone.trim()
         val password = _uiState.value.password
         val confirmPassword = _uiState.value.confirmPassword
 
@@ -83,8 +77,8 @@ class RegisterViewModel(
         if (password.isEmpty()) {
             _uiState.update { it.copy(passwordError = "Password is required") }
             hasError = true
-        } else if (password.length < 6) {
-            _uiState.update { it.copy(passwordError = "Password must be at least 6 characters") }
+        } else if (password.length < 8) {
+            _uiState.update { it.copy(passwordError = "Password must be at least 8 characters long") }
             hasError = true
         }
 
@@ -98,7 +92,7 @@ class RegisterViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            when (val result = authRepository.register(name, email, password, phone.ifEmpty { null })) {
+            when (val result = authRepository.register(name, email, password)) {
                 is NetworkResult.Success -> {
                     _uiState.update { it.copy(isLoading = false, isRegistered = true) }
                 }

@@ -47,15 +47,14 @@ class AuthRepository(
     suspend fun register(
         name: String,
         email: String,
-        password: String,
-        phone: String? = null
+        password: String
     ): NetworkResult<AuthResponse> {
         return try {
             val request = RegisterRequest(
-                name = name.trim(),
+                name = name.trim().ifEmpty { null },
                 email = email.trim(),
                 password = password,
-                phone = phone?.trim()
+                acceptPolicies = true
             )
             val response = authApi.register(request)
             if (response.isSuccessful && response.body() != null) {
@@ -103,7 +102,7 @@ class AuthRepository(
         return try {
             if (errorBody.isNullOrEmpty()) return null
             val parsed = Gson().fromJson(errorBody, AuthResponse::class.java)
-            parsed.message
+            parsed.error ?: parsed.message
         } catch (e: Exception) {
             null
         }
