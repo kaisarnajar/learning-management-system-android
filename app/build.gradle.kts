@@ -1,8 +1,23 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
+
+// Load local.properties safely
+val localProperties = Properties().apply {
+    val localFile = rootProject.file("local.properties")
+    if (localFile.exists()) {
+        localFile.inputStream().use { load(it) }
+    }
+}
+
+// Read Google Web Client ID from local.properties -> CI Environment variable -> Fallback
+val googleWebClientId: String = localProperties.getProperty("GOOGLE_WEB_CLIENT_ID")
+    ?: System.getenv("GOOGLE_WEB_CLIENT_ID")
+    ?: "1056581177651-darsequran.apps.googleusercontent.com"
 
 android {
     namespace = "com.darsequran.academy"
@@ -20,8 +35,8 @@ android {
             useSupportLibrary = true
         }
 
-        // Expose Google Web Client ID via BuildConfig
-        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"1056581177651-darsequran.apps.googleusercontent.com\"")
+        // Dynamically inject GOOGLE_WEB_CLIENT_ID into BuildConfig
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
     }
 
     buildTypes {
