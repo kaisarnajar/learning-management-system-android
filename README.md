@@ -80,6 +80,8 @@ const val PRODUCTION_BASE_URL = "https://darsequranacademy.com/api/v1/"
 const val EMULATOR_BASE_URL = "http://10.0.2.2:3000/api/v1/"
 ```
 
+> 📄 **Complete API Specification**: See [`docs/api_contract.json`](docs/api_contract.json) for the full JSON schema of all endpoints.
+
 ---
 
 ## ⚙️ Getting Started
