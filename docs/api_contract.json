@@ -1,0 +1,310 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Darse Quran Academy API Contract (v1)",
+  "baseUrl": {
+    "production": "https://darsequranacademy.com/api/v1",
+    "emulator": "http://10.0.2.2:3000/api/v1"
+  },
+  "authentication": {
+    "type": "Bearer Token",
+    "header": "Authorization: Bearer <jwt_token>",
+    "tokenStorageKey": "jwt_auth_token"
+  },
+  "endpoints": [
+    {
+      "name": "Student Login",
+      "path": "/auth/login",
+      "method": "POST",
+      "authRequired": false,
+      "request": {
+        "headers": { "Content-Type": "application/json" },
+        "body": {
+          "email": "string (required, email format)",
+          "password": "string (required)"
+        }
+      },
+      "response": {
+        "success": {
+          "status": 200,
+          "body": {
+            "success": true,
+            "token": "string (JWT Token)",
+            "user": {
+              "id": "string",
+              "email": "string",
+              "name": "string",
+              "image": "string | null",
+              "registrationNumber": "string | null",
+              "emailVerified": "string | null",
+              "role": "string (STUDENT / USER)"
+            }
+          }
+        },
+        "failure": {
+          "status": 400,
+          "body": {
+            "success": false,
+            "error": "Invalid email or password."
+          }
+        }
+      }
+    },
+    {
+      "name": "Student Registration",
+      "path": "/auth/register",
+      "method": "POST",
+      "authRequired": false,
+      "request": {
+        "headers": { "Content-Type": "application/json" },
+        "body": {
+          "name": "string (optional)",
+          "email": "string (required, email format)",
+          "password": "string (required, min 8 characters)",
+          "acceptPolicies": "boolean (required, must be true)"
+        }
+      },
+      "response": {
+        "success": {
+          "status": 200,
+          "body": {
+            "success": true,
+            "token": "string (JWT Token)",
+            "user": {
+              "id": "string",
+              "email": "string",
+              "name": "string",
+              "image": "string | null",
+              "registrationNumber": "string | null",
+              "emailVerified": null,
+              "role": "USER"
+            }
+          }
+        },
+        "failure": {
+          "status": 400,
+          "body": {
+            "success": false,
+            "error": "Password must be at least 8 characters long."
+          }
+        }
+      }
+    },
+    {
+      "name": "Google Sign-In Auth",
+      "path": "/auth/google",
+      "method": "POST",
+      "authRequired": false,
+      "request": {
+        "headers": { "Content-Type": "application/json" },
+        "body": {
+          "idToken": "string (Google OAuth ID Token)"
+        }
+      },
+      "response": {
+        "success": {
+          "status": 200,
+          "body": {
+            "success": true,
+            "token": "string (JWT Token)",
+            "user": {
+              "id": "string",
+              "email": "string",
+              "name": "string",
+              "role": "USER"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Current Authenticated Profile",
+      "path": "/auth/me",
+      "method": "GET",
+      "authRequired": true,
+      "request": {
+        "headers": { "Authorization": "Bearer <jwt_token>" }
+      },
+      "response": {
+        "success": {
+          "status": 200,
+          "body": {
+            "success": true,
+            "user": {
+              "id": "string",
+              "name": "string",
+              "email": "string",
+              "fatherName": "string | null",
+              "dateOfBirth": "string | null",
+              "occupation": "string | null",
+              "address": "string | null",
+              "whatsapp": "string | null",
+              "gender": "string | null",
+              "registrationNumber": "string | null",
+              "emailVerified": "string | null",
+              "image": "string | null",
+              "role": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Browse Courses (Paginated)",
+      "path": "/courses",
+      "method": "GET",
+      "authRequired": false,
+      "queryParams": {
+        "page": "number (default: 1)",
+        "pageSize": "number (default: 20)",
+        "search": "string (optional search keyword)"
+      },
+      "response": {
+        "success": {
+          "status": 200,
+          "body": {
+            "success": true,
+            "data": "array of Course Objects",
+            "totalCount": "number",
+            "page": "number",
+            "pageSize": "number"
+          }
+        }
+      }
+    },
+    {
+      "name": "Daily Wisdom & Inspiration",
+      "path": "/daily-inspiration",
+      "method": "GET",
+      "authRequired": false,
+      "response": {
+        "success": {
+          "status": 200,
+          "body": {
+            "success": true,
+            "inspiration": {
+              "arabicText": "string",
+              "englishTranslation": "string",
+              "reference": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "My Enrolled Courses",
+      "path": "/enrollments",
+      "method": "GET",
+      "authRequired": true,
+      "request": {
+        "headers": { "Authorization": "Bearer <jwt_token>" }
+      },
+      "response": {
+        "success": {
+          "status": 200,
+          "body": {
+            "success": true,
+            "data": "array of Enrollment Objects with Course details"
+          }
+        }
+      }
+    },
+    {
+      "name": "Submit Course Enrollment",
+      "path": "/enrollments",
+      "method": "POST",
+      "authRequired": true,
+      "request": {
+        "headers": {
+          "Authorization": "Bearer <jwt_token>",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "courseId": "string (required)"
+        }
+      },
+      "response": {
+        "success": {
+          "status": 200,
+          "body": {
+            "success": true,
+            "enrollment": "Enrollment Object",
+            "requiresEnrollmentFee": "boolean",
+            "feeAmountPaise": "number"
+          }
+        }
+      }
+    },
+    {
+      "name": "Student Attendance Records",
+      "path": "/student/attendance",
+      "method": "GET",
+      "authRequired": true,
+      "queryParams": {
+        "courseId": "string (optional filter)"
+      },
+      "response": {
+        "success": {
+          "status": 200,
+          "body": {
+            "success": true,
+            "attendance": [
+              {
+                "enrollmentId": "string",
+                "courseId": "string",
+                "rollNumber": "string | null",
+                "totalClasses": "number",
+                "presentClasses": "number",
+                "absentClasses": "number",
+                "percentage": "number",
+                "records": [
+                  {
+                    "id": "string",
+                    "date": "string (ISO date)",
+                    "isPresent": "boolean"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "Student Grades & Marksheets",
+      "path": "/student/grades",
+      "method": "GET",
+      "authRequired": true,
+      "queryParams": {
+        "courseId": "string (optional filter)"
+      },
+      "response": {
+        "success": {
+          "status": 200,
+          "body": {
+            "success": true,
+            "grades": [
+              {
+                "enrollmentId": "string",
+                "courseId": "string",
+                "rollNumber": "string | null",
+                "totalMaxMarks": "number",
+                "totalMarksObtained": "number",
+                "overallPercentage": "number",
+                "grades": [
+                  {
+                    "id": "string",
+                    "title": "string",
+                    "date": "string (ISO date)",
+                    "maxMarks": "number",
+                    "marksObtained": "number",
+                    "percentage": "number"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
