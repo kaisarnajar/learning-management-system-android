@@ -9,6 +9,8 @@ import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.data.repository.AuthRepository
 import com.darsequran.academy.ui.auth.LoginScreen
 import com.darsequran.academy.ui.auth.LoginViewModel
+import com.darsequran.academy.ui.auth.RegisterScreen
+import com.darsequran.academy.ui.auth.RegisterViewModel
 import com.darsequran.academy.ui.auth.SplashScreen
 import com.darsequran.academy.ui.home.HomeScreen
 
@@ -44,7 +46,27 @@ fun AppNavGraph(
             )
             LoginScreen(
                 viewModel = viewModel,
+                onNavigateToRegister = {
+                    navController.navigate(Screen.Register.route)
+                },
                 onLoginSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Register.route) {
+            val viewModel: RegisterViewModel = viewModel(
+                factory = RegisterViewModel.Factory(authRepository)
+            )
+            RegisterScreen(
+                viewModel = viewModel,
+                onNavigateToLogin = {
+                    navController.popBackStack()
+                },
+                onRegisterSuccess = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }

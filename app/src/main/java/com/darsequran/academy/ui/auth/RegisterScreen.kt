@@ -23,6 +23,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -64,19 +66,19 @@ import com.darsequran.academy.ui.theme.GoldAccent
 import com.darsequran.academy.ui.theme.GoldDark
 
 @Composable
-fun LoginScreen(
-    viewModel: LoginViewModel,
-    onNavigateToRegister: () -> Unit,
-    onLoginSuccess: () -> Unit
+fun RegisterScreen(
+    viewModel: RegisterViewModel,
+    onNavigateToLogin: () -> Unit,
+    onRegisterSuccess: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    LaunchedEffect(uiState.isLoggedIn) {
-        if (uiState.isLoggedIn) {
-            Toast.makeText(context, "Welcome to Darse Quran Academy!", Toast.LENGTH_SHORT).show()
-            onLoginSuccess()
+    LaunchedEffect(uiState.isRegistered) {
+        if (uiState.isRegistered) {
+            Toast.makeText(context, "Account created successfully!", Toast.LENGTH_SHORT).show()
+            onRegisterSuccess()
         }
     }
 
@@ -94,17 +96,17 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(EmeraldDark)
-                    .padding(vertical = 36.dp, horizontal = 24.dp),
+                    .padding(vertical = 28.dp, horizontal = 24.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Image(
                         painter = painterResource(id = R.drawable.logo),
                         contentDescription = "Darse Quran Academy Logo",
-                        modifier = Modifier.size(72.dp)
+                        modifier = Modifier.size(64.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
                         text = "DARSE QURAN ACADEMY",
@@ -118,7 +120,7 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "Student Portal Login",
+                        text = "Create Student Account",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = Color.White.copy(alpha = 0.85f)
                         )
@@ -126,21 +128,21 @@ fun LoginScreen(
                 }
             }
 
-            // Login Form Card
+            // Register Form Card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
+                    .padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(24.dp),
+                    modifier = Modifier.padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Sign In to Your Account",
+                        text = "Join Darse Quran Academy",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             color = EmeraldPrimary
@@ -148,11 +150,11 @@ fun LoginScreen(
                     )
 
                     Text(
-                        text = "Access your Quran & Tajweed classes",
+                        text = "Start your journey in Quran & Islamic Studies",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         ),
-                        modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
+                        modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
                     )
 
                     // Error Message Banner
@@ -160,7 +162,7 @@ fun LoginScreen(
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 16.dp),
+                                .padding(bottom = 12.dp),
                             color = MaterialTheme.colorScheme.errorContainer,
                             shape = RoundedCornerShape(8.dp)
                         ) {
@@ -173,6 +175,39 @@ fun LoginScreen(
                             )
                         }
                     }
+
+                    // Full Name Field
+                    OutlinedTextField(
+                        value = uiState.name,
+                        onValueChange = { viewModel.onNameChanged(it) },
+                        label = { Text("Full Name") },
+                        placeholder = { Text("Ahmad Magray") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Name Icon",
+                                tint = EmeraldPrimary
+                            )
+                        },
+                        isError = uiState.nameError != null,
+                        supportingText = {
+                            if (uiState.nameError != null) {
+                                Text(text = uiState.nameError!!, color = MaterialTheme.colorScheme.error)
+                            }
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Text,
+                            imeAction = ImeAction.Next
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = EmeraldPrimary,
+                            focusedLabelColor = EmeraldPrimary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     // Email Field
                     OutlinedTextField(
@@ -205,7 +240,34 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Phone Number Field (Optional)
+                    OutlinedTextField(
+                        value = uiState.phone,
+                        onValueChange = { viewModel.onPhoneChanged(it) },
+                        label = { Text("Phone Number (Optional)") },
+                        placeholder = { Text("+91 96229 66911") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Phone,
+                                contentDescription = "Phone Icon",
+                                tint = EmeraldPrimary
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Phone,
+                            imeAction = ImeAction.Next
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = EmeraldPrimary,
+                            focusedLabelColor = EmeraldPrimary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     // Password Field
                     OutlinedTextField(
@@ -238,12 +300,46 @@ fun LoginScreen(
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Next
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = EmeraldPrimary,
+                            focusedLabelColor = EmeraldPrimary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Confirm Password Field
+                    OutlinedTextField(
+                        value = uiState.confirmPassword,
+                        onValueChange = { viewModel.onConfirmPasswordChanged(it) },
+                        label = { Text("Confirm Password") },
+                        placeholder = { Text("••••••••") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = "Confirm Password Icon",
+                                tint = EmeraldPrimary
+                            )
+                        },
+                        visualTransformation = if (uiState.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        isError = uiState.confirmPasswordError != null,
+                        supportingText = {
+                            if (uiState.confirmPasswordError != null) {
+                                Text(text = uiState.confirmPasswordError!!, color = MaterialTheme.colorScheme.error)
+                            }
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Done
                         ),
                         keyboardActions = KeyboardActions(
                             onDone = {
                                 keyboardController?.hide()
-                                viewModel.login()
+                                viewModel.register()
                             }
                         ),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -253,13 +349,13 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    // Sign In Button
+                    // Create Account Button
                     Button(
                         onClick = {
                             keyboardController?.hide()
-                            viewModel.login()
+                            viewModel.register()
                         },
                         enabled = !uiState.isLoading,
                         colors = ButtonDefaults.buttonColors(
@@ -279,30 +375,30 @@ fun LoginScreen(
                             )
                         } else {
                             Text(
-                                text = "SIGN IN",
+                                text = "CREATE ACCOUNT",
                                 style = MaterialTheme.typography.titleLarge.copy(
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp
+                                    fontSize = 15.sp
                                 )
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    // Google Sign-In Option
+                    // Google Sign-Up Option
                     OutlinedButton(
                         onClick = {
                             Toast.makeText(
                                 context,
-                                "Google Sign-In integration ready via Credential Manager.",
+                                "Google Sign-Up ready via Credential Manager.",
                                 Toast.LENGTH_SHORT
                             ).show()
                         },
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp)
+                            .height(46.dp)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -312,11 +408,11 @@ fun LoginScreen(
                                 imageVector = Icons.Default.MenuBook,
                                 contentDescription = "Google Icon",
                                 tint = GoldDark,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Sign in with Google",
+                                text = "Sign up with Google",
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
@@ -324,23 +420,23 @@ fun LoginScreen(
                 }
             }
 
-            // Bottom Navigation Link: Don't have an account? Sign Up
+            // Bottom Link: Already have an account? Sign In
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12.dp),
+                    .padding(bottom = 24.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Don't have an account?",
+                    text = "Already have an account?",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
                     )
                 )
-                TextButton(onClick = onNavigateToRegister) {
+                TextButton(onClick = onNavigateToLogin) {
                     Text(
-                        text = "Sign Up / Register",
+                        text = "Sign In",
                         color = EmeraldPrimary,
                         fontWeight = FontWeight.Bold
                     )

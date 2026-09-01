@@ -4,6 +4,7 @@ import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.data.model.AuthResponse
 import com.darsequran.academy.data.model.GoogleLoginRequest
 import com.darsequran.academy.data.model.LoginRequest
+import com.darsequran.academy.data.model.RegisterRequest
 import com.darsequran.academy.data.remote.AuthApi
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
@@ -43,6 +44,37 @@ class AuthRepository(
         }
     }
 
+    suspend fun register(
+        name: String,
+        email: String,
+        password: String,
+        phone: String? = null
+    ): NetworkResult<AuthResponse> {
+        return try {
+            val request = RegisterRequest(
+                name = name.trim(),
+                email = email.trim(),
+                password = password,
+                phone = phone?.trim()
+            )
+            val response = authApi.register(request)
+            if (response.isSuccessful && response.body() != null) {
+                val authResponse = response.body()!!
+                authResponse.token?.let { token ->
+                    tokenManager.saveSession(token, authResponse.user)
+                }
+                NetworkResult.Success(authResponse)
+            } else {
+                val errorMsg = parseErrorMessage(response.errorBody()?.string())
+                NetworkResult.Error(errorMsg ?: "Registration failed. Please try again.")
+            }
+        } catch (e: IOException) {
+            NetworkResult.Error("Network error. Please check your internet connection.")
+        } catch (e: Exception) {
+            NetworkResult.Error(e.localizedMessage ?: "An unexpected error occurred.")
+        }
+    }
+
     suspend fun googleLogin(idToken: String): NetworkResult<AuthResponse> {
         return try {
             val response = authApi.googleLogin(GoogleLoginRequest(idToken = idToken))
@@ -69,13 +101,11 @@ class AuthRepository(
 
     private fun parseErrorMessage(errorBody: String?): String? {
         return try {
-            if (errorBody.isNull_or_Empty()) return null
+            if (errorBody.isNullOrEmpty()) return null
             val parsed = Gson().fromJson(errorBody, AuthResponse::class.java)
             parsed.message
         } catch (e: Exception) {
             null
         }
     }
-
-    private fun String?.isNull_or_Empty(): Boolean = this.isNullOrEmpty()
 }

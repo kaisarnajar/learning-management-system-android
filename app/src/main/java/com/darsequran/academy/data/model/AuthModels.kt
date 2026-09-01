@@ -7,6 +7,14 @@ data class LoginRequest(
     @SerializedName("password") val password: String
 )
 
+data class RegisterRequest(
+    @SerializedName("name") val name: String,
+    @SerializedName("email") val email: String,
+    @SerializedName("password") val password: String,
+    @SerializedName("phone") val phone: String? = null,
+    @SerializedName("role") val role: String = "student"
+)
+
 data class GoogleLoginRequest(
     @SerializedName("idToken") val idToken: String
 )
