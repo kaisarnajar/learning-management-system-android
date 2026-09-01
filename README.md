@@ -13,7 +13,6 @@ Official native Android application for **Darse Quran Academy** ([darsequranacad
   - **Quick Class Join**: Instant Google Meet link button for active sessions (e.g. *Tajweed E Quran – Batch 3*).
   - **Enrolled Courses**: Quick view of active student enrollments and instructor details.
 - 🎨 **Modern Islamic Aesthetic**: Custom Material 3 theme incorporating Darse Quran Academy's brand palette (Deep Emerald Green `#003527` & Islamic Warm Gold `#D4AF37`).
-- 💬 **Direct WhatsApp Support**: Integrated help link (`+91 96229 66911`) for instant registration and sign-in support.
 
 ---
 
@@ -103,7 +102,6 @@ const val EMULATOR_BASE_URL = "http://10.0.2.2:3000/api/v1/"
 ## 🤝 Support & Contact
 
 - **Website**: [darsequranacademy.com](https://darsequranacademy.com)
-- **WhatsApp Support**: [+91 96229 66911](https://wa.me/919622966911)
 
 ---
 
