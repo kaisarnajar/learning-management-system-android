@@ -110,6 +110,17 @@ data class EnrollmentsResponse(
     @SerializedName("data") val data: List<EnrollmentDto>? = null
 )
 
+data class EnrollCourseRequest(
+    @SerializedName("courseId") val courseId: String
+)
+
+data class EnrollCourseResponse(
+    @SerializedName("success") val success: Boolean = true,
+    @SerializedName("alreadyEnrolled") val alreadyEnrolled: Boolean? = false,
+    @SerializedName("error") val error: String? = null,
+    @SerializedName("enrollment") val enrollment: EnrollmentDto? = null
+)
+
 data class CoursesResponse(
     @SerializedName("success") val success: Boolean = true,
     @SerializedName("error") val error: String? = null,

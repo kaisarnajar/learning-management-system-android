@@ -19,6 +19,8 @@ data class CoursesCatalogUiState(
     val selectedCategory: String = "All",
     val selectedCourseDetail: CourseDto? = null,
     val isLoading: Boolean = false,
+    val isEnrolling: Boolean = false,
+    val enrollmentSuccessMessage: String? = null,
     val errorMessage: String? = null
 )
 
@@ -79,6 +81,44 @@ class CoursesCatalogViewModel(
 
     fun selectCourseDetail(course: CourseDto?) {
         _uiState.update { it.copy(selectedCourseDetail = course) }
+    }
+
+    fun requestEnrollment(courseId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isEnrolling = true, errorMessage = null) }
+            when (val result = authRepository.enrollInCourse(courseId)) {
+                is NetworkResult.Success -> {
+                    val body = result.data
+                    val msg = if (body.alreadyEnrolled == true) {
+                        "You have already requested enrollment for this course."
+                    } else {
+                        "Enrollment request submitted successfully! Awaiting academy approval."
+                    }
+                    _uiState.update {
+                        it.copy(
+                            isEnrolling = false,
+                            enrollmentSuccessMessage = msg,
+                            selectedCourseDetail = null
+                        )
+                    }
+                }
+                is NetworkResult.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isEnrolling = false,
+                            errorMessage = result.message ?: "Failed to submit enrollment request."
+                        )
+                    }
+                }
+                else -> {
+                    _uiState.update { it.copy(isEnrolling = false) }
+                }
+            }
+        }
+    }
+
+    fun clearMessages() {
+        _uiState.update { it.copy(enrollmentSuccessMessage = null, errorMessage = null) }
     }
 
     private fun filterCoursesList(courses: List<CourseDto>, query: String, category: String): List<CourseDto> {

@@ -70,6 +70,17 @@ fun CoursesCatalogScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
+    androidx.compose.runtime.LaunchedEffect(uiState.enrollmentSuccessMessage, uiState.errorMessage) {
+        uiState.enrollmentSuccessMessage?.let { msg ->
+            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+            viewModel.clearMessages()
+        }
+        uiState.errorMessage?.let { err ->
+            Toast.makeText(context, err, Toast.LENGTH_LONG).show()
+            viewModel.clearMessages()
+        }
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -276,17 +287,10 @@ fun CoursesCatalogScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Action Button: Request Enrollment via WhatsApp
+                // Action Button: Request Enrollment via Web API
                 Button(
-                    onClick = {
-                        val message = "Assalamu Alaikum, I am interested in enrolling for the course: ${course.title}."
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/919622966911?text=${Uri.encode(message)}"))
-                        try {
-                            context.startActivity(intent)
-                        } catch (e: Exception) {
-                            Toast.makeText(context, "Contact WhatsApp: +91 96229 66911", Toast.LENGTH_SHORT).show()
-                        }
-                    },
+                    onClick = { viewModel.requestEnrollment(course.id) },
+                    enabled = !uiState.isEnrolling,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = Color.White
@@ -296,7 +300,15 @@ fun CoursesCatalogScreen(
                         .fillMaxWidth()
                         .height(48.dp)
                 ) {
-                    Text("Apply & Request Enrollment", fontWeight = FontWeight.Bold)
+                    if (uiState.isEnrolling) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(22.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Apply & Request Enrollment", fontWeight = FontWeight.Bold)
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
