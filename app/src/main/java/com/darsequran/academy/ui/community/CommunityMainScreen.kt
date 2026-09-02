@@ -3,9 +3,9 @@ package com.darsequran.academy.ui.community
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
@@ -17,38 +17,30 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import com.darsequran.academy.ui.announcements.AnnouncementsScreen
-import com.darsequran.academy.ui.announcements.AnnouncementsViewModel
 import com.darsequran.academy.ui.blog.BlogScreen
 import com.darsequran.academy.ui.blog.BlogViewModel
 import com.darsequran.academy.ui.fatwa.FatwaScreen
 import com.darsequran.academy.ui.fatwa.FatwaViewModel
-import com.darsequran.academy.ui.teachers.TeachersScreen
-import com.darsequran.academy.ui.teachers.TeachersViewModel
 import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.GoldAccent
 
 @Composable
 fun CommunityMainScreen(
-    announcementsViewModel: AnnouncementsViewModel,
     blogViewModel: BlogViewModel,
-    fatwaViewModel: FatwaViewModel,
-    teachersViewModel: TeachersViewModel
+    fatwaViewModel: FatwaViewModel
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Announcements", "Blog & Articles", "Fatwa Q&A", "Faculty & Scholars")
+    val tabs = listOf("Blog & Articles", "Fatwa & Fiqh Q&A")
 
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            ScrollableTabRow(
+            TabRow(
                 selectedTabIndex = selectedTabIndex,
                 containerColor = EmeraldDark,
                 contentColor = Color.White,
-                edgePadding = 16.dp,
                 indicator = { tabPositions ->
                     TabRowDefaults.SecondaryIndicator(
                         modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
@@ -72,10 +64,8 @@ fun CommunityMainScreen(
             }
 
             when (selectedTabIndex) {
-                0 -> AnnouncementsScreen(viewModel = announcementsViewModel, onBackPress = {})
-                1 -> BlogScreen(viewModel = blogViewModel, onBackPress = {})
-                2 -> FatwaScreen(viewModel = fatwaViewModel, onBackPress = {})
-                3 -> TeachersScreen(viewModel = teachersViewModel, onBackPress = {})
+                0 -> BlogScreen(viewModel = blogViewModel, onBackPress = {})
+                1 -> FatwaScreen(viewModel = fatwaViewModel, onBackPress = {})
             }
         }
     }
