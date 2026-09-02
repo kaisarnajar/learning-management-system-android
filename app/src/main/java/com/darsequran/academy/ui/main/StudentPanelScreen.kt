@@ -1,5 +1,6 @@
 package com.darsequran.academy.ui.main
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -53,6 +54,11 @@ fun StudentPanelScreen(
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     var activeSubView by remember { mutableStateOf("menu") } // "menu" or "reviews"
+
+    // Back press handler for sub-views inside Dashboard/More tab
+    BackHandler(enabled = selectedTab == 4 && activeSubView != "menu") {
+        activeSubView = "menu"
+    }
 
     val notificationsViewModel: NotificationsViewModel = viewModel(
         factory = NotificationsViewModel.Factory(authRepository)
