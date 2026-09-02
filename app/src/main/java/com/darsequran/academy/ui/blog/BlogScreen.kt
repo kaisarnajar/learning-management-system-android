@@ -81,7 +81,7 @@ fun BlogScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = EmeraldPrimary
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
@@ -90,7 +90,7 @@ fun BlogScreen(
                         text = "Academy Blog & Articles",
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = EmeraldPrimary
+                            color = MaterialTheme.colorScheme.primary
                         )
                     )
                     Text(
@@ -114,7 +114,7 @@ fun BlogScreen(
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = "Search",
-                        tint = EmeraldPrimary
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 },
                 trailingIcon = {
@@ -127,7 +127,7 @@ fun BlogScreen(
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = EmeraldPrimary,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
                     unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
                 )
             )
@@ -146,7 +146,7 @@ fun BlogScreen(
                         onClick = { viewModel.onCategorySelected(category) },
                         label = { Text(category, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldPrimary,
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
                             selectedLabelColor = Color.White,
                             containerColor = EmeraldDark.copy(alpha = 0.08f),
                             labelColor = EmeraldDark
@@ -163,7 +163,7 @@ fun BlogScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = EmeraldPrimary)
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             } else if (uiState.filteredPosts.isEmpty()) {
                 Box(
@@ -222,7 +222,7 @@ fun BlogScreen(
                         text = post.category ?: "REFLECTION",
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = EmeraldPrimary
+                            color = MaterialTheme.colorScheme.primary
                         ),
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                     )
@@ -234,7 +234,7 @@ fun BlogScreen(
                     text = post.title,
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
-                        color = EmeraldPrimary
+                        color = MaterialTheme.colorScheme.primary
                     )
                 )
 
@@ -263,7 +263,7 @@ fun BlogScreen(
                         Icon(
                             imageVector = Icons.Default.AccessTime,
                             contentDescription = "Read Time",
-                            tint = EmeraldPrimary,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
@@ -319,7 +319,7 @@ fun BlogPostCard(
                         text = post.category?.uppercase() ?: "ARTICLE",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = EmeraldPrimary
+                            color = MaterialTheme.colorScheme.primary
                         ),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
@@ -330,7 +330,7 @@ fun BlogPostCard(
                         Icon(
                             imageVector = Icons.Default.AccessTime,
                             contentDescription = "Read Time",
-                            tint = EmeraldPrimary,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))

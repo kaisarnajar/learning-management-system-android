@@ -88,7 +88,7 @@ fun CoursesCatalogScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = EmeraldPrimary
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
@@ -97,7 +97,7 @@ fun CoursesCatalogScreen(
                         text = "Public Courses Directory",
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = EmeraldPrimary
+                            color = MaterialTheme.colorScheme.primary
                         )
                     )
                     Text(
@@ -121,7 +121,7 @@ fun CoursesCatalogScreen(
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = "Search",
-                        tint = EmeraldPrimary
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 },
                 trailingIcon = {
@@ -134,7 +134,7 @@ fun CoursesCatalogScreen(
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = EmeraldPrimary,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
                     unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
                 )
             )
@@ -153,7 +153,7 @@ fun CoursesCatalogScreen(
                         onClick = { viewModel.onCategorySelected(category) },
                         label = { Text(category, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldPrimary,
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
                             selectedLabelColor = Color.White,
                             containerColor = EmeraldDark.copy(alpha = 0.08f),
                             labelColor = EmeraldDark
@@ -170,7 +170,7 @@ fun CoursesCatalogScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = EmeraldPrimary)
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             } else if (uiState.filteredCourses.isEmpty()) {
                 Box(
@@ -228,7 +228,7 @@ fun CoursesCatalogScreen(
                         text = course.category ?: "QURANIC STUDIES",
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = EmeraldPrimary
+                            color = MaterialTheme.colorScheme.primary
                         ),
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                     )
@@ -240,7 +240,7 @@ fun CoursesCatalogScreen(
                     text = course.title,
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
-                        color = EmeraldPrimary
+                        color = MaterialTheme.colorScheme.primary
                     )
                 )
 
@@ -288,7 +288,7 @@ fun CoursesCatalogScreen(
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = EmeraldPrimary,
+                        containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(10.dp),
@@ -332,7 +332,7 @@ fun PublicCourseCard(
                         text = course.category?.uppercase() ?: "GENERAL",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = EmeraldPrimary
+                            color = MaterialTheme.colorScheme.primary
                         ),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
@@ -363,7 +363,7 @@ fun PublicCourseCard(
                 text = course.title,
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    color = EmeraldPrimary,
+                    color = MaterialTheme.colorScheme.primary,
                     fontSize = 17.sp
                 )
             )
@@ -390,7 +390,7 @@ fun PublicCourseCard(
                 Text(
                     text = "Detailed Curriculum & Schedule",
                     style = MaterialTheme.typography.labelMedium.copy(
-                        color = EmeraldPrimary,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
                     )
                 )

@@ -18,21 +18,27 @@ private val LightColorScheme = lightColorScheme(
     onBackground = TextPrimary,
     surface = SurfaceCard,
     onSurface = TextPrimary,
+    surfaceVariant = Color(0xFFF9FAFB),
+    onSurfaceVariant = TextSecondary,
+    outline = Color(0xFFE5E5E5),
     error = ErrorRed,
     onError = Color.White
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = EmeraldLight,
-    onPrimary = Color.White,
-    primaryContainer = EmeraldDark,
-    onPrimaryContainer = Color.White,
+    primary = GoldAccent,
+    onPrimary = Color.Black,
+    primaryContainer = DarkAccentMuted,
+    onPrimaryContainer = GoldAccent,
     secondary = GoldAccent,
     onSecondary = Color.Black,
-    background = EmeraldDark,
-    onBackground = Color.White,
-    surface = EmeraldPrimary,
-    onSurface = Color.White,
+    background = DarkBackground,
+    onBackground = DarkOnBackground,
+    surface = DarkSurface,
+    onSurface = DarkOnSurface,
+    surfaceVariant = DarkSurfaceMuted,
+    onSurfaceVariant = DarkTextMuted,
+    outline = DarkBorder,
     error = ErrorRed,
     onError = Color.White
 )

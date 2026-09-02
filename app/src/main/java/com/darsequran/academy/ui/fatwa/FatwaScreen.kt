@@ -83,7 +83,7 @@ fun FatwaScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { viewModel.toggleAskFatwaDialog(true) },
-                containerColor = EmeraldPrimary,
+                containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White
             ) {
                 Row(
@@ -117,7 +117,7 @@ fun FatwaScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = EmeraldPrimary
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
@@ -126,7 +126,7 @@ fun FatwaScreen(
                             text = "Fatwa & Fiqh Repository",
                             style = MaterialTheme.typography.headlineSmall.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = EmeraldPrimary
+                                color = MaterialTheme.colorScheme.primary
                             )
                         )
                         Text(
@@ -150,7 +150,7 @@ fun FatwaScreen(
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Search",
-                            tint = EmeraldPrimary
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     },
                     trailingIcon = {
@@ -163,7 +163,7 @@ fun FatwaScreen(
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = EmeraldPrimary,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
                         unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
                     )
                 )
@@ -182,7 +182,7 @@ fun FatwaScreen(
                             onClick = { viewModel.onCategorySelected(category) },
                             label = { Text(category, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = EmeraldPrimary,
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
                                 selectedLabelColor = Color.White,
                                 containerColor = EmeraldDark.copy(alpha = 0.08f),
                                 labelColor = EmeraldDark
@@ -199,7 +199,7 @@ fun FatwaScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = EmeraldPrimary)
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
                 } else if (uiState.filteredFatwas.isEmpty()) {
                     Box(
@@ -274,7 +274,7 @@ fun FatwaCard(fatwa: FatwaItemDto) {
                         text = fatwa.category.uppercase(),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = EmeraldPrimary
+                            color = MaterialTheme.colorScheme.primary
                         ),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
@@ -283,7 +283,7 @@ fun FatwaCard(fatwa: FatwaItemDto) {
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                     contentDescription = "Expand",
-                    tint = EmeraldPrimary
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -293,7 +293,7 @@ fun FatwaCard(fatwa: FatwaItemDto) {
                 text = fatwa.title,
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    color = EmeraldPrimary,
+                    color = MaterialTheme.colorScheme.primary,
                     fontSize = 17.sp
                 )
             )
@@ -321,7 +321,7 @@ fun FatwaCard(fatwa: FatwaItemDto) {
                                 text = "Answer from Scholar:",
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = EmeraldPrimary
+                                    color = MaterialTheme.colorScheme.primary
                                 )
                             )
                             Spacer(modifier = Modifier.height(6.dp))
