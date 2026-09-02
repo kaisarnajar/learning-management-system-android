@@ -1,16 +1,15 @@
 package com.darsequran.academy.ui.main
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Book
-import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.Campaign
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
@@ -23,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -34,29 +32,23 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.data.repository.AuthRepository
-import com.darsequran.academy.ui.announcements.AnnouncementsScreen
 import com.darsequran.academy.ui.announcements.AnnouncementsViewModel
-import com.darsequran.academy.ui.blog.BlogScreen
 import com.darsequran.academy.ui.blog.BlogViewModel
-import com.darsequran.academy.ui.bookstore.BookstoreScreen
 import com.darsequran.academy.ui.bookstore.BookstoreViewModel
-import com.darsequran.academy.ui.courses.CoursesCatalogScreen
+import com.darsequran.academy.ui.community.CommunityMainScreen
 import com.darsequran.academy.ui.courses.CoursesCatalogViewModel
-import com.darsequran.academy.ui.courses.MyCoursesScreen
+import com.darsequran.academy.ui.courses.CoursesMainScreen
 import com.darsequran.academy.ui.courses.MyCoursesViewModel
-import com.darsequran.academy.ui.fatwa.FatwaScreen
 import com.darsequran.academy.ui.fatwa.FatwaViewModel
-import com.darsequran.academy.ui.library.DigitalLibraryScreen
+import com.darsequran.academy.ui.home.HomeScreen
+import com.darsequran.academy.ui.home.HomeViewModel
 import com.darsequran.academy.ui.library.DigitalLibraryViewModel
-import com.darsequran.academy.ui.notifications.NotificationsScreen
+import com.darsequran.academy.ui.library.LibraryMainScreen
 import com.darsequran.academy.ui.notifications.NotificationsViewModel
-import com.darsequran.academy.ui.payments.PaymentsScreen
 import com.darsequran.academy.ui.payments.PaymentsViewModel
-import com.darsequran.academy.ui.profile.ProfileScreen
+import com.darsequran.academy.ui.profile.ProfileMainScreen
 import com.darsequran.academy.ui.profile.ProfileViewModel
-import com.darsequran.academy.ui.reviews.ReviewsScreen
 import com.darsequran.academy.ui.reviews.ReviewsViewModel
-import com.darsequran.academy.ui.teachers.TeachersScreen
 import com.darsequran.academy.ui.teachers.TeachersViewModel
 import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.EmeraldPrimary
@@ -69,17 +61,52 @@ fun StudentPanelScreen(
     onLogout: () -> Unit
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
-    var activeSubView by remember { mutableStateOf("menu") } // "menu", "courses", "library", "announcements", "blog", "teachers", "fatwa", "bookstore", "reviews"
-
-    // Back press handler for sub-views inside Dashboard/Explorer tab
-    BackHandler(enabled = selectedTab == 4 && activeSubView != "menu") {
-        activeSubView = "menu"
-    }
 
     val notificationsViewModel: NotificationsViewModel = viewModel(
         factory = NotificationsViewModel.Factory(authRepository)
     )
     val notificationsUiState by notificationsViewModel.uiState.collectAsState()
+
+    val homeViewModel: HomeViewModel = viewModel(
+        factory = HomeViewModel.Factory(authRepository)
+    )
+
+    val myCoursesViewModel: MyCoursesViewModel = viewModel(
+        factory = MyCoursesViewModel.Factory(authRepository)
+    )
+    val coursesCatalogViewModel: CoursesCatalogViewModel = viewModel(
+        factory = CoursesCatalogViewModel.Factory(authRepository)
+    )
+
+    val libraryViewModel: DigitalLibraryViewModel = viewModel(
+        factory = DigitalLibraryViewModel.Factory(authRepository)
+    )
+    val bookstoreViewModel: BookstoreViewModel = viewModel(
+        factory = BookstoreViewModel.Factory(authRepository)
+    )
+
+    val announcementsViewModel: AnnouncementsViewModel = viewModel(
+        factory = AnnouncementsViewModel.Factory(authRepository)
+    )
+    val blogViewModel: BlogViewModel = viewModel(
+        factory = BlogViewModel.Factory(authRepository)
+    )
+    val fatwaViewModel: FatwaViewModel = viewModel(
+        factory = FatwaViewModel.Factory(authRepository)
+    )
+
+    val profileViewModel: ProfileViewModel = viewModel(
+        factory = ProfileViewModel.Factory(authRepository)
+    )
+    val paymentsViewModel: PaymentsViewModel = viewModel(
+        factory = PaymentsViewModel.Factory(authRepository)
+    )
+    val teachersViewModel: TeachersViewModel = viewModel(
+        factory = TeachersViewModel.Factory(authRepository)
+    )
+    val reviewsViewModel: ReviewsViewModel = viewModel(
+        factory = ReviewsViewModel.Factory(authRepository)
+    )
 
     Scaffold(
         modifier = Modifier
@@ -90,20 +117,20 @@ fun StudentPanelScreen(
                 containerColor = EmeraldDark,
                 contentColor = Color.White
             ) {
-                // Tab 0: Profile
+                // Tab 0: Home
                 NavigationBarItem(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
                     icon = {
                         Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Profile",
+                            imageVector = Icons.Default.Home,
+                            contentDescription = "Home",
                             tint = if (selectedTab == 0) GoldAccent else Color.White.copy(alpha = 0.7f)
                         )
                     },
                     label = {
                         Text(
-                            text = "Profile",
+                            text = "Home",
                             fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal,
                             color = if (selectedTab == 0) GoldAccent else Color.White.copy(alpha = 0.7f),
                             fontSize = 11.sp,
@@ -117,10 +144,64 @@ fun StudentPanelScreen(
                     )
                 )
 
-                // Tab 1: Notifications
+                // Tab 1: Courses
                 NavigationBarItem(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.School,
+                            contentDescription = "Courses",
+                            tint = if (selectedTab == 1) GoldAccent else Color.White.copy(alpha = 0.7f)
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = "Courses",
+                            fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal,
+                            color = if (selectedTab == 1) GoldAccent else Color.White.copy(alpha = 0.7f),
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = EmeraldPrimary
+                    )
+                )
+
+                // Tab 2: Library
+                NavigationBarItem(
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                            contentDescription = "Library",
+                            tint = if (selectedTab == 2) GoldAccent else Color.White.copy(alpha = 0.7f)
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = "Library",
+                            fontWeight = if (selectedTab == 2) FontWeight.Bold else FontWeight.Normal,
+                            color = if (selectedTab == 2) GoldAccent else Color.White.copy(alpha = 0.7f),
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = EmeraldPrimary
+                    )
+                )
+
+                // Tab 3: Notices & Community
+                NavigationBarItem(
+                    selected = selectedTab == 3,
+                    onClick = { selectedTab = 3 },
                     icon = {
                         BadgedBox(
                             badge = {
@@ -130,67 +211,15 @@ fun StudentPanelScreen(
                             }
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Notifications,
-                                contentDescription = "Notifications",
-                                tint = if (selectedTab == 1) GoldAccent else Color.White.copy(alpha = 0.7f)
+                                imageVector = Icons.Default.Campaign,
+                                contentDescription = "Notices",
+                                tint = if (selectedTab == 3) GoldAccent else Color.White.copy(alpha = 0.7f)
                             )
                         }
                     },
                     label = {
                         Text(
-                            text = "Notifications",
-                            fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal,
-                            color = if (selectedTab == 1) GoldAccent else Color.White.copy(alpha = 0.7f),
-                            fontSize = 9.5.sp,
-                            maxLines = 1,
-                            softWrap = false
-                        )
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = EmeraldPrimary
-                    )
-                )
-
-                // Tab 2: My Courses
-                NavigationBarItem(
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Book,
-                            contentDescription = "My Courses",
-                            tint = if (selectedTab == 2) GoldAccent else Color.White.copy(alpha = 0.7f)
-                        )
-                    },
-                    label = {
-                        Text(
-                            text = "My Courses",
-                            fontWeight = if (selectedTab == 2) FontWeight.Bold else FontWeight.Normal,
-                            color = if (selectedTab == 2) GoldAccent else Color.White.copy(alpha = 0.7f),
-                            fontSize = 9.5.sp,
-                            maxLines = 1,
-                            softWrap = false
-                        )
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = EmeraldPrimary
-                    )
-                )
-
-                // Tab 3: Payments
-                NavigationBarItem(
-                    selected = selectedTab == 3,
-                    onClick = { selectedTab = 3 },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.CreditCard,
-                            contentDescription = "Payments",
-                            tint = if (selectedTab == 3) GoldAccent else Color.White.copy(alpha = 0.7f)
-                        )
-                    },
-                    label = {
-                        Text(
-                            text = "Payments",
+                            text = "Notices",
                             fontWeight = if (selectedTab == 3) FontWeight.Bold else FontWeight.Normal,
                             color = if (selectedTab == 3) GoldAccent else Color.White.copy(alpha = 0.7f),
                             fontSize = 11.sp,
@@ -204,23 +233,20 @@ fun StudentPanelScreen(
                     )
                 )
 
-                // Tab 4: Dashboard / Explorer Hub
+                // Tab 4: Profile & Account
                 NavigationBarItem(
                     selected = selectedTab == 4,
-                    onClick = {
-                        selectedTab = 4
-                        activeSubView = "menu"
-                    },
+                    onClick = { selectedTab = 4 },
                     icon = {
                         Icon(
-                            imageVector = Icons.Default.MoreHoriz,
-                            contentDescription = "Explorer",
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Profile",
                             tint = if (selectedTab == 4) GoldAccent else Color.White.copy(alpha = 0.7f)
                         )
                     },
                     label = {
                         Text(
-                            text = "Explorer",
+                            text = "Profile",
                             fontWeight = if (selectedTab == 4) FontWeight.Bold else FontWeight.Normal,
                             color = if (selectedTab == 4) GoldAccent else Color.White.copy(alpha = 0.7f),
                             fontSize = 11.sp,
@@ -242,119 +268,30 @@ fun StudentPanelScreen(
                 .padding(innerPadding)
         ) {
             when (selectedTab) {
-                0 -> {
-                    val profileViewModel: ProfileViewModel = viewModel(
-                        factory = ProfileViewModel.Factory(authRepository)
-                    )
-                    ProfileScreen(viewModel = profileViewModel)
-                }
-                1 -> {
-                    NotificationsScreen(viewModel = notificationsViewModel)
-                }
-                2 -> {
-                    val myCoursesViewModel: MyCoursesViewModel = viewModel(
-                        factory = MyCoursesViewModel.Factory(authRepository)
-                    )
-                    MyCoursesScreen(viewModel = myCoursesViewModel)
-                }
-                3 -> {
-                    val paymentsViewModel: PaymentsViewModel = viewModel(
-                        factory = PaymentsViewModel.Factory(authRepository)
-                    )
-                    PaymentsScreen(viewModel = paymentsViewModel)
-                }
-                4 -> {
-                    when (activeSubView) {
-                        "courses" -> {
-                            val coursesCatalogViewModel: CoursesCatalogViewModel = viewModel(
-                                factory = CoursesCatalogViewModel.Factory(authRepository)
-                            )
-                            CoursesCatalogScreen(
-                                viewModel = coursesCatalogViewModel,
-                                onBackPress = { activeSubView = "menu" }
-                            )
-                        }
-                        "library" -> {
-                            val libraryViewModel: DigitalLibraryViewModel = viewModel(
-                                factory = DigitalLibraryViewModel.Factory(authRepository)
-                            )
-                            DigitalLibraryScreen(
-                                viewModel = libraryViewModel,
-                                onBackPress = { activeSubView = "menu" }
-                            )
-                        }
-                        "announcements" -> {
-                            val announcementsViewModel: AnnouncementsViewModel = viewModel(
-                                factory = AnnouncementsViewModel.Factory(authRepository)
-                            )
-                            AnnouncementsScreen(
-                                viewModel = announcementsViewModel,
-                                onBackPress = { activeSubView = "menu" }
-                            )
-                        }
-                        "blog" -> {
-                            val blogViewModel: BlogViewModel = viewModel(
-                                factory = BlogViewModel.Factory(authRepository)
-                            )
-                            BlogScreen(
-                                viewModel = blogViewModel,
-                                onBackPress = { activeSubView = "menu" }
-                            )
-                        }
-                        "teachers" -> {
-                            val teachersViewModel: TeachersViewModel = viewModel(
-                                factory = TeachersViewModel.Factory(authRepository)
-                            )
-                            TeachersScreen(
-                                viewModel = teachersViewModel,
-                                onBackPress = { activeSubView = "menu" }
-                            )
-                        }
-                        "fatwa" -> {
-                            val fatwaViewModel: FatwaViewModel = viewModel(
-                                factory = FatwaViewModel.Factory(authRepository)
-                            )
-                            FatwaScreen(
-                                viewModel = fatwaViewModel,
-                                onBackPress = { activeSubView = "menu" }
-                            )
-                        }
-                        "bookstore" -> {
-                            val bookstoreViewModel: BookstoreViewModel = viewModel(
-                                factory = BookstoreViewModel.Factory(authRepository)
-                            )
-                            BookstoreScreen(
-                                viewModel = bookstoreViewModel,
-                                onBackPress = { activeSubView = "menu" }
-                            )
-                        }
-                        "reviews" -> {
-                            val reviewsViewModel: ReviewsViewModel = viewModel(
-                                factory = ReviewsViewModel.Factory(authRepository)
-                            )
-                            ReviewsScreen(viewModel = reviewsViewModel)
-                        }
-                        else -> {
-                            MoreMenuSheet(
-                                onSelectCourses = { activeSubView = "courses" },
-                                onSelectLibrary = { activeSubView = "library" },
-                                onSelectAnnouncements = { activeSubView = "announcements" },
-                                onSelectBlog = { activeSubView = "blog" },
-                                onSelectTeachers = { activeSubView = "teachers" },
-                                onSelectFatwa = { activeSubView = "fatwa" },
-                                onSelectBookstore = { activeSubView = "bookstore" },
-                                onSelectReviews = { activeSubView = "reviews" },
-                                onLogout = onLogout
-                            )
-                        }
-                    }
-                }
-                else -> {
-                    val profileViewModel: ProfileViewModel = viewModel(
-                        factory = ProfileViewModel.Factory(authRepository)
-                    )
-                    ProfileScreen(viewModel = profileViewModel)
-                }
+                0 -> HomeScreen(
+                    viewModel = homeViewModel,
+                    tokenManager = tokenManager,
+                    onLogout = onLogout
+                )
+                1 -> CoursesMainScreen(
+                    myCoursesViewModel = myCoursesViewModel,
+                    catalogViewModel = coursesCatalogViewModel
+                )
+                2 -> LibraryMainScreen(
+                    libraryViewModel = libraryViewModel,
+                    bookstoreViewModel = bookstoreViewModel
+                )
+                3 -> CommunityMainScreen(
+                    announcementsViewModel = announcementsViewModel,
+                    blogViewModel = blogViewModel,
+                    fatwaViewModel = fatwaViewModel
+                )
+                4 -> ProfileMainScreen(
+                    profileViewModel = profileViewModel,
+                    paymentsViewModel = paymentsViewModel,
+                    teachersViewModel = teachersViewModel,
+                    reviewsViewModel = reviewsViewModel
+                )
             }
         }
     }
