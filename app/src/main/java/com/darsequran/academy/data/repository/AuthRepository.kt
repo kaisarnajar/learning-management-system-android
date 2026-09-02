@@ -503,10 +503,12 @@ class AuthRepository(
 
     private fun getFallbackBookstore(search: String?): com.darsequran.academy.data.model.BookstoreResponse {
         val list = listOf(
-            com.darsequran.academy.data.model.BookstoreItemDto("book-1", "Tajweed-ul-Quran (Color Coded Edition)", "Darse Quran Academy", "Tajweed rules indicated by intuitive color highlights for easy learning.", 49900, 60000, "AVAILABLE", null, "Quran Editions"),
-            com.darsequran.academy.data.model.BookstoreItemDto("book-2", "The Sealed Nectar (Hardcover)", "Sheikh Safiur Rahman Mubarakpuri", "Deluxe hardcover edition of the award-winning prophetic biography.", 65000, 80000, "AVAILABLE", null, "Seerah"),
-            com.darsequran.academy.data.model.BookstoreItemDto("book-3", "Madinah Arabic Reader Set (Books 1-3)", "Dr. V. Abdur Rahim", "Complete 3-volume series for learning classical Arabic grammar.", 85000, 100000, "AVAILABLE", null, "Arabic Literature"),
-            com.darsequran.academy.data.model.BookstoreItemDto("book-4", "Forty Hadith with Commentary", "Imam Al-Nawawi", "English-Arabic edition with explanatory notes and practical lessons.", 35000, 45000, "AVAILABLE", null, "Hadith Studies")
+            com.darsequran.academy.data.model.BookstoreItemDto("book-1", "Tafseer Ibn Kathir (English - 10 Volumes)", "Hafiz Ibn Kathir", "The most widely recognized and accepted explanation of the Quran in the world. Features full Arabic text, English translation, and comprehensive commentary.", 450000, 500000, "AVAILABLE", null, "Tafsir & Quranic Studies"),
+            com.darsequran.academy.data.model.BookstoreItemDto("book-2", "Riyad us Saliheen (Gardens of the Righteous)", "Imam An-Nawawi", "A highly acclaimed collection of authentic Ahadith compiled by Imam An-Nawawi. Essential reading for every Muslim household.", 85000, 100000, "AVAILABLE", null, "Hadith & Sunnah"),
+            com.darsequran.academy.data.model.BookstoreItemDto("book-3", "Al-Adab Al-Mufrad (A Code for Everyday Living)", "Imam Al-Bukhari", "A topical collection of Ahadith addressing moral behavior, good manners, and family relations.", 65000, 80000, "AVAILABLE", null, "Hadith & Morals"),
+            com.darsequran.academy.data.model.BookstoreItemDto("book-4", "The Sealed Nectar (Ar-Raheeq Al-Makhtum)", "Safi-ur-Rahman Al-Mubarakpuri", "An authoritative biography of the Prophet Muhammad (Peace Be Upon Him). Award-winning historical analysis of the Seerah.", 55000, 70000, "OUT_OF_STOCK", null, "Seerah"),
+            com.darsequran.academy.data.model.BookstoreItemDto("book-5", "Fortress of the Muslim (Hisnul Muslim)", "Sa'id bin Ali bin Wahf Al-Qahtani", "A pocket-sized booklet consisting of authentic supplications (Duas) for everyday use.", 15000, 20000, "AVAILABLE", null, "Duas & Azkar"),
+            com.darsequran.academy.data.model.BookstoreItemDto("book-6", "Qasas ul Anbiya (Stories of the Prophets)", "Hafiz Ibn Kathir", "Detailed historical accounts of the Prophets mentioned in the Quran and Sunnah.", 95000, 120000, "COMING_SOON", null, "Islamic History")
         ).filter { item ->
             search.isNullOrBlank() || item.title.contains(search, ignoreCase = true) || (item.author?.contains(search, ignoreCase = true) == true)
         }
