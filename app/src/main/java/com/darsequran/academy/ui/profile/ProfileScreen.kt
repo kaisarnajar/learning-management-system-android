@@ -156,6 +156,8 @@ fun ProfileScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
+    var showSignOutDialog by remember { mutableStateOf(false) }
+
     LaunchedEffect(uiState.successMessage) {
         uiState.successMessage?.let {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
@@ -341,12 +343,7 @@ fun ProfileScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable {
-                            scope.launch {
-                                tokenManager.clearSession()
-                                onLogout()
-                            }
-                        },
+                        .clickable { showSignOutDialog = true },
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.12f)
@@ -397,6 +394,62 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
+    }
+
+    // Sign Out Confirmation Dialog
+    if (showSignOutDialog) {
+        AlertDialog(
+            onDismissRequest = { showSignOutDialog = false },
+            shape = RoundedCornerShape(18.dp),
+            icon = {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                    contentDescription = "Sign Out Icon",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = "Confirm Sign Out",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to sign out from your Darse Quran Academy account?",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                    )
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showSignOutDialog = false
+                        scope.launch {
+                            tokenManager.clearSession()
+                            onLogout()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("SIGN OUT", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSignOutDialog = false }) {
+                    Text("Cancel", color = EmeraldPrimary, fontWeight = FontWeight.Medium)
+                }
+            }
+        )
     }
 
     // Edit Profile Modal Dialog
