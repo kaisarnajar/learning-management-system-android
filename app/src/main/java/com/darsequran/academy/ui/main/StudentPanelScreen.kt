@@ -29,6 +29,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.data.repository.AuthRepository
@@ -89,7 +91,11 @@ fun StudentPanelScreen(
                         Text(
                             text = "Profile",
                             fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal,
-                            color = if (selectedTab == 0) GoldAccent else Color.White.copy(alpha = 0.7f)
+                            color = if (selectedTab == 0) GoldAccent else Color.White.copy(alpha = 0.7f),
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis
                         )
                     },
                     colors = NavigationBarItemDefaults.colors(
@@ -118,9 +124,13 @@ fun StudentPanelScreen(
                     },
                     label = {
                         Text(
-                            text = "Notifications",
+                            text = "Notifs",
                             fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal,
-                            color = if (selectedTab == 1) GoldAccent else Color.White.copy(alpha = 0.7f)
+                            color = if (selectedTab == 1) GoldAccent else Color.White.copy(alpha = 0.7f),
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis
                         )
                     },
                     colors = NavigationBarItemDefaults.colors(
@@ -141,9 +151,13 @@ fun StudentPanelScreen(
                     },
                     label = {
                         Text(
-                            text = "My Courses",
+                            text = "Courses",
                             fontWeight = if (selectedTab == 2) FontWeight.Bold else FontWeight.Normal,
-                            color = if (selectedTab == 2) GoldAccent else Color.White.copy(alpha = 0.7f)
+                            color = if (selectedTab == 2) GoldAccent else Color.White.copy(alpha = 0.7f),
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis
                         )
                     },
                     colors = NavigationBarItemDefaults.colors(
@@ -166,7 +180,11 @@ fun StudentPanelScreen(
                         Text(
                             text = "Payments",
                             fontWeight = if (selectedTab == 3) FontWeight.Bold else FontWeight.Normal,
-                            color = if (selectedTab == 3) GoldAccent else Color.White.copy(alpha = 0.7f)
+                            color = if (selectedTab == 3) GoldAccent else Color.White.copy(alpha = 0.7f),
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis
                         )
                     },
                     colors = NavigationBarItemDefaults.colors(
@@ -192,7 +210,11 @@ fun StudentPanelScreen(
                         Text(
                             text = "Dashboard",
                             fontWeight = if (selectedTab == 4) FontWeight.Bold else FontWeight.Normal,
-                            color = if (selectedTab == 4) GoldAccent else Color.White.copy(alpha = 0.7f)
+                            color = if (selectedTab == 4) GoldAccent else Color.White.copy(alpha = 0.7f),
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis
                         )
                     },
                     colors = NavigationBarItemDefaults.colors(
