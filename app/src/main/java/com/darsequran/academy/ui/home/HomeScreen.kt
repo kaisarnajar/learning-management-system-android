@@ -227,61 +227,30 @@ fun HomeScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Enrolled Courses Summary Section
-            Text(
-                text = "My Enrolled Courses Overview",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
+            // Enrolled Courses Summary Section (only visible if enrolled or loading)
             if (uiState.isLoadingEnrollments) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Text(
+                    text = "My Enrolled Courses Overview",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                )
+                Spacer(modifier = Modifier.height(12.dp))
                 Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
-            } else if (uiState.enrollments.isEmpty()) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Book,
-                            contentDescription = "No Course Icon",
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                            modifier = Modifier.size(36.dp)
-                        )
-
-                        Spacer(modifier = Modifier.width(16.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "No Enrolled Courses Yet",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                                )
-                            )
-                            Text(
-                                text = "Explore available courses under the Courses tab to enroll.",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                                )
-                            )
-                        }
-                    }
-                }
-            } else {
+            } else if (uiState.enrollments.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Text(
+                    text = "My Enrolled Courses Overview",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                )
+                Spacer(modifier = Modifier.height(12.dp))
                 uiState.enrollments.forEach { enrollment ->
                     val courseTitle = enrollment.course?.title ?: "Enrolled Course"
                     val teacherName = enrollment.course?.teacher?.name ?: "Darse Quran Academy Instructor"
@@ -299,7 +268,7 @@ fun HomeScreen(
                             Icon(
                                 imageVector = Icons.Default.Book,
                                 contentDescription = "Course Icon",
-                                tint = EmeraldPrimary,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(36.dp)
                             )
 
