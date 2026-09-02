@@ -3,15 +3,19 @@ package com.darsequran.academy.data.remote
 import com.darsequran.academy.data.model.AuthResponse
 import com.darsequran.academy.data.model.CoursesResponse
 import com.darsequran.academy.data.model.DailyInspirationResponse
+import com.darsequran.academy.data.model.DeviceTokenRequest
 import com.darsequran.academy.data.model.EnrollmentsResponse
 import com.darsequran.academy.data.model.GoogleLoginRequest
 import com.darsequran.academy.data.model.LoginRequest
+import com.darsequran.academy.data.model.MarkReadRequest
+import com.darsequran.academy.data.model.NotificationsResponse
 import com.darsequran.academy.data.model.RegisterRequest
 import com.darsequran.academy.data.model.UpdateProfileRequest
 import com.darsequran.academy.data.model.UserProfileResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Query
@@ -40,6 +44,23 @@ interface AuthApi {
     suspend fun updateProfile(
         @Body request: UpdateProfileRequest
     ): Response<UserProfileResponse>
+
+    @GET("notifications")
+    suspend fun getNotifications(
+        @Query("page") page: Int = 1,
+        @Query("pageSize") pageSize: Int = 20,
+        @Query("filter") filter: String = "all"
+    ): Response<NotificationsResponse>
+
+    @PATCH("notifications")
+    suspend fun markNotificationsRead(
+        @Body request: MarkReadRequest
+    ): Response<NotificationsResponse>
+
+    @POST("notifications/device-token")
+    suspend fun registerDeviceToken(
+        @Body request: DeviceTokenRequest
+    ): Response<AuthResponse>
 
     @GET("daily-inspiration")
     suspend fun getDailyInspiration(): Response<DailyInspirationResponse>
