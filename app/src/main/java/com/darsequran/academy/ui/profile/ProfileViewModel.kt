@@ -75,7 +75,8 @@ class ProfileViewModel(
         occupation: String,
         address: String,
         phone: String,
-        gender: String
+        gender: String,
+        image: String? = null
     ) {
         viewModelScope.launch {
             _uiState.update { it.copy(isUpdating = true, errorMessage = null) }
@@ -87,7 +88,8 @@ class ProfileViewModel(
                 occupation = occupation.trim().ifEmpty { null },
                 address = address.trim().ifEmpty { null },
                 whatsapp = phone.trim().ifEmpty { null },
-                gender = gender.trim().ifEmpty { null }
+                gender = gender.trim().ifEmpty { null },
+                image = image?.trim()?.ifEmpty { null }
             )
 
             when (val result = authRepository.updateProfile(request)) {
