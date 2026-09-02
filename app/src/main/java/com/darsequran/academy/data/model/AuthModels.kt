@@ -36,6 +36,16 @@ data class UserDto(
     @SerializedName("createdAt") val createdAt: String? = null
 )
 
+data class UpdateProfileRequest(
+    @SerializedName("name") val name: String? = null,
+    @SerializedName("fatherName") val fatherName: String? = null,
+    @SerializedName("dateOfBirth") val dateOfBirth: String? = null,
+    @SerializedName("occupation") val occupation: String? = null,
+    @SerializedName("address") val address: String? = null,
+    @SerializedName("whatsapp") val whatsapp: String? = null,
+    @SerializedName("gender") val gender: String? = null
+)
+
 data class AuthResponse(
     @SerializedName("success") val success: Boolean = true,
     @SerializedName("message") val message: String? = null,

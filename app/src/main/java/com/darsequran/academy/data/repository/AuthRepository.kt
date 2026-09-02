@@ -8,6 +8,7 @@ import com.darsequran.academy.data.model.EnrollmentsResponse
 import com.darsequran.academy.data.model.GoogleLoginRequest
 import com.darsequran.academy.data.model.LoginRequest
 import com.darsequran.academy.data.model.RegisterRequest
+import com.darsequran.academy.data.model.UpdateProfileRequest
 import com.darsequran.academy.data.model.UserProfileResponse
 import com.darsequran.academy.data.remote.AuthApi
 import com.google.gson.Gson
@@ -103,10 +104,31 @@ class AuthRepository(
         return try {
             val response = authApi.getProfile()
             if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!)
+                val profile = response.body()!!
+                profile.user?.let { u ->
+                    tokenManager.saveSession(
+                        tokenManager.authTokenFlow.toString(),
+                        u
+                    )
+                }
+                NetworkResult.Success(profile)
             } else {
                 val errorMsg = parseErrorMessage(response.errorBody()?.string())
                 NetworkResult.Error(errorMsg ?: "Failed to fetch profile.")
+            }
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
+        }
+    }
+
+    suspend fun updateProfile(request: UpdateProfileRequest): NetworkResult<UserProfileResponse> {
+        return try {
+            val response = authApi.updateProfile(request)
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                val errorMsg = parseErrorMessage(response.errorBody()?.string())
+                NetworkResult.Error(errorMsg ?: "Failed to update profile.")
             }
         } catch (ex: Exception) {
             NetworkResult.Error(ex.localizedMessage ?: "Network error.")
