@@ -170,10 +170,11 @@ fun HomeScreen(
 
                         Column {
                             Text(
-                                text = "Assalamu Alaikum,",
-                                style = MaterialTheme.typography.bodyMedium.copy(
+                                text = "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ ٱللَّهِ وَبَرَكَاتُهُ",
+                                style = MaterialTheme.typography.bodyLarge.copy(
                                     color = GoldAccent,
-                                    fontWeight = FontWeight.SemiBold
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
                                 )
                             )
                             Spacer(modifier = Modifier.height(2.dp))
