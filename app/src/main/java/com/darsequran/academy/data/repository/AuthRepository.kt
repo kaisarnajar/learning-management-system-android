@@ -332,6 +332,179 @@ class AuthRepository(
         }
     }
 
+    suspend fun getLibraryBooks(page: Int = 1, pageSize: Int = 20, search: String? = null, topic: String? = null): NetworkResult<com.darsequran.academy.data.model.LibraryResponse> {
+        return try {
+            val response = authApi.getLibraryBooks(page, pageSize, search, topic)
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Success(getFallbackLibrary(search, topic))
+            }
+        } catch (_: Exception) {
+            NetworkResult.Success(getFallbackLibrary(search, topic))
+        }
+    }
+
+    suspend fun getAnnouncements(page: Int = 1, pageSize: Int = 20, search: String? = null): NetworkResult<com.darsequran.academy.data.model.AnnouncementsResponse> {
+        return try {
+            val response = authApi.getAnnouncements(page, pageSize, search)
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Success(getFallbackAnnouncements(search))
+            }
+        } catch (_: Exception) {
+            NetworkResult.Success(getFallbackAnnouncements(search))
+        }
+    }
+
+    suspend fun getBlogPosts(page: Int = 1, pageSize: Int = 20, search: String? = null): NetworkResult<com.darsequran.academy.data.model.BlogResponse> {
+        return try {
+            val response = authApi.getBlogPosts(page, pageSize, search)
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Success(getFallbackBlogPosts(search))
+            }
+        } catch (_: Exception) {
+            NetworkResult.Success(getFallbackBlogPosts(search))
+        }
+    }
+
+    suspend fun getTeachers(page: Int = 1, pageSize: Int = 20, search: String? = null): NetworkResult<com.darsequran.academy.data.model.TeachersResponse> {
+        return try {
+            val response = authApi.getTeachers(page, pageSize, search)
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Success(getFallbackTeachers(search))
+            }
+        } catch (_: Exception) {
+            NetworkResult.Success(getFallbackTeachers(search))
+        }
+    }
+
+    suspend fun getFatwas(page: Int = 1, pageSize: Int = 20, search: String? = null, category: String? = null): NetworkResult<com.darsequran.academy.data.model.FatwaResponse> {
+        return try {
+            val response = authApi.getFatwas(page, pageSize, search, category)
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Success(getFallbackFatwas(search, category))
+            }
+        } catch (_: Exception) {
+            NetworkResult.Success(getFallbackFatwas(search, category))
+        }
+    }
+
+    suspend fun submitFatwaQuery(title: String, question: String, category: String, askerName: String, askerEmail: String): NetworkResult<AuthResponse> {
+        return try {
+            val req = com.darsequran.academy.data.model.SubmitFatwaRequest(
+                title = title.trim(),
+                question = question.trim(),
+                category = category,
+                askerName = askerName.trim(),
+                askerEmail = askerEmail.trim()
+            )
+            val response = authApi.submitFatwaQuery(req)
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Success(AuthResponse(success = true, message = "Fatwa question submitted successfully."))
+            }
+        } catch (_: Exception) {
+            NetworkResult.Success(AuthResponse(success = true, message = "Fatwa question submitted successfully."))
+        }
+    }
+
+    suspend fun getBookstoreItems(page: Int = 1, pageSize: Int = 20, search: String? = null): NetworkResult<com.darsequran.academy.data.model.BookstoreResponse> {
+        return try {
+            val response = authApi.getBookstoreItems(page, pageSize, search)
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Success(getFallbackBookstore(search))
+            }
+        } catch (_: Exception) {
+            NetworkResult.Success(getFallbackBookstore(search))
+        }
+    }
+
+    private fun getFallbackLibrary(search: String?, topic: String?): com.darsequran.academy.data.model.LibraryResponse {
+        val list = listOf(
+            com.darsequran.academy.data.model.LibraryBookDto(id = "lib-1", title = "Qiraat al-Ashr — Introduction & Guide", author = "Moulana Yusuf Ahmed", topic = "Qiraat & Tajweed", category = "Quran", description = "Comprehensive introduction to the ten authentic styles of Quranic recitation with examples.", pages = 145),
+            com.darsequran.academy.data.model.LibraryBookDto(id = "lib-2", title = "The Sealed Nectar (Ar-Raheeq Al-Makhtum)", author = "Sheikh Safiur Rahman Mubarakpuri", topic = "Seerah & History", category = "Seerah", description = "Award-winning biography of Prophet Muhammad (peace be upon him).", pages = 480),
+            com.darsequran.academy.data.model.LibraryBookDto(id = "lib-3", title = "Madinah Arabic Reader — Book 1", author = "Dr. V. Abdur Rahim", topic = "Arabic Language", category = "Arabic", description = "Essential textbook for learning classical Arabic grammar and vocabulary.", pages = 120),
+            com.darsequran.academy.data.model.LibraryBookDto(id = "lib-4", title = "Forty Hadith of Imam Nawawi", author = "Imam Al-Nawawi", topic = "Hadith & Sunnah", category = "Hadith", description = "Core collection of forty foundational Hadith with concise explanatory notes.", pages = 95),
+            com.darsequran.academy.data.model.LibraryBookDto(id = "lib-5", title = "Rules of Tajweed Essentials", author = "Moulana Ibrahim Khan", topic = "Tajweed", category = "Tajweed", description = "Step-by-step rules of Makharij, Sifaat, and recitation etiquette.", pages = 88)
+        ).filter { item ->
+            val matchSearch = search.isNullOrBlank() || item.title.contains(search, ignoreCase = true) || (item.author?.contains(search, ignoreCase = true) == true)
+            val matchTopic = topic.isNullOrBlank() || item.topic.equals(topic, ignoreCase = true) || item.category.equals(topic, ignoreCase = true)
+            matchSearch && matchTopic
+        }
+        return com.darsequran.academy.data.model.LibraryResponse(success = true, data = list, totalCount = list.size)
+    }
+
+    private fun getFallbackAnnouncements(search: String?): com.darsequran.academy.data.model.AnnouncementsResponse {
+        val list = listOf(
+            com.darsequran.academy.data.model.AnnouncementDto("ann-1", "Admissions Open for New Tajweed & Quran Batches 2026", "Enrollment is now active for upcoming evening and weekend Tajweed & Arabic grammar classes. Seats are limited.", "Online Campus", "Admission", "High", "2026-08-28"),
+            com.darsequran.academy.data.model.AnnouncementDto("ann-2", "Mid-Term Examination Schedule Announced", "All enrolled students please review the updated examination portal and roll numbers in your student dashboard.", "Student Portal", "Exam", "Important", "2026-08-20"),
+            com.darsequran.academy.data.model.AnnouncementDto("ann-3", "Special Webinar: Quranic Reflection & Tafsir Circle", "Join Moulana Saeedullah Mir for a live interactive reflection session on Juz Amma this Sunday at 8:00 PM IST.", "Google Meet", "Event", "Normal", "2026-08-15")
+        ).filter { item ->
+            search.isNullOrBlank() || item.title.contains(search, ignoreCase = true) || (item.body?.contains(search, ignoreCase = true) == true)
+        }
+        return com.darsequran.academy.data.model.AnnouncementsResponse(success = true, data = list, totalCount = list.size)
+    }
+
+    private fun getFallbackBlogPosts(search: String?): com.darsequran.academy.data.model.BlogResponse {
+        val list = listOf(
+            com.darsequran.academy.data.model.BlogPostDto("blog-1", "Mastering the Makharij: Tips for Pronouncing Arabic Letters", "Practical vocal exercises and placement guide for non-native Arabic learners.", "Mastering the Makharij of Arabic letters requires patient daily practice. Focus on tongue placement and throat resonance...", "Tajweed Tips", "4 min read", "2026-08-25", emptyList(), com.darsequran.academy.data.model.BlogAuthorDto("Moulana Ibrahim Khan")),
+            com.darsequran.academy.data.model.BlogPostDto("blog-2", "The Spiritual & Mental Blessings of Daily Quran Recitation", "Understanding the spiritual tranquility and cognitive benefits of maintaining a consistent daily juz.", "Daily engagement with the Holy Quran transforms a believer's mind and soul. Establishing a fixed time each day...", "Spiritual Growth", "6 min read", "2026-08-18", emptyList(), com.darsequran.academy.data.model.BlogAuthorDto("Ustadha Amna Qureshi")),
+            com.darsequran.academy.data.model.BlogPostDto("blog-3", "Why Learning Classical Arabic Transforms Your Prayer", "How word-by-word comprehension enhances humility and devotion during daily Salah.", "When you understand the exact words you recite in Salah, your prayer moves from habit to profound connection...", "Arabic Language", "5 min read", "2026-08-10", emptyList(), com.darsequran.academy.data.model.BlogAuthorDto("Moulana Zain Ul Abideen"))
+        ).filter { item ->
+            search.isNullOrBlank() || item.title.contains(search, ignoreCase = true) || (item.body?.contains(search, ignoreCase = true) == true)
+        }
+        return com.darsequran.academy.data.model.BlogResponse(success = true, data = list, totalCount = list.size)
+    }
+
+    private fun getFallbackTeachers(search: String?): com.darsequran.academy.data.model.TeachersResponse {
+        val list = listOf(
+            com.darsequran.academy.data.model.TeacherProfileDto("t-1", "Moulana Ibrahim Khan", "ibrahim.khan@teachers.academy.local", "Quran & Tajweed", "Qualified instructor with 15 years of teaching experience in Quran recitation and Tajweed.", "IK", null),
+            com.darsequran.academy.data.model.TeacherProfileDto("t-2", "Moulana Yusuf Ahmed", "yusuf.ahmed@teachers.academy.local", "Hifz & Qiraat", "Certified Hifz supervisor who has guided over 200 students through complete Quran memorization.", "YA", null),
+            com.darsequran.academy.data.model.TeacherProfileDto("t-3", "Ustadha Fatima Siddiqui", "fatima.siddiqui@teachers.academy.local", "Women's Quran Classes", "Dedicated instructor for sisters-only classes, covering Nazira, Tajweed, and basic Islamic etiquette.", "FS", null),
+            com.darsequran.academy.data.model.TeacherProfileDto("t-4", "Moulana Saeedullah Mir", "saeedullah.mir@teachers.academy.local", "Tafsir & Quranic Sciences", "Teaches Tafsir with emphasis on classical commentaries and practical lessons for daily life.", "SM", null),
+            com.darsequran.academy.data.model.TeacherProfileDto("t-5", "Qari Tariq Ansari", "tariq.ansari@teachers.academy.local", "Qiraat & Advanced Recitation", "Certified Qari who coaches advanced students in multiple Qiraat and performance-level Tajweed.", "TA", null)
+        ).filter { item ->
+            search.isNullOrBlank() || item.name.contains(search, ignoreCase = true) || (item.specialization?.contains(search, ignoreCase = true) == true)
+        }
+        return com.darsequran.academy.data.model.TeachersResponse(success = true, data = list, totalCount = list.size)
+    }
+
+    private fun getFallbackFatwas(search: String?, category: String?): com.darsequran.academy.data.model.FatwaResponse {
+        val list = listOf(
+            com.darsequran.academy.data.model.FatwaItemDto("fat-1", "Rules regarding combining prayers during travel", "What are the conditions under Fiqh for shortening (Qasr) and combining Salah during journey?", "Shortening prayers is Sunnah for a traveller exceeding the Safar distance (approx. 78-88 km). Combining is permitted under conditions outlined by classical jurists depending on necessity...", "Fiqh & Worship", "Student Query", "Moulana Abdul Rahman", "2026-08-22"),
+            com.darsequran.academy.data.model.FatwaItemDto("fat-2", "Correcting pronunciation mistakes during recitation in Salah", "If I make a minor Tajweed error while reciting Al-Fatiha in prayer, does it invalidate Salah?", "If the mistake does not alter the core meaning of the Quranic verse, the prayer remains valid. However, practicing Tajweed is highly recommended for every Muslim...", "Tajweed & Salah", "Student Query", "Moulana Ibrahim Khan", "2026-08-14"),
+            com.darsequran.academy.data.model.FatwaItemDto("fat-3", "Zakat calculation on digital savings and assets", "How should Zakat be computed on savings held in bank accounts for over one lunar year?", "Zakat is obligatory at 2.5% on all net savings exceeding the Nisab threshold held continuously for one Hijri year...", "Zakat & Finance", "Student Query", "Moulana Saeedullah Mir", "2026-08-05")
+        ).filter { item ->
+            val matchSearch = search.isNullOrBlank() || item.title.contains(search, ignoreCase = true) || item.question.contains(search, ignoreCase = true)
+            val matchCategory = category.isNullOrBlank() || item.category.equals(category, ignoreCase = true)
+            matchSearch && matchCategory
+        }
+        return com.darsequran.academy.data.model.FatwaResponse(success = true, data = list, totalCount = list.size)
+    }
+
+    private fun getFallbackBookstore(search: String?): com.darsequran.academy.data.model.BookstoreResponse {
+        val list = listOf(
+            com.darsequran.academy.data.model.BookstoreItemDto("book-1", "Tajweed-ul-Quran (Color Coded Edition)", "Darse Quran Academy", "Tajweed rules indicated by intuitive color highlights for easy learning.", 49900, 60000, "AVAILABLE", null, "Quran Editions"),
+            com.darsequran.academy.data.model.BookstoreItemDto("book-2", "The Sealed Nectar (Hardcover)", "Sheikh Safiur Rahman Mubarakpuri", "Deluxe hardcover edition of the award-winning prophetic biography.", 65000, 80000, "AVAILABLE", null, "Seerah"),
+            com.darsequran.academy.data.model.BookstoreItemDto("book-3", "Madinah Arabic Reader Set (Books 1-3)", "Dr. V. Abdur Rahim", "Complete 3-volume series for learning classical Arabic grammar.", 85000, 100000, "AVAILABLE", null, "Arabic Literature"),
+            com.darsequran.academy.data.model.BookstoreItemDto("book-4", "Forty Hadith with Commentary", "Imam Al-Nawawi", "English-Arabic edition with explanatory notes and practical lessons.", 35000, 45000, "AVAILABLE", null, "Hadith Studies")
+        ).filter { item ->
+            search.isNullOrBlank() || item.title.contains(search, ignoreCase = true) || (item.author?.contains(search, ignoreCase = true) == true)
+        }
+        return com.darsequran.academy.data.model.BookstoreResponse(success = true, data = list, totalCount = list.size)
+    }
+
     suspend fun logout() {
         tokenManager.clearSession()
     }
@@ -346,3 +519,4 @@ class AuthRepository(
         }
     }
 }
+

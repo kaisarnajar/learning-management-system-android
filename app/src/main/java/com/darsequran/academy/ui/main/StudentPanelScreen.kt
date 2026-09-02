@@ -34,8 +34,20 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.data.repository.AuthRepository
+import com.darsequran.academy.ui.announcements.AnnouncementsScreen
+import com.darsequran.academy.ui.announcements.AnnouncementsViewModel
+import com.darsequran.academy.ui.blog.BlogScreen
+import com.darsequran.academy.ui.blog.BlogViewModel
+import com.darsequran.academy.ui.bookstore.BookstoreScreen
+import com.darsequran.academy.ui.bookstore.BookstoreViewModel
+import com.darsequran.academy.ui.courses.CoursesCatalogScreen
+import com.darsequran.academy.ui.courses.CoursesCatalogViewModel
 import com.darsequran.academy.ui.courses.MyCoursesScreen
 import com.darsequran.academy.ui.courses.MyCoursesViewModel
+import com.darsequran.academy.ui.fatwa.FatwaScreen
+import com.darsequran.academy.ui.fatwa.FatwaViewModel
+import com.darsequran.academy.ui.library.DigitalLibraryScreen
+import com.darsequran.academy.ui.library.DigitalLibraryViewModel
 import com.darsequran.academy.ui.notifications.NotificationsScreen
 import com.darsequran.academy.ui.notifications.NotificationsViewModel
 import com.darsequran.academy.ui.payments.PaymentsScreen
@@ -44,6 +56,8 @@ import com.darsequran.academy.ui.profile.ProfileScreen
 import com.darsequran.academy.ui.profile.ProfileViewModel
 import com.darsequran.academy.ui.reviews.ReviewsScreen
 import com.darsequran.academy.ui.reviews.ReviewsViewModel
+import com.darsequran.academy.ui.teachers.TeachersScreen
+import com.darsequran.academy.ui.teachers.TeachersViewModel
 import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.EmeraldPrimary
 import com.darsequran.academy.ui.theme.GoldAccent
@@ -55,9 +69,9 @@ fun StudentPanelScreen(
     onLogout: () -> Unit
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
-    var activeSubView by remember { mutableStateOf("menu") } // "menu" or "reviews"
+    var activeSubView by remember { mutableStateOf("menu") } // "menu", "courses", "library", "announcements", "blog", "teachers", "fatwa", "bookstore", "reviews"
 
-    // Back press handler for sub-views inside Dashboard/More tab
+    // Back press handler for sub-views inside Dashboard/Explorer tab
     BackHandler(enabled = selectedTab == 4 && activeSubView != "menu") {
         activeSubView = "menu"
     }
@@ -190,7 +204,7 @@ fun StudentPanelScreen(
                     )
                 )
 
-                // Tab 4: Dashboard / More
+                // Tab 4: Dashboard / Explorer Hub
                 NavigationBarItem(
                     selected = selectedTab == 4,
                     onClick = {
@@ -200,13 +214,13 @@ fun StudentPanelScreen(
                     icon = {
                         Icon(
                             imageVector = Icons.Default.MoreHoriz,
-                            contentDescription = "Dashboard",
+                            contentDescription = "Explorer",
                             tint = if (selectedTab == 4) GoldAccent else Color.White.copy(alpha = 0.7f)
                         )
                     },
                     label = {
                         Text(
-                            text = "Dashboard",
+                            text = "Explorer",
                             fontWeight = if (selectedTab == 4) FontWeight.Bold else FontWeight.Normal,
                             color = if (selectedTab == 4) GoldAccent else Color.White.copy(alpha = 0.7f),
                             fontSize = 11.sp,
@@ -250,17 +264,89 @@ fun StudentPanelScreen(
                     PaymentsScreen(viewModel = paymentsViewModel)
                 }
                 4 -> {
-                    if (activeSubView == "reviews") {
-                        val reviewsViewModel: ReviewsViewModel = viewModel(
-                            factory = ReviewsViewModel.Factory(authRepository)
-                        )
-                        ReviewsScreen(viewModel = reviewsViewModel)
-                    } else {
-                        MoreMenuSheet(
-                            onSelectReviews = { activeSubView = "reviews" },
-                            onSelectCart = { activeSubView = "reviews" },
-                            onLogout = onLogout
-                        )
+                    when (activeSubView) {
+                        "courses" -> {
+                            val coursesCatalogViewModel: CoursesCatalogViewModel = viewModel(
+                                factory = CoursesCatalogViewModel.Factory(authRepository)
+                            )
+                            CoursesCatalogScreen(
+                                viewModel = coursesCatalogViewModel,
+                                onBackPress = { activeSubView = "menu" }
+                            )
+                        }
+                        "library" -> {
+                            val libraryViewModel: DigitalLibraryViewModel = viewModel(
+                                factory = DigitalLibraryViewModel.Factory(authRepository)
+                            )
+                            DigitalLibraryScreen(
+                                viewModel = libraryViewModel,
+                                onBackPress = { activeSubView = "menu" }
+                            )
+                        }
+                        "announcements" -> {
+                            val announcementsViewModel: AnnouncementsViewModel = viewModel(
+                                factory = AnnouncementsViewModel.Factory(authRepository)
+                            )
+                            AnnouncementsScreen(
+                                viewModel = announcementsViewModel,
+                                onBackPress = { activeSubView = "menu" }
+                            )
+                        }
+                        "blog" -> {
+                            val blogViewModel: BlogViewModel = viewModel(
+                                factory = BlogViewModel.Factory(authRepository)
+                            )
+                            BlogScreen(
+                                viewModel = blogViewModel,
+                                onBackPress = { activeSubView = "menu" }
+                            )
+                        }
+                        "teachers" -> {
+                            val teachersViewModel: TeachersViewModel = viewModel(
+                                factory = TeachersViewModel.Factory(authRepository)
+                            )
+                            TeachersScreen(
+                                viewModel = teachersViewModel,
+                                onBackPress = { activeSubView = "menu" }
+                            )
+                        }
+                        "fatwa" -> {
+                            val fatwaViewModel: FatwaViewModel = viewModel(
+                                factory = FatwaViewModel.Factory(authRepository)
+                            )
+                            FatwaScreen(
+                                viewModel = fatwaViewModel,
+                                onBackPress = { activeSubView = "menu" }
+                            )
+                        }
+                        "bookstore" -> {
+                            val bookstoreViewModel: BookstoreViewModel = viewModel(
+                                factory = BookstoreViewModel.Factory(authRepository)
+                            )
+                            BookstoreScreen(
+                                viewModel = bookstoreViewModel,
+                                onBackPress = { activeSubView = "menu" }
+                            )
+                        }
+                        "reviews" -> {
+                            val reviewsViewModel: ReviewsViewModel = viewModel(
+                                factory = ReviewsViewModel.Factory(authRepository)
+                            )
+                            ReviewsScreen(viewModel = reviewsViewModel)
+                        }
+                        else -> {
+                            MoreMenuSheet(
+                                onSelectCourses = { activeSubView = "courses" },
+                                onSelectLibrary = { activeSubView = "library" },
+                                onSelectAnnouncements = { activeSubView = "announcements" },
+                                onSelectBlog = { activeSubView = "blog" },
+                                onSelectTeachers = { activeSubView = "teachers" },
+                                onSelectFatwa = { activeSubView = "fatwa" },
+                                onSelectBookstore = { activeSubView = "bookstore" },
+                                onSelectReviews = { activeSubView = "reviews" },
+                                onLogout = onLogout
+                            )
+                        }
                     }
                 }
                 else -> {

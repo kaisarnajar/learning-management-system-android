@@ -110,4 +110,53 @@ interface AuthApi {
 
     @GET("enrollments")
     suspend fun getEnrollments(): Response<EnrollmentsResponse>
+
+    @GET("library")
+    suspend fun getLibraryBooks(
+        @Query("page") page: Int = 1,
+        @Query("pageSize") pageSize: Int = 20,
+        @Query("search") search: String? = null,
+        @Query("topic") topic: String? = null
+    ): Response<com.darsequran.academy.data.model.LibraryResponse>
+
+    @GET("announcements")
+    suspend fun getAnnouncements(
+        @Query("page") page: Int = 1,
+        @Query("pageSize") pageSize: Int = 20,
+        @Query("search") search: String? = null
+    ): Response<com.darsequran.academy.data.model.AnnouncementsResponse>
+
+    @GET("blog")
+    suspend fun getBlogPosts(
+        @Query("page") page: Int = 1,
+        @Query("pageSize") pageSize: Int = 20,
+        @Query("search") search: String? = null
+    ): Response<com.darsequran.academy.data.model.BlogResponse>
+
+    @GET("teachers")
+    suspend fun getTeachers(
+        @Query("page") page: Int = 1,
+        @Query("pageSize") pageSize: Int = 20,
+        @Query("search") search: String? = null
+    ): Response<com.darsequran.academy.data.model.TeachersResponse>
+
+    @GET("fatwa")
+    suspend fun getFatwas(
+        @Query("page") page: Int = 1,
+        @Query("pageSize") pageSize: Int = 20,
+        @Query("search") search: String? = null,
+        @Query("category") category: String? = null
+    ): Response<com.darsequran.academy.data.model.FatwaResponse>
+
+    @POST("fatwa")
+    suspend fun submitFatwaQuery(
+        @Body request: com.darsequran.academy.data.model.SubmitFatwaRequest
+    ): Response<AuthResponse>
+
+    @GET("bookstore")
+    suspend fun getBookstoreItems(
+        @Query("page") page: Int = 1,
+        @Query("pageSize") pageSize: Int = 20,
+        @Query("search") search: String? = null
+    ): Response<com.darsequran.academy.data.model.BookstoreResponse>
 }
