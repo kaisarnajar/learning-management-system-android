@@ -1,7 +1,9 @@
 package com.darsequran.academy.ui.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ContactSupport
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Campaign
@@ -43,8 +44,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -55,7 +58,6 @@ import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.EmeraldPrimary
 import com.darsequran.academy.ui.theme.GoldAccent
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,119 +119,182 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-            // Welcome Header Card
+            // Welcome Header Card with Rich Gradient & Gold Accent Border
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = EmeraldPrimary),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(18.dp),
+                border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.35f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                Row(
-                    modifier = Modifier.padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(54.dp)
-                            .background(GoldAccent, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "User Avatar",
-                            tint = EmeraldDark,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column {
-                        Text(
-                            text = "Assalamu Alaikum,",
-                            style = MaterialTheme.typography.bodyMedium.copy(color = GoldAccent)
-                        )
-                        Text(
-                            text = userName ?: "Student",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(EmeraldDark, EmeraldPrimary, Color(0xFF004D38))
                             )
                         )
-                        if (!userEmail.isNullOrEmpty()) {
+                        .padding(20.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(58.dp)
+                                .background(GoldAccent, CircleShape)
+                                .border(2.dp, Color.White.copy(alpha = 0.3f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "User Avatar",
+                                tint = EmeraldDark,
+                                modifier = Modifier.size(34.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Column {
                             Text(
-                                text = userEmail ?: "",
+                                text = "Assalamu Alaikum,",
                                 style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = Color.White.copy(alpha = 0.75f)
+                                    color = GoldAccent,
+                                    fontWeight = FontWeight.SemiBold
                                 )
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = userName ?: "Student",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp,
+                                    color = Color.White
+                                )
+                            )
+                            if (!userEmail.isNullOrEmpty()) {
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = userEmail ?: "",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = Color.White.copy(alpha = 0.8f)
+                                    )
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
-            // Daily Wisdom Quran Verse Card (Live API with fallback)
+            // Daily Wisdom Quran Verse Card (Premium Islamic Gradient & Styling)
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = EmeraldDark),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(18.dp),
+                border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.4f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFF0D281E),
+                                    Color(0xFF003527),
+                                    Color(0xFF002117)
+                                )
+                            )
+                        )
+                        .padding(20.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.AutoAwesome,
-                            contentDescription = "Star",
-                            tint = GoldAccent,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "DAILY WISDOM",
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                color = GoldAccent,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.5.sp
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        // Title Pill Tag
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = GoldAccent.copy(alpha = 0.15f),
+                            border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.3f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = "Star",
+                                    tint = GoldAccent,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "DAILY WISDOM",
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        color = GoldAccent,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.8.sp
+                                    )
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        if (uiState.isLoadingInspiration) {
+                            CircularProgressIndicator(color = GoldAccent, modifier = Modifier.size(24.dp))
+                        } else {
+                            val arabicText = uiState.inspiration?.arabicText ?: "وَٱسْتَغْفِرُوا۟ رَبَّكُمْ ثُمَّ تُوبُوٓا۟ إِلَيْهِ ۚ إِنَّ رَبِّى رَحِيمٌۭ وَدُودٌۭ"
+                            val translation = uiState.inspiration?.englishTranslation ?: "“Seek forgiveness from your Lord, then turn towards Him in repentance. Surely, my Lord is very merciful, most loving.”"
+                            val reference = uiState.inspiration?.reference ?: "Surah Hud 11:90"
+
+                            // Arabic Container
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp),
+                                color = Color.Black.copy(alpha = 0.22f)
+                            ) {
+                                Text(
+                                    text = arabicText,
+                                    style = MaterialTheme.typography.headlineSmall.copy(
+                                        color = Color(0xFFFFF8E7),
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center,
+                                        lineHeight = 34.sp,
+                                        fontSize = 22.sp
+                                    ),
+                                    modifier = Modifier.padding(16.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(14.dp))
+
+                            // Translation
+                            Text(
+                                text = translation,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = Color.White.copy(alpha = 0.92f),
+                                    textAlign = TextAlign.Center,
+                                    fontStyle = FontStyle.Italic,
+                                    lineHeight = 20.sp
+                                )
                             )
-                        )
-                    }
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                            Spacer(modifier = Modifier.height(14.dp))
 
-                    if (uiState.isLoadingInspiration) {
-                        CircularProgressIndicator(color = GoldAccent, modifier = Modifier.size(24.dp))
-                    } else {
-                        val arabicText = uiState.inspiration?.arabicText ?: "وَٱسْتَغْفِرُوا۟ رَبَّكُمْ ثُمَّ تُوبُوٓا۟ إِلَيْهِ ۚ إِنَّ رَبِّى رَحِيمٌۭ وَدُودٌۭ"
-                        val translation = uiState.inspiration?.englishTranslation ?: "“Seek forgiveness from your Lord, then turn towards Him in repentance. Surely, my Lord is very merciful, most loving.”"
-                        val reference = uiState.inspiration?.reference ?: "Surah Hud 11:90"
-
-                        Text(
-                            text = arabicText,
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                color = Color.White,
-                                textAlign = TextAlign.Center
-                            )
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text = translation,
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = Color.White.copy(alpha = 0.9f),
-                                textAlign = TextAlign.Center
-                            )
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text = "— $reference",
-                            style = MaterialTheme.typography.labelLarge.copy(color = GoldAccent)
-                        )
+                            // Reference Pill
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = GoldAccent
+                            ) {
+                                Text(
+                                    text = "— $reference —",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = EmeraldDark,
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
