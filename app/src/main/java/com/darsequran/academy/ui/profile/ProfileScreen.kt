@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,8 +35,13 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -65,6 +71,31 @@ import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.EmeraldPrimary
 import com.darsequran.academy.ui.theme.GoldAccent
 
+data class OccupationChoice(val value: String, val label: String)
+
+val OCCUPATION_OPTIONS = listOf(
+    OccupationChoice("STUDENT", "Student"),
+    OccupationChoice("WORKING", "Working (private sector)"),
+    OccupationChoice("GOVERNMENT_EMPLOYEE", "Government employee"),
+    OccupationChoice("SELF_EMPLOYED", "Self-employed / business owner"),
+    OccupationChoice("LABOURER", "Labour / daily wage worker"),
+    OccupationChoice("POLICE_OFFICER", "Police officer"),
+    OccupationChoice("ARMED_FORCES", "Armed forces"),
+    OccupationChoice("TEACHER", "Teacher / educator"),
+    OccupationChoice("HEALTHCARE_WORKER", "Healthcare worker"),
+    OccupationChoice("ENGINEER", "Engineer"),
+    OccupationChoice("IT_PROFESSIONAL", "IT / software professional"),
+    OccupationChoice("ACCOUNTANT", "Accountant / finance"),
+    OccupationChoice("LAWYER", "Lawyer / legal professional"),
+    OccupationChoice("DRIVER", "Driver / transport worker"),
+    OccupationChoice("FARMER", "Farmer / agriculture"),
+    OccupationChoice("SHOPKEEPER", "Shopkeeper / retail"),
+    OccupationChoice("CLERGY", "Imam / religious scholar"),
+    OccupationChoice("HOMEMAKER", "Homemaker"),
+    OccupationChoice("RETIRED", "Retired"),
+    OccupationChoice("UNEMPLOYED", "Unemployed")
+)
+
 fun formatDateOfBirthDisplay(dobString: String?): String {
     if (dobString.isNullOrBlank()) return "Not provided"
     return try {
@@ -87,29 +118,8 @@ fun formatDateOfBirthDisplay(dobString: String?): String {
 
 fun formatOccupationDisplay(occupation: String?): String {
     if (occupation.isNullOrBlank()) return "Not provided"
-    return when (occupation.uppercase()) {
-        "IT_PROFESSIONAL" -> "IT / software professional"
-        "STUDENT" -> "Student"
-        "WORKING" -> "Working (private sector)"
-        "GOVERNMENT_EMPLOYEE" -> "Government employee"
-        "SELF_EMPLOYED" -> "Self-employed / business owner"
-        "LABOURER" -> "Labour / daily wage worker"
-        "POLICE_OFFICER" -> "Police officer"
-        "ARMED_FORCES" -> "Armed forces"
-        "TEACHER" -> "Teacher / educator"
-        "HEALTHCARE_WORKER" -> "Healthcare worker"
-        "ENGINEER" -> "Engineer"
-        "ACCOUNTANT" -> "Accountant / finance"
-        "LAWYER" -> "Lawyer / legal professional"
-        "DRIVER" -> "Driver / transport worker"
-        "FARMER" -> "Farmer / agriculture"
-        "SHOPKEEPER" -> "Shopkeeper / retail"
-        "CLERGY" -> "Imam / religious scholar"
-        "HOMEMAKER" -> "Homemaker"
-        "RETIRED" -> "Retired"
-        "UNEMPLOYED" -> "Unemployed"
-        else -> occupation.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
-    }
+    val match = OCCUPATION_OPTIONS.find { it.value.equals(occupation, ignoreCase = true) }
+    return match?.label ?: occupation.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
 }
 
 fun formatGenderDisplay(gender: String?): String {
@@ -379,6 +389,7 @@ fun ProfileInfoCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileDialog(
     user: UserDto?,
@@ -388,14 +399,18 @@ fun EditProfileDialog(
 ) {
     var name by remember { mutableStateOf(user?.name ?: "") }
     var fatherName by remember { mutableStateOf(user?.fatherName ?: "") }
-    var dateOfBirth by remember { mutableStateOf(user?.dateOfBirth ?: "") }
-    var occupation by remember { mutableStateOf(user?.occupation ?: "") }
+    var dateOfBirth by remember { mutableStateOf(user?.dateOfBirth?.take(10) ?: "") }
+    var selectedOccupationValue by remember { mutableStateOf(user?.occupation ?: "IT_PROFESSIONAL") }
     var address by remember { mutableStateOf(user?.address ?: "") }
     var phone by remember { mutableStateOf(user?.whatsapp ?: "") }
-    var gender by remember { mutableStateOf(user?.gender ?: "Male") }
+    var genderValue by remember { mutableStateOf(user?.gender?.uppercase() ?: "MALE") }
+
+    var occupationExpanded by remember { mutableStateOf(false) }
+    var genderExpanded by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(20.dp),
         title = {
             Text(
                 text = "Edit Personal Details",
@@ -420,7 +435,7 @@ fun EditProfileDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 OutlinedTextField(
                     value = fatherName,
@@ -431,18 +446,22 @@ fun EditProfileDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 OutlinedTextField(
                     value = dateOfBirth,
                     onValueChange = { dateOfBirth = it },
                     label = { Text("Date of Birth (YYYY-MM-DD)") },
+                    placeholder = { Text("1999-01-03") },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Default.CalendarToday, contentDescription = "DOB", tint = EmeraldPrimary)
+                    },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = EmeraldPrimary),
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 OutlinedTextField(
                     value = phone,
@@ -453,29 +472,84 @@ fun EditProfileDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                OutlinedTextField(
-                    value = gender,
-                    onValueChange = { gender = it },
-                    label = { Text("Gender (Male / Female)") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = EmeraldPrimary),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                // Gender Selection Dropdown
+                ExposedDropdownMenuBox(
+                    expanded = genderExpanded,
+                    onExpandedChange = { genderExpanded = !genderExpanded }
+                ) {
+                    OutlinedTextField(
+                        value = if (genderValue == "FEMALE") "Female" else "Male",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Gender") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = genderExpanded) },
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = EmeraldPrimary),
+                        modifier = Modifier
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                            .fillMaxWidth()
+                    )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    ExposedDropdownMenu(
+                        expanded = genderExpanded,
+                        onDismissRequest = { genderExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Male") },
+                            onClick = {
+                                genderValue = "MALE"
+                                genderExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Female") },
+                            onClick = {
+                                genderValue = "FEMALE"
+                                genderExpanded = false
+                            }
+                        )
+                    }
+                }
 
-                OutlinedTextField(
-                    value = occupation,
-                    onValueChange = { occupation = it },
-                    label = { Text("Occupation") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = EmeraldPrimary),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Spacer(modifier = Modifier.height(10.dp))
 
-                Spacer(modifier = Modifier.height(8.dp))
+                // Occupation Selection Dropdown
+                val currentOccupationLabel = formatOccupationDisplay(selectedOccupationValue)
+
+                ExposedDropdownMenuBox(
+                    expanded = occupationExpanded,
+                    onExpandedChange = { occupationExpanded = !occupationExpanded }
+                ) {
+                    OutlinedTextField(
+                        value = currentOccupationLabel,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Occupation") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = occupationExpanded) },
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = EmeraldPrimary),
+                        modifier = Modifier
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                            .fillMaxWidth()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = occupationExpanded,
+                        onDismissRequest = { occupationExpanded = false }
+                    ) {
+                        OCCUPATION_OPTIONS.forEach { choice ->
+                            DropdownMenuItem(
+                                text = { Text(choice.label) },
+                                onClick = {
+                                    selectedOccupationValue = choice.value
+                                    occupationExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
 
                 OutlinedTextField(
                     value = address,
@@ -488,20 +562,31 @@ fun EditProfileDialog(
         },
         confirmButton = {
             Button(
-                onClick = { onSave(name, fatherName, dateOfBirth, occupation, address, phone, gender) },
+                onClick = {
+                    onSave(
+                        name,
+                        fatherName,
+                        dateOfBirth,
+                        selectedOccupationValue,
+                        address,
+                        phone,
+                        genderValue
+                    )
+                },
                 enabled = !isUpdating,
-                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
+                shape = RoundedCornerShape(10.dp)
             ) {
                 if (isUpdating) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp))
                 } else {
-                    Text("SAVE CHANGES")
+                    Text("SAVE CHANGES", fontWeight = FontWeight.Bold)
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = EmeraldPrimary)
+                Text("Cancel", color = EmeraldPrimary, fontWeight = FontWeight.Medium)
             }
         }
     )
