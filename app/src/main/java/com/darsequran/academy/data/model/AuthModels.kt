@@ -43,7 +43,8 @@ data class UpdateProfileRequest(
     @SerializedName("occupation") val occupation: String? = null,
     @SerializedName("address") val address: String? = null,
     @SerializedName("whatsapp") val whatsapp: String? = null,
-    @SerializedName("gender") val gender: String? = null
+    @SerializedName("gender") val gender: String? = null,
+    @SerializedName("image") val image: String? = null
 )
 
 data class AuthResponse(

@@ -1,6 +1,12 @@
 package com.darsequran.academy.ui.profile
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.util.Base64
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,6 +29,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BusinessCenter
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.FamilyRestroom
@@ -42,6 +49,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -58,6 +66,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -70,6 +79,8 @@ import com.darsequran.academy.data.model.UserDto
 import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.EmeraldPrimary
 import com.darsequran.academy.ui.theme.GoldAccent
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
 
 data class OccupationChoice(val value: String, val label: String)
 
@@ -328,8 +339,8 @@ fun ProfileScreen(
             user = uiState.user,
             isUpdating = uiState.isUpdating,
             onDismiss = { viewModel.closeEditDialog() },
-            onSave = { name, fatherName, dob, occupation, address, phone, gender ->
-                viewModel.updateProfile(name, fatherName, dob, occupation, address, phone, gender)
+            onSave = { name, fatherName, dob, occupation, address, phone, gender, image ->
+                viewModel.updateProfile(name, fatherName, dob, occupation, address, phone, gender, image)
             }
         )
     }
@@ -395,8 +406,9 @@ fun EditProfileDialog(
     user: UserDto?,
     isUpdating: Boolean,
     onDismiss: () -> Unit,
-    onSave: (name: String, fatherName: String, dob: String, occupation: String, address: String, phone: String, gender: String) -> Unit
+    onSave: (name: String, fatherName: String, dob: String, occupation: String, address: String, phone: String, gender: String, image: String?) -> Unit
 ) {
+    val context = LocalContext.current
     var name by remember { mutableStateOf(user?.name ?: "") }
     var fatherName by remember { mutableStateOf(user?.fatherName ?: "") }
     var dateOfBirth by remember { mutableStateOf(user?.dateOfBirth?.take(10) ?: "") }
@@ -404,9 +416,31 @@ fun EditProfileDialog(
     var address by remember { mutableStateOf(user?.address ?: "") }
     var phone by remember { mutableStateOf(user?.whatsapp ?: "") }
     var genderValue by remember { mutableStateOf(user?.gender?.uppercase() ?: "MALE") }
+    var imageBase64 by remember { mutableStateOf<String?>(user?.image) }
+    var selectedBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
     var occupationExpanded by remember { mutableStateOf(false) }
     var genderExpanded by remember { mutableStateOf(false) }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            try {
+                val inputStream: InputStream? = context.contentResolver.openInputStream(it)
+                val bitmap = BitmapFactory.decodeStream(inputStream)
+                selectedBitmap = bitmap
+
+                val byteArrayOutputStream = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 70, byteArrayOutputStream)
+                val byteArray = byteArrayOutputStream.toByteArray()
+                val encoded = Base64.encodeToString(byteArray, Base64.NO_WRAP)
+                imageBase64 = "data:image/jpeg;base64,$encoded"
+            } catch (e: Exception) {
+                Toast.makeText(context, "Failed to load image", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -426,6 +460,76 @@ fun EditProfileDialog(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
+                // Profile Photo Section matching Web Logic
+                Text(
+                    text = "Profile Photo ${if (genderValue == "FEMALE") "(Disabled for Female students)" else "(Optional)"}",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .background(EmeraldDark)
+                            .border(1.dp, GoldAccent, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (selectedBitmap != null) {
+                            Image(
+                                bitmap = selectedBitmap!!.asImageBitmap(),
+                                contentDescription = "New Profile Photo",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            val iconRes = if (genderValue == "FEMALE") R.drawable.female_icon else R.drawable.male_icon
+                            Image(
+                                painter = painterResource(id = iconRes),
+                                contentDescription = "Profile Avatar",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    if (genderValue == "FEMALE") {
+                        Text(
+                            text = "Photo upload is disabled for Female students.",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 12.sp
+                            )
+                        )
+                    } else {
+                        OutlinedButton(
+                            onClick = { photoPickerLauncher.launch("image/*") },
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CameraAlt,
+                                contentDescription = "Upload Photo",
+                                modifier = Modifier.size(16.dp),
+                                tint = EmeraldPrimary
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Upload Photo", fontSize = 12.sp, color = EmeraldPrimary)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
@@ -507,6 +611,8 @@ fun EditProfileDialog(
                             onClick = {
                                 genderValue = "FEMALE"
                                 genderExpanded = false
+                                selectedBitmap = null
+                                imageBase64 = null
                             }
                         )
                     }
@@ -570,7 +676,8 @@ fun EditProfileDialog(
                         selectedOccupationValue,
                         address,
                         phone,
-                        genderValue
+                        genderValue,
+                        if (genderValue == "FEMALE") null else imageBase64
                     )
                 },
                 enabled = !isUpdating,
