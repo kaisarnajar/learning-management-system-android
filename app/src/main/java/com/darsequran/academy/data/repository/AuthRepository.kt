@@ -11,6 +11,8 @@ import com.darsequran.academy.data.model.LoginRequest
 import com.darsequran.academy.data.model.MarkReadRequest
 import com.darsequran.academy.data.model.NotificationsResponse
 import com.darsequran.academy.data.model.RegisterRequest
+import com.darsequran.academy.data.model.StudentAttendanceResponse
+import com.darsequran.academy.data.model.StudentGradesResponse
 import com.darsequran.academy.data.model.UpdateProfileRequest
 import com.darsequran.academy.data.model.UserProfileResponse
 import com.darsequran.academy.data.remote.AuthApi
@@ -171,6 +173,32 @@ class AuthRepository(
         }
     }
 
+    suspend fun getStudentAttendance(courseId: String? = null): NetworkResult<StudentAttendanceResponse> {
+        return try {
+            val response = authApi.getStudentAttendance(courseId)
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Error("Failed to fetch student attendance.")
+            }
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
+        }
+    }
+
+    suspend fun getStudentGrades(courseId: String? = null): NetworkResult<StudentGradesResponse> {
+        return try {
+            val response = authApi.getStudentGrades(courseId)
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Error("Failed to fetch student grades.")
+            }
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
+        }
+    }
+
     suspend fun registerDeviceToken(token: String): NetworkResult<AuthResponse> {
         return try {
             val response = authApi.registerDeviceToken(DeviceTokenRequest(token = token))
@@ -201,7 +229,12 @@ class AuthRepository(
         return try {
             val response = authApi.getEnrollments()
             if (response.isSuccessful && response.body() != null) {
-                NetworkResult.Success(response.body()!!)
+                val errorMsg = parseErrorMessage(response.errorBody()?.string())
+                if (errorMsg != null) {
+                    NetworkResult.Error(errorMsg)
+                } else {
+                    NetworkResult.Success(response.body()!!)
+                }
             } else {
                 val errorMsg = parseErrorMessage(response.errorBody()?.string())
                 NetworkResult.Error(errorMsg ?: "Failed to fetch enrollments.")
