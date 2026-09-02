@@ -22,8 +22,6 @@ import com.darsequran.academy.ui.payments.PaymentsScreen
 import com.darsequran.academy.ui.payments.PaymentsViewModel
 import com.darsequran.academy.ui.reviews.ReviewsScreen
 import com.darsequran.academy.ui.reviews.ReviewsViewModel
-import com.darsequran.academy.ui.teachers.TeachersScreen
-import com.darsequran.academy.ui.teachers.TeachersViewModel
 import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.GoldAccent
 
@@ -31,11 +29,10 @@ import com.darsequran.academy.ui.theme.GoldAccent
 fun ProfileMainScreen(
     profileViewModel: ProfileViewModel,
     paymentsViewModel: PaymentsViewModel,
-    teachersViewModel: TeachersViewModel,
     reviewsViewModel: ReviewsViewModel
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Student Profile", "Fee Payments", "Faculty", "My Reviews")
+    val tabs = listOf("Student Profile", "Fee Payments", "My Reviews")
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -72,8 +69,7 @@ fun ProfileMainScreen(
             when (selectedTabIndex) {
                 0 -> ProfileScreen(viewModel = profileViewModel)
                 1 -> PaymentsScreen(viewModel = paymentsViewModel)
-                2 -> TeachersScreen(viewModel = teachersViewModel, onBackPress = {})
-                3 -> ReviewsScreen(viewModel = reviewsViewModel)
+                2 -> ReviewsScreen(viewModel = reviewsViewModel)
             }
         }
     }
