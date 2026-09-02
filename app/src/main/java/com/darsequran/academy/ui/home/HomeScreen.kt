@@ -234,7 +234,7 @@ fun HomeScreen(
                 text = "My Enrolled Courses Overview",
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    color = EmeraldPrimary
+                    color = MaterialTheme.colorScheme.primary
                 )
             )
 
@@ -242,7 +242,7 @@ fun HomeScreen(
 
             if (uiState.isLoadingEnrollments) {
                 Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = EmeraldPrimary)
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             } else if (uiState.enrollments.isEmpty()) {
                 Card(

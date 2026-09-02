@@ -87,7 +87,7 @@ fun BookstoreScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = EmeraldPrimary
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
@@ -96,7 +96,7 @@ fun BookstoreScreen(
                         text = "Academy Bookstore",
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = EmeraldPrimary
+                            color = MaterialTheme.colorScheme.primary
                         )
                     )
                     Text(
@@ -120,7 +120,7 @@ fun BookstoreScreen(
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = "Search",
-                        tint = EmeraldPrimary
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 },
                 trailingIcon = {
@@ -133,7 +133,7 @@ fun BookstoreScreen(
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = EmeraldPrimary,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
                     unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
                 )
             )
@@ -152,7 +152,7 @@ fun BookstoreScreen(
                         onClick = { viewModel.onCategorySelected(category) },
                         label = { Text(category, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldPrimary,
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
                             selectedLabelColor = Color.White,
                             containerColor = EmeraldDark.copy(alpha = 0.08f),
                             labelColor = EmeraldDark
@@ -169,7 +169,7 @@ fun BookstoreScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = EmeraldPrimary)
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             } else if (uiState.filteredBooks.isEmpty()) {
                 Box(
@@ -227,7 +227,7 @@ fun BookstoreScreen(
                         text = book.category?.uppercase() ?: "BOOK",
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = EmeraldPrimary
+                            color = MaterialTheme.colorScheme.primary
                         ),
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                     )
@@ -239,7 +239,7 @@ fun BookstoreScreen(
                     text = book.title,
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
-                        color = EmeraldPrimary
+                        color = MaterialTheme.colorScheme.primary
                     )
                 )
 
@@ -269,7 +269,7 @@ fun BookstoreScreen(
                     text = "Price: ₹${book.priceInRupees.toInt()}",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        color = EmeraldPrimary
+                        color = MaterialTheme.colorScheme.primary
                     )
                 )
 
@@ -296,7 +296,7 @@ fun BookstoreScreen(
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = EmeraldPrimary,
+                        containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(10.dp),
@@ -362,7 +362,7 @@ fun BookstoreItemCard(
                         text = book.status ?: "AVAILABLE",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = EmeraldPrimary,
+                            color = MaterialTheme.colorScheme.primary,
                             fontSize = 10.sp
                         ),
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -375,7 +375,7 @@ fun BookstoreItemCard(
                     text = book.title,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        color = EmeraldPrimary,
+                        color = MaterialTheme.colorScheme.primary,
                         fontSize = 16.sp
                     ),
                     maxLines = 1,
