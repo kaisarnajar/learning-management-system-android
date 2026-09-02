@@ -3,6 +3,7 @@ package com.darsequran.academy.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.darsequran.academy.data.model.AnnouncementDto
 import com.darsequran.academy.data.model.EnrollmentDto
 import com.darsequran.academy.data.model.InspirationDto
 import com.darsequran.academy.data.repository.AuthRepository
@@ -15,8 +16,10 @@ import kotlinx.coroutines.launch
 
 data class HomeUiState(
     val inspiration: InspirationDto? = null,
+    val announcements: List<AnnouncementDto> = emptyList(),
     val enrollments: List<EnrollmentDto> = emptyList(),
     val isLoadingInspiration: Boolean = false,
+    val isLoadingAnnouncements: Boolean = false,
     val isLoadingEnrollments: Boolean = false,
     val errorMessage: String? = null
 )
@@ -30,6 +33,7 @@ class HomeViewModel(
 
     init {
         fetchDailyInspiration()
+        fetchAnnouncements()
         fetchEnrollments()
     }
 
@@ -47,6 +51,26 @@ class HomeViewModel(
                 }
                 is NetworkResult.Error -> {
                     _uiState.update { it.copy(isLoadingInspiration = false) }
+                }
+                is NetworkResult.Loading -> {}
+            }
+        }
+    }
+
+    fun fetchAnnouncements() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingAnnouncements = true) }
+            when (val result = authRepository.getAnnouncements()) {
+                is NetworkResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoadingAnnouncements = false,
+                            announcements = result.data.data ?: emptyList()
+                        )
+                    }
+                }
+                is NetworkResult.Error -> {
+                    _uiState.update { it.copy(isLoadingAnnouncements = false) }
                 }
                 is NetworkResult.Loading -> {}
             }
