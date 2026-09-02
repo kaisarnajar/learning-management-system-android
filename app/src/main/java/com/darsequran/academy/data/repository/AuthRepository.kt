@@ -4,9 +4,12 @@ import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.data.model.AuthResponse
 import com.darsequran.academy.data.model.CoursesResponse
 import com.darsequran.academy.data.model.DailyInspirationResponse
+import com.darsequran.academy.data.model.DeviceTokenRequest
 import com.darsequran.academy.data.model.EnrollmentsResponse
 import com.darsequran.academy.data.model.GoogleLoginRequest
 import com.darsequran.academy.data.model.LoginRequest
+import com.darsequran.academy.data.model.MarkReadRequest
+import com.darsequran.academy.data.model.NotificationsResponse
 import com.darsequran.academy.data.model.RegisterRequest
 import com.darsequran.academy.data.model.UpdateProfileRequest
 import com.darsequran.academy.data.model.UserProfileResponse
@@ -104,14 +107,7 @@ class AuthRepository(
         return try {
             val response = authApi.getProfile()
             if (response.isSuccessful && response.body() != null) {
-                val profile = response.body()!!
-                profile.user?.let { u ->
-                    tokenManager.saveSession(
-                        tokenManager.authTokenFlow.toString(),
-                        u
-                    )
-                }
-                NetworkResult.Success(profile)
+                NetworkResult.Success(response.body()!!)
             } else {
                 val errorMsg = parseErrorMessage(response.errorBody()?.string())
                 NetworkResult.Error(errorMsg ?: "Failed to fetch profile.")
@@ -129,6 +125,59 @@ class AuthRepository(
             } else {
                 val errorMsg = parseErrorMessage(response.errorBody()?.string())
                 NetworkResult.Error(errorMsg ?: "Failed to update profile.")
+            }
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
+        }
+    }
+
+    suspend fun getNotifications(page: Int = 1, pageSize: Int = 20, filter: String = "all"): NetworkResult<NotificationsResponse> {
+        return try {
+            val response = authApi.getNotifications(page, pageSize, filter)
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                val errorMsg = parseErrorMessage(response.errorBody()?.string())
+                NetworkResult.Error(errorMsg ?: "Failed to fetch notifications.")
+            }
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
+        }
+    }
+
+    suspend fun markNotificationRead(notificationId: String): NetworkResult<NotificationsResponse> {
+        return try {
+            val response = authApi.markNotificationsRead(MarkReadRequest(notificationId = notificationId))
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Error("Failed to mark notification as read.")
+            }
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
+        }
+    }
+
+    suspend fun markAllNotificationsRead(): NetworkResult<NotificationsResponse> {
+        return try {
+            val response = authApi.markNotificationsRead(MarkReadRequest(markAllRead = true))
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Error("Failed to mark all notifications as read.")
+            }
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
+        }
+    }
+
+    suspend fun registerDeviceToken(token: String): NetworkResult<AuthResponse> {
+        return try {
+            val response = authApi.registerDeviceToken(DeviceTokenRequest(token = token))
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Error("Failed to register FCM device token.")
             }
         } catch (ex: Exception) {
             NetworkResult.Error(ex.localizedMessage ?: "Network error.")

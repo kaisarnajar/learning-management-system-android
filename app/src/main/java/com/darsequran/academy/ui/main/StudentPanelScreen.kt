@@ -19,6 +19,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -31,6 +32,8 @@ import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.data.repository.AuthRepository
 import com.darsequran.academy.ui.home.HomeScreen
 import com.darsequran.academy.ui.home.HomeViewModel
+import com.darsequran.academy.ui.notifications.NotificationsScreen
+import com.darsequran.academy.ui.notifications.NotificationsViewModel
 import com.darsequran.academy.ui.profile.ProfileScreen
 import com.darsequran.academy.ui.profile.ProfileViewModel
 import com.darsequran.academy.ui.theme.EmeraldDark
@@ -44,6 +47,11 @@ fun StudentPanelScreen(
     onLogout: () -> Unit
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
+
+    val notificationsViewModel: NotificationsViewModel = viewModel(
+        factory = NotificationsViewModel.Factory(authRepository)
+    )
+    val notificationsUiState by notificationsViewModel.uiState.collectAsState()
 
     Scaffold(
         modifier = Modifier
@@ -83,7 +91,11 @@ fun StudentPanelScreen(
                     onClick = { selectedTab = 1 },
                     icon = {
                         BadgedBox(
-                            badge = { Badge { Text("3") } }
+                            badge = {
+                                if (notificationsUiState.unreadCount > 0) {
+                                    Badge { Text("${notificationsUiState.unreadCount}") }
+                                }
+                            }
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Notifications,
@@ -187,6 +199,9 @@ fun StudentPanelScreen(
                     )
                     ProfileScreen(viewModel = profileViewModel)
                 }
+                1 -> {
+                    NotificationsScreen(viewModel = notificationsViewModel)
+                }
                 4 -> {
                     val homeViewModel: HomeViewModel = viewModel(
                         factory = HomeViewModel.Factory(authRepository)
@@ -198,10 +213,7 @@ fun StudentPanelScreen(
                     )
                 }
                 else -> {
-                    val profileViewModel: ProfileViewModel = viewModel(
-                        factory = ProfileViewModel.Factory(authRepository)
-                    )
-                    ProfileScreen(viewModel = profileViewModel)
+                    NotificationsScreen(viewModel = notificationsViewModel)
                 }
             }
         }
