@@ -447,9 +447,10 @@ class AuthRepository(
 
     private fun getFallbackAnnouncements(search: String?): com.darsequran.academy.data.model.AnnouncementsResponse {
         val list = listOf(
-            com.darsequran.academy.data.model.AnnouncementDto("ann-1", "Admissions Open for New Tajweed & Quran Batches 2026", "Enrollment is now active for upcoming evening and weekend Tajweed & Arabic grammar classes. Seats are limited.", "Online Campus", "Admission", "High", "2026-08-28"),
-            com.darsequran.academy.data.model.AnnouncementDto("ann-2", "Mid-Term Examination Schedule Announced", "All enrolled students please review the updated examination portal and roll numbers in your student dashboard.", "Student Portal", "Exam", "Important", "2026-08-20"),
-            com.darsequran.academy.data.model.AnnouncementDto("ann-3", "Special Webinar: Quranic Reflection & Tafsir Circle", "Join Moulana Saeedullah Mir for a live interactive reflection session on Juz Amma this Sunday at 8:00 PM IST.", "Google Meet", "Event", "Normal", "2026-08-15")
+            com.darsequran.academy.data.model.AnnouncementDto("ann-1", "Annual Hifz Graduation Ceremony", "Join us to celebrate students who completed their Hifz this academic year. Families and guests are welcome after Maghrib.", "Main campus, Srinagar", "Ceremony", "High", "15 Rajab 1447 / 5 Jan 2026"),
+            com.darsequran.academy.data.model.AnnouncementDto("ann-2", "Visiting Scholar: Tajweed Workshop", "Moulana Farid Hassan will lead a two-day Tajweed intensive for intermediate students. Registration is open in the admin office.", "Online + campus lab", "Workshop", "Important", "12–13 January 2026"),
+            com.darsequran.academy.data.model.AnnouncementDto("ann-3", "Ramadan Class Timetable Released", "Revised class timings for Ramadan are now available. Evening batches start 45 minutes after Iftar.", "All campuses", "Timetable", "Normal", "February 2026"),
+            com.darsequran.academy.data.model.AnnouncementDto("ann-4", "New Nazira Batch — Open Enrollment", "A fresh Nazira batch for beginners starts next month. Limited seats; complete your profile before requesting enrollment.", "Online", "Enrollment", "High", "March 2026")
         ).filter { item ->
             search.isNullOrBlank() || item.title.contains(search, ignoreCase = true) || (item.body?.contains(search, ignoreCase = true) == true)
         }
