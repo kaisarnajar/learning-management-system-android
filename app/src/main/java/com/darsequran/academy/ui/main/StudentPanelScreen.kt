@@ -268,7 +268,9 @@ fun StudentPanelScreen(
                 4 -> ProfileMainScreen(
                     profileViewModel = profileViewModel,
                     paymentsViewModel = paymentsViewModel,
-                    reviewsViewModel = reviewsViewModel
+                    reviewsViewModel = reviewsViewModel,
+                    tokenManager = tokenManager,
+                    onLogout = onLogout
                 )
             }
         }

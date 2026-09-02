@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.BusinessCenter
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CameraAlt
@@ -61,6 +62,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,10 +77,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.darsequran.academy.R
+import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.data.model.UserDto
 import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.EmeraldPrimary
 import com.darsequran.academy.ui.theme.GoldAccent
+import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 
@@ -144,8 +148,11 @@ fun formatGenderDisplay(gender: String?): String {
 
 @Composable
 fun ProfileScreen(
-    viewModel: ProfileViewModel
+    viewModel: ProfileViewModel,
+    tokenManager: TokenManager,
+    onLogout: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
@@ -327,6 +334,65 @@ fun ProfileScreen(
                     label = "Address",
                     value = user?.address ?: "Kampora Tangmarg"
                 )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Sign Out Section Card
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            scope.launch {
+                                tokenManager.clearSession()
+                                onLogout()
+                            }
+                        },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.12f)
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.4f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .background(MaterialTheme.colorScheme.error.copy(alpha = 0.15f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                                contentDescription = "Sign Out",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Sign Out",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.error,
+                                    fontSize = 16.sp
+                                )
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Log out from your Darse Quran Academy account",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(32.dp))
             }
