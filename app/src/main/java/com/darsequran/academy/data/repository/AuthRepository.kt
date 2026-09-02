@@ -10,9 +10,12 @@ import com.darsequran.academy.data.model.GoogleLoginRequest
 import com.darsequran.academy.data.model.LoginRequest
 import com.darsequran.academy.data.model.MarkReadRequest
 import com.darsequran.academy.data.model.NotificationsResponse
+import com.darsequran.academy.data.model.PaymentHistoryResponse
+import com.darsequran.academy.data.model.PaymentSettingsResponse
 import com.darsequran.academy.data.model.RegisterRequest
 import com.darsequran.academy.data.model.StudentAttendanceResponse
 import com.darsequran.academy.data.model.StudentGradesResponse
+import com.darsequran.academy.data.model.SubmitPaymentRequest
 import com.darsequran.academy.data.model.UpdateProfileRequest
 import com.darsequran.academy.data.model.UserProfileResponse
 import com.darsequran.academy.data.remote.AuthApi
@@ -193,6 +196,47 @@ class AuthRepository(
                 NetworkResult.Success(response.body()!!)
             } else {
                 NetworkResult.Error("Failed to fetch student grades.")
+            }
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
+        }
+    }
+
+    suspend fun getPaymentSettings(): NetworkResult<PaymentSettingsResponse> {
+        return try {
+            val response = authApi.getPaymentSettings()
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Error("Failed to fetch payment settings.")
+            }
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
+        }
+    }
+
+    suspend fun getPaymentHistory(): NetworkResult<PaymentHistoryResponse> {
+        return try {
+            val response = authApi.getPaymentHistory()
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                val errorMsg = parseErrorMessage(response.errorBody()?.string())
+                NetworkResult.Error(errorMsg ?: "Failed to fetch payment history.")
+            }
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
+        }
+    }
+
+    suspend fun submitPayment(request: SubmitPaymentRequest): NetworkResult<AuthResponse> {
+        return try {
+            val response = authApi.submitPayment(request)
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                val errorMsg = parseErrorMessage(response.errorBody()?.string())
+                NetworkResult.Error(errorMsg ?: "Failed to submit payment proof.")
             }
         } catch (ex: Exception) {
             NetworkResult.Error(ex.localizedMessage ?: "Network error.")
