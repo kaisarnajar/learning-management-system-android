@@ -18,10 +18,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ContactSupport
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Campaign
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -60,6 +62,8 @@ import kotlinx.coroutines.launch
 fun HomeScreen(
     viewModel: HomeViewModel,
     tokenManager: TokenManager,
+    onNavigateToAbout: () -> Unit,
+    onNavigateToContact: () -> Unit,
     onLogout: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -82,6 +86,22 @@ fun HomeScreen(
                             text = "Darse Quran Academy",
                             fontWeight = FontWeight.Bold,
                             color = Color.White
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onNavigateToAbout) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "About Us",
+                            tint = GoldAccent
+                        )
+                    }
+                    IconButton(onClick = onNavigateToContact) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ContactSupport,
+                            contentDescription = "Contact Us",
+                            tint = GoldAccent
                         )
                     }
                 },
