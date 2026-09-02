@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -32,14 +33,14 @@ import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.data.repository.AuthRepository
 import com.darsequran.academy.ui.courses.MyCoursesScreen
 import com.darsequran.academy.ui.courses.MyCoursesViewModel
-import com.darsequran.academy.ui.home.HomeScreen
-import com.darsequran.academy.ui.home.HomeViewModel
 import com.darsequran.academy.ui.notifications.NotificationsScreen
 import com.darsequran.academy.ui.notifications.NotificationsViewModel
 import com.darsequran.academy.ui.payments.PaymentsScreen
 import com.darsequran.academy.ui.payments.PaymentsViewModel
 import com.darsequran.academy.ui.profile.ProfileScreen
 import com.darsequran.academy.ui.profile.ProfileViewModel
+import com.darsequran.academy.ui.reviews.ReviewsScreen
+import com.darsequran.academy.ui.reviews.ReviewsViewModel
 import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.EmeraldPrimary
 import com.darsequran.academy.ui.theme.GoldAccent
@@ -51,6 +52,7 @@ fun StudentPanelScreen(
     onLogout: () -> Unit
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
+    var activeSubView by remember { mutableStateOf("menu") } // "menu" or "reviews"
 
     val notificationsViewModel: NotificationsViewModel = viewModel(
         factory = NotificationsViewModel.Factory(authRepository)
@@ -166,10 +168,13 @@ fun StudentPanelScreen(
                     )
                 )
 
-                // Tab 4: Dashboard / Home
+                // Tab 4: Dashboard / More
                 NavigationBarItem(
                     selected = selectedTab == 4,
-                    onClick = { selectedTab = 4 },
+                    onClick = {
+                        selectedTab = 4
+                        activeSubView = "menu"
+                    },
                     icon = {
                         Icon(
                             imageVector = Icons.Default.MoreHoriz,
@@ -219,20 +224,24 @@ fun StudentPanelScreen(
                     PaymentsScreen(viewModel = paymentsViewModel)
                 }
                 4 -> {
-                    val homeViewModel: HomeViewModel = viewModel(
-                        factory = HomeViewModel.Factory(authRepository)
-                    )
-                    HomeScreen(
-                        viewModel = homeViewModel,
-                        tokenManager = tokenManager,
-                        onLogout = onLogout
-                    )
+                    if (activeSubView == "reviews") {
+                        val reviewsViewModel: ReviewsViewModel = viewModel(
+                            factory = ReviewsViewModel.Factory(authRepository)
+                        )
+                        ReviewsScreen(viewModel = reviewsViewModel)
+                    } else {
+                        MoreMenuSheet(
+                            onSelectReviews = { activeSubView = "reviews" },
+                            onSelectCart = { activeSubView = "reviews" },
+                            onLogout = onLogout
+                        )
+                    }
                 }
                 else -> {
-                    val paymentsViewModel: PaymentsViewModel = viewModel(
-                        factory = PaymentsViewModel.Factory(authRepository)
+                    val profileViewModel: ProfileViewModel = viewModel(
+                        factory = ProfileViewModel.Factory(authRepository)
                     )
-                    PaymentsScreen(viewModel = paymentsViewModel)
+                    ProfileScreen(viewModel = profileViewModel)
                 }
             }
         }

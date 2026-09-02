@@ -3,6 +3,7 @@ package com.darsequran.academy.data.repository
 import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.data.model.AuthResponse
 import com.darsequran.academy.data.model.CoursesResponse
+import com.darsequran.academy.data.model.CreateReviewRequest
 import com.darsequran.academy.data.model.DailyInspirationResponse
 import com.darsequran.academy.data.model.DeviceTokenRequest
 import com.darsequran.academy.data.model.EnrollmentsResponse
@@ -15,6 +16,7 @@ import com.darsequran.academy.data.model.PaymentSettingsResponse
 import com.darsequran.academy.data.model.RegisterRequest
 import com.darsequran.academy.data.model.StudentAttendanceResponse
 import com.darsequran.academy.data.model.StudentGradesResponse
+import com.darsequran.academy.data.model.StudentReviewsResponse
 import com.darsequran.academy.data.model.SubmitPaymentRequest
 import com.darsequran.academy.data.model.UpdateProfileRequest
 import com.darsequran.academy.data.model.UserProfileResponse
@@ -237,6 +239,35 @@ class AuthRepository(
             } else {
                 val errorMsg = parseErrorMessage(response.errorBody()?.string())
                 NetworkResult.Error(errorMsg ?: "Failed to submit payment proof.")
+            }
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
+        }
+    }
+
+    suspend fun getReviews(): NetworkResult<StudentReviewsResponse> {
+        return try {
+            val response = authApi.getReviews()
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                val errorMsg = parseErrorMessage(response.errorBody()?.string())
+                NetworkResult.Error(errorMsg ?: "Failed to fetch reviews.")
+            }
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
+        }
+    }
+
+    suspend fun submitReview(rating: Int, quote: String, course: String? = null): NetworkResult<AuthResponse> {
+        return try {
+            val request = CreateReviewRequest(rating = rating, quote = quote.trim(), course = course)
+            val response = authApi.submitReview(request)
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                val errorMsg = parseErrorMessage(response.errorBody()?.string())
+                NetworkResult.Error(errorMsg ?: "Failed to submit review.")
             }
         } catch (ex: Exception) {
             NetworkResult.Error(ex.localizedMessage ?: "Network error.")

@@ -2,6 +2,7 @@ package com.darsequran.academy.data.remote
 
 import com.darsequran.academy.data.model.AuthResponse
 import com.darsequran.academy.data.model.CoursesResponse
+import com.darsequran.academy.data.model.CreateReviewRequest
 import com.darsequran.academy.data.model.DailyInspirationResponse
 import com.darsequran.academy.data.model.DeviceTokenRequest
 import com.darsequran.academy.data.model.EnrollmentsResponse
@@ -14,6 +15,7 @@ import com.darsequran.academy.data.model.PaymentSettingsResponse
 import com.darsequran.academy.data.model.RegisterRequest
 import com.darsequran.academy.data.model.StudentAttendanceResponse
 import com.darsequran.academy.data.model.StudentGradesResponse
+import com.darsequran.academy.data.model.StudentReviewsResponse
 import com.darsequran.academy.data.model.SubmitPaymentRequest
 import com.darsequran.academy.data.model.UpdateProfileRequest
 import com.darsequran.academy.data.model.UserProfileResponse
@@ -86,6 +88,14 @@ interface AuthApi {
     @POST("payments/submit")
     suspend fun submitPayment(
         @Body request: SubmitPaymentRequest
+    ): Response<AuthResponse>
+
+    @GET("reviews")
+    suspend fun getReviews(): Response<StudentReviewsResponse>
+
+    @POST("reviews")
+    suspend fun submitReview(
+        @Body request: CreateReviewRequest
     ): Response<AuthResponse>
 
     @GET("daily-inspiration")
