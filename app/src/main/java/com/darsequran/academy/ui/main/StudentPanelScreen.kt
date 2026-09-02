@@ -284,12 +284,12 @@ fun StudentPanelScreen(
                 3 -> CommunityMainScreen(
                     announcementsViewModel = announcementsViewModel,
                     blogViewModel = blogViewModel,
-                    fatwaViewModel = fatwaViewModel
+                    fatwaViewModel = fatwaViewModel,
+                    teachersViewModel = teachersViewModel
                 )
                 4 -> ProfileMainScreen(
                     profileViewModel = profileViewModel,
                     paymentsViewModel = paymentsViewModel,
-                    teachersViewModel = teachersViewModel,
                     reviewsViewModel = reviewsViewModel
                 )
             }

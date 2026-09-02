@@ -24,6 +24,8 @@ import com.darsequran.academy.ui.blog.BlogScreen
 import com.darsequran.academy.ui.blog.BlogViewModel
 import com.darsequran.academy.ui.fatwa.FatwaScreen
 import com.darsequran.academy.ui.fatwa.FatwaViewModel
+import com.darsequran.academy.ui.teachers.TeachersScreen
+import com.darsequran.academy.ui.teachers.TeachersViewModel
 import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.GoldAccent
 
@@ -31,10 +33,11 @@ import com.darsequran.academy.ui.theme.GoldAccent
 fun CommunityMainScreen(
     announcementsViewModel: AnnouncementsViewModel,
     blogViewModel: BlogViewModel,
-    fatwaViewModel: FatwaViewModel
+    fatwaViewModel: FatwaViewModel,
+    teachersViewModel: TeachersViewModel
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Announcements", "Blog & Articles", "Fatwa Q&A")
+    val tabs = listOf("Announcements", "Blog & Articles", "Fatwa Q&A", "Faculty & Scholars")
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -72,6 +75,7 @@ fun CommunityMainScreen(
                 0 -> AnnouncementsScreen(viewModel = announcementsViewModel, onBackPress = {})
                 1 -> BlogScreen(viewModel = blogViewModel, onBackPress = {})
                 2 -> FatwaScreen(viewModel = fatwaViewModel, onBackPress = {})
+                3 -> TeachersScreen(viewModel = teachersViewModel, onBackPress = {})
             }
         }
     }
