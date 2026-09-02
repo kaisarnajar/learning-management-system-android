@@ -111,6 +111,11 @@ interface AuthApi {
     @GET("enrollments")
     suspend fun getEnrollments(): Response<EnrollmentsResponse>
 
+    @POST("enrollments")
+    suspend fun enrollInCourse(
+        @Body request: com.darsequran.academy.data.model.EnrollCourseRequest
+    ): Response<com.darsequran.academy.data.model.EnrollCourseResponse>
+
     @GET("library")
     suspend fun getLibraryBooks(
         @Query("page") page: Int = 1,
