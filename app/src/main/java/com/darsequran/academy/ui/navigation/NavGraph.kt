@@ -12,8 +12,7 @@ import com.darsequran.academy.ui.auth.LoginViewModel
 import com.darsequran.academy.ui.auth.RegisterScreen
 import com.darsequran.academy.ui.auth.RegisterViewModel
 import com.darsequran.academy.ui.auth.SplashScreen
-import com.darsequran.academy.ui.home.HomeScreen
-import com.darsequran.academy.ui.home.HomeViewModel
+import com.darsequran.academy.ui.main.StudentPanelScreen
 
 @Composable
 fun AppNavGraph(
@@ -76,12 +75,9 @@ fun AppNavGraph(
         }
 
         composable(Screen.Home.route) {
-            val viewModel: HomeViewModel = viewModel(
-                factory = HomeViewModel.Factory(authRepository)
-            )
-            HomeScreen(
-                viewModel = viewModel,
+            StudentPanelScreen(
                 tokenManager = tokenManager,
+                authRepository = authRepository,
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
