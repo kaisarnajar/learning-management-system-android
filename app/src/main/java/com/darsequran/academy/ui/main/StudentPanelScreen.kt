@@ -124,13 +124,12 @@ fun StudentPanelScreen(
                     },
                     label = {
                         Text(
-                            text = "Notifs",
+                            text = "Notifications",
                             fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal,
                             color = if (selectedTab == 1) GoldAccent else Color.White.copy(alpha = 0.7f),
-                            fontSize = 11.sp,
+                            fontSize = 9.5.sp,
                             maxLines = 1,
-                            softWrap = false,
-                            overflow = TextOverflow.Ellipsis
+                            softWrap = false
                         )
                     },
                     colors = NavigationBarItemDefaults.colors(
@@ -151,13 +150,12 @@ fun StudentPanelScreen(
                     },
                     label = {
                         Text(
-                            text = "Courses",
+                            text = "My Courses",
                             fontWeight = if (selectedTab == 2) FontWeight.Bold else FontWeight.Normal,
                             color = if (selectedTab == 2) GoldAccent else Color.White.copy(alpha = 0.7f),
-                            fontSize = 11.sp,
+                            fontSize = 9.5.sp,
                             maxLines = 1,
-                            softWrap = false,
-                            overflow = TextOverflow.Ellipsis
+                            softWrap = false
                         )
                     },
                     colors = NavigationBarItemDefaults.colors(
