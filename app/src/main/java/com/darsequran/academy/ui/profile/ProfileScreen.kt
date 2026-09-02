@@ -20,7 +20,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.BusinessCenter
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Edit
@@ -66,6 +65,62 @@ import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.EmeraldPrimary
 import com.darsequran.academy.ui.theme.GoldAccent
 
+fun formatDateOfBirthDisplay(dobString: String?): String {
+    if (dobString.isNullOrBlank()) return "Not provided"
+    return try {
+        val cleanStr = dobString.take(10) // e.g. "1999-01-03"
+        val parts = cleanStr.split("-")
+        if (parts.size == 3) {
+            val year = parts[0]
+            val monthIndex = parts[1].toIntOrNull() ?: 1
+            val day = parts[2].toIntOrNull() ?: 1
+            val monthNames = arrayOf(
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            )
+            "$day ${monthNames.getOrElse(monthIndex - 1) { "January" }} $year"
+        } else dobString
+    } catch (_: Exception) {
+        dobString
+    }
+}
+
+fun formatOccupationDisplay(occupation: String?): String {
+    if (occupation.isNullOrBlank()) return "Not provided"
+    return when (occupation.uppercase()) {
+        "IT_PROFESSIONAL" -> "IT / software professional"
+        "STUDENT" -> "Student"
+        "WORKING" -> "Working (private sector)"
+        "GOVERNMENT_EMPLOYEE" -> "Government employee"
+        "SELF_EMPLOYED" -> "Self-employed / business owner"
+        "LABOURER" -> "Labour / daily wage worker"
+        "POLICE_OFFICER" -> "Police officer"
+        "ARMED_FORCES" -> "Armed forces"
+        "TEACHER" -> "Teacher / educator"
+        "HEALTHCARE_WORKER" -> "Healthcare worker"
+        "ENGINEER" -> "Engineer"
+        "ACCOUNTANT" -> "Accountant / finance"
+        "LAWYER" -> "Lawyer / legal professional"
+        "DRIVER" -> "Driver / transport worker"
+        "FARMER" -> "Farmer / agriculture"
+        "SHOPKEEPER" -> "Shopkeeper / retail"
+        "CLERGY" -> "Imam / religious scholar"
+        "HOMEMAKER" -> "Homemaker"
+        "RETIRED" -> "Retired"
+        "UNEMPLOYED" -> "Unemployed"
+        else -> occupation.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
+    }
+}
+
+fun formatGenderDisplay(gender: String?): String {
+    if (gender.isNullOrBlank()) return "Not provided"
+    return when (gender.uppercase()) {
+        "MALE" -> "Male"
+        "FEMALE" -> "Female"
+        else -> gender
+    }
+}
+
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel
@@ -89,6 +144,12 @@ fun ProfileScreen(
             }
         } else {
             val user = uiState.user
+            val avatarDrawable = if (user?.gender?.uppercase() == "FEMALE") {
+                R.drawable.female_icon
+            } else {
+                R.drawable.male_icon
+            }
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -110,15 +171,15 @@ fun ProfileScreen(
                             modifier = Modifier
                                 .size(84.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(EmeraldDark)
-                                .border(2.dp, GoldAccent, RoundedCornerShape(12.dp)),
+                                .background(MaterialTheme.colorScheme.surface)
+                                .border(1.dp, GoldAccent.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
+                            Image(
+                                painter = painterResource(id = avatarDrawable),
                                 contentDescription = "Profile Photo",
-                                tint = GoldAccent,
-                                modifier = Modifier.size(54.dp)
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
                             )
                         }
 
@@ -219,7 +280,7 @@ fun ProfileScreen(
                 ProfileInfoCard(
                     icon = Icons.Default.CalendarToday,
                     label = "Date of Birth",
-                    value = user?.dateOfBirth ?: "3 January 1999"
+                    value = formatDateOfBirthDisplay(user?.dateOfBirth)
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -227,7 +288,7 @@ fun ProfileScreen(
                 ProfileInfoCard(
                     icon = Icons.Default.Person,
                     label = "Gender",
-                    value = user?.gender ?: "Male"
+                    value = formatGenderDisplay(user?.gender)
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -235,7 +296,7 @@ fun ProfileScreen(
                 ProfileInfoCard(
                     icon = Icons.Default.BusinessCenter,
                     label = "Occupation",
-                    value = user?.occupation ?: "IT / software professional"
+                    value = formatOccupationDisplay(user?.occupation)
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
