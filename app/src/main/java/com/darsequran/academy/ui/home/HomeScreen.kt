@@ -257,8 +257,8 @@ fun HomeScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Book,
-                            contentDescription = "Course Icon",
-                            tint = EmeraldPrimary,
+                            contentDescription = "No Course Icon",
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                             modifier = Modifier.size(36.dp)
                         )
 
@@ -266,13 +266,16 @@ fun HomeScreen(
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Tajweed E Quran (Boys Batch 3)",
-                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                                text = "No Enrolled Courses Yet",
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                )
                             )
                             Text(
-                                text = "Instructor: Rayeess Ahmad Magray",
+                                text = "Explore available courses under the Courses tab to enroll.",
                                 style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                                 )
                             )
                         }
