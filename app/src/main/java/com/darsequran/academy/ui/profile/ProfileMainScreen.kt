@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.ui.payments.PaymentsScreen
 import com.darsequran.academy.ui.payments.PaymentsViewModel
 import com.darsequran.academy.ui.reviews.ReviewsScreen
@@ -29,7 +30,9 @@ import com.darsequran.academy.ui.theme.GoldAccent
 fun ProfileMainScreen(
     profileViewModel: ProfileViewModel,
     paymentsViewModel: PaymentsViewModel,
-    reviewsViewModel: ReviewsViewModel
+    reviewsViewModel: ReviewsViewModel,
+    tokenManager: TokenManager,
+    onLogout: () -> Unit
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabs = listOf("Student Profile", "Fee Payments", "My Reviews")
@@ -67,7 +70,11 @@ fun ProfileMainScreen(
             }
 
             when (selectedTabIndex) {
-                0 -> ProfileScreen(viewModel = profileViewModel)
+                0 -> ProfileScreen(
+                    viewModel = profileViewModel,
+                    tokenManager = tokenManager,
+                    onLogout = onLogout
+                )
                 1 -> PaymentsScreen(viewModel = paymentsViewModel)
                 2 -> ReviewsScreen(viewModel = reviewsViewModel)
             }

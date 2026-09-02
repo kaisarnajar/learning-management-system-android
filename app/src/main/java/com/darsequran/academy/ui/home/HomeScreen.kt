@@ -85,22 +85,6 @@ fun HomeScreen(
                         )
                     }
                 },
-                actions = {
-                    IconButton(
-                        onClick = {
-                            scope.launch {
-                                tokenManager.clearSession()
-                                onLogout()
-                            }
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                            contentDescription = "Logout",
-                            tint = GoldAccent
-                        )
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = EmeraldDark)
             )
         }
