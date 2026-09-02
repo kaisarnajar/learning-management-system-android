@@ -61,12 +61,14 @@ fun DarseQuranAcademyTheme(
             val window = (view.context as Activity).window
             val insetsController = WindowCompat.getInsetsController(window, view)
 
-            // Set status bar background color to EmeraldDark in Light Theme (matching app top header) or DarkBackground in Dark Theme
+            // Dynamic status bar background: EmeraldDark in light mode, DarkBackground (#121212) in dark mode
             val statusBarColor = if (darkTheme) DarkBackground else EmeraldDark
             window.statusBarColor = statusBarColor.toArgb()
 
-            // White status bar icons (time, battery, wifi) on dark status bar background (EmeraldDark / DarkBackground)
-            insetsController.isAppearanceLightStatusBars = false
+            // Dynamic status bar icons:
+            // Light Mode: isAppearanceLightStatusBars = true -> DARK status bar icons (time, battery) for high contrast on light/transparent backgrounds
+            // Dark Mode: isAppearanceLightStatusBars = false -> WHITE status bar icons for high contrast on dark backgrounds
+            insetsController.isAppearanceLightStatusBars = !darkTheme
             insetsController.isAppearanceLightNavigationBars = !darkTheme
         }
     }
