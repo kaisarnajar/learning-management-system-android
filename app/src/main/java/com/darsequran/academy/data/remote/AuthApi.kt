@@ -10,6 +10,8 @@ import com.darsequran.academy.data.model.LoginRequest
 import com.darsequran.academy.data.model.MarkReadRequest
 import com.darsequran.academy.data.model.NotificationsResponse
 import com.darsequran.academy.data.model.RegisterRequest
+import com.darsequran.academy.data.model.StudentAttendanceResponse
+import com.darsequran.academy.data.model.StudentGradesResponse
 import com.darsequran.academy.data.model.UpdateProfileRequest
 import com.darsequran.academy.data.model.UserProfileResponse
 import retrofit2.Response
@@ -61,6 +63,16 @@ interface AuthApi {
     suspend fun registerDeviceToken(
         @Body request: DeviceTokenRequest
     ): Response<AuthResponse>
+
+    @GET("student/attendance")
+    suspend fun getStudentAttendance(
+        @Query("courseId") courseId: String? = null
+    ): Response<StudentAttendanceResponse>
+
+    @GET("student/grades")
+    suspend fun getStudentGrades(
+        @Query("courseId") courseId: String? = null
+    ): Response<StudentGradesResponse>
 
     @GET("daily-inspiration")
     suspend fun getDailyInspiration(): Response<DailyInspirationResponse>

@@ -30,6 +30,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.data.repository.AuthRepository
+import com.darsequran.academy.ui.courses.MyCoursesScreen
+import com.darsequran.academy.ui.courses.MyCoursesViewModel
 import com.darsequran.academy.ui.home.HomeScreen
 import com.darsequran.academy.ui.home.HomeViewModel
 import com.darsequran.academy.ui.notifications.NotificationsScreen
@@ -202,6 +204,12 @@ fun StudentPanelScreen(
                 1 -> {
                     NotificationsScreen(viewModel = notificationsViewModel)
                 }
+                2 -> {
+                    val myCoursesViewModel: MyCoursesViewModel = viewModel(
+                        factory = MyCoursesViewModel.Factory(authRepository)
+                    )
+                    MyCoursesScreen(viewModel = myCoursesViewModel)
+                }
                 4 -> {
                     val homeViewModel: HomeViewModel = viewModel(
                         factory = HomeViewModel.Factory(authRepository)
@@ -213,7 +221,10 @@ fun StudentPanelScreen(
                     )
                 }
                 else -> {
-                    NotificationsScreen(viewModel = notificationsViewModel)
+                    val myCoursesViewModel: MyCoursesViewModel = viewModel(
+                        factory = MyCoursesViewModel.Factory(authRepository)
+                    )
+                    MyCoursesScreen(viewModel = myCoursesViewModel)
                 }
             }
         }
