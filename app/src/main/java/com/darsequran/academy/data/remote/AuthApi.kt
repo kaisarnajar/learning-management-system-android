@@ -9,9 +9,12 @@ import com.darsequran.academy.data.model.GoogleLoginRequest
 import com.darsequran.academy.data.model.LoginRequest
 import com.darsequran.academy.data.model.MarkReadRequest
 import com.darsequran.academy.data.model.NotificationsResponse
+import com.darsequran.academy.data.model.PaymentHistoryResponse
+import com.darsequran.academy.data.model.PaymentSettingsResponse
 import com.darsequran.academy.data.model.RegisterRequest
 import com.darsequran.academy.data.model.StudentAttendanceResponse
 import com.darsequran.academy.data.model.StudentGradesResponse
+import com.darsequran.academy.data.model.SubmitPaymentRequest
 import com.darsequran.academy.data.model.UpdateProfileRequest
 import com.darsequran.academy.data.model.UserProfileResponse
 import retrofit2.Response
@@ -73,6 +76,17 @@ interface AuthApi {
     suspend fun getStudentGrades(
         @Query("courseId") courseId: String? = null
     ): Response<StudentGradesResponse>
+
+    @GET("payment-settings")
+    suspend fun getPaymentSettings(): Response<PaymentSettingsResponse>
+
+    @GET("payments/history")
+    suspend fun getPaymentHistory(): Response<PaymentHistoryResponse>
+
+    @POST("payments/submit")
+    suspend fun submitPayment(
+        @Body request: SubmitPaymentRequest
+    ): Response<AuthResponse>
 
     @GET("daily-inspiration")
     suspend fun getDailyInspiration(): Response<DailyInspirationResponse>

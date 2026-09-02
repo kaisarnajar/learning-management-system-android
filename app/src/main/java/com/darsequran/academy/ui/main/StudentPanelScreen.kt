@@ -36,6 +36,8 @@ import com.darsequran.academy.ui.home.HomeScreen
 import com.darsequran.academy.ui.home.HomeViewModel
 import com.darsequran.academy.ui.notifications.NotificationsScreen
 import com.darsequran.academy.ui.notifications.NotificationsViewModel
+import com.darsequran.academy.ui.payments.PaymentsScreen
+import com.darsequran.academy.ui.payments.PaymentsViewModel
 import com.darsequran.academy.ui.profile.ProfileScreen
 import com.darsequran.academy.ui.profile.ProfileViewModel
 import com.darsequran.academy.ui.theme.EmeraldDark
@@ -210,6 +212,12 @@ fun StudentPanelScreen(
                     )
                     MyCoursesScreen(viewModel = myCoursesViewModel)
                 }
+                3 -> {
+                    val paymentsViewModel: PaymentsViewModel = viewModel(
+                        factory = PaymentsViewModel.Factory(authRepository)
+                    )
+                    PaymentsScreen(viewModel = paymentsViewModel)
+                }
                 4 -> {
                     val homeViewModel: HomeViewModel = viewModel(
                         factory = HomeViewModel.Factory(authRepository)
@@ -221,10 +229,10 @@ fun StudentPanelScreen(
                     )
                 }
                 else -> {
-                    val myCoursesViewModel: MyCoursesViewModel = viewModel(
-                        factory = MyCoursesViewModel.Factory(authRepository)
+                    val paymentsViewModel: PaymentsViewModel = viewModel(
+                        factory = PaymentsViewModel.Factory(authRepository)
                     )
-                    MyCoursesScreen(viewModel = myCoursesViewModel)
+                    PaymentsScreen(viewModel = paymentsViewModel)
                 }
             }
         }
