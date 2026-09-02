@@ -7,11 +7,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.data.repository.AuthRepository
+import com.darsequran.academy.ui.about.AboutScreen
 import com.darsequran.academy.ui.auth.LoginScreen
 import com.darsequran.academy.ui.auth.LoginViewModel
 import com.darsequran.academy.ui.auth.RegisterScreen
 import com.darsequran.academy.ui.auth.RegisterViewModel
 import com.darsequran.academy.ui.auth.SplashScreen
+import com.darsequran.academy.ui.contact.ContactScreen
+import com.darsequran.academy.ui.contact.ContactViewModel
 import com.darsequran.academy.ui.main.StudentPanelScreen
 
 @Composable
@@ -78,10 +81,37 @@ fun AppNavGraph(
             StudentPanelScreen(
                 tokenManager = tokenManager,
                 authRepository = authRepository,
+                onNavigateToAbout = {
+                    navController.navigate(Screen.About.route)
+                },
+                onNavigateToContact = {
+                    navController.navigate(Screen.Contact.route)
+                },
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
+                }
+            )
+        }
+
+        composable(Screen.About.route) {
+            AboutScreen(
+                onBackPress = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Screen.Contact.route) {
+            val contactViewModel: ContactViewModel = viewModel(
+                factory = ContactViewModel.Factory(authRepository)
+            )
+            ContactScreen(
+                viewModel = contactViewModel,
+                tokenManager = tokenManager,
+                onBackPress = {
+                    navController.popBackStack()
                 }
             )
         }

@@ -53,6 +53,8 @@ import com.darsequran.academy.ui.theme.GoldAccent
 fun StudentPanelScreen(
     tokenManager: TokenManager,
     authRepository: AuthRepository,
+    onNavigateToAbout: () -> Unit,
+    onNavigateToContact: () -> Unit,
     onLogout: () -> Unit
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -250,6 +252,8 @@ fun StudentPanelScreen(
                 0 -> HomeScreen(
                     viewModel = homeViewModel,
                     tokenManager = tokenManager,
+                    onNavigateToAbout = onNavigateToAbout,
+                    onNavigateToContact = onNavigateToContact,
                     onLogout = onLogout
                 )
                 1 -> CoursesMainScreen(
