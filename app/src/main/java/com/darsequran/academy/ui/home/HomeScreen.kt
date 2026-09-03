@@ -170,15 +170,15 @@ fun HomeScreen(
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp)
+                .padding(horizontal = 12.dp, vertical = 10.dp)
         ) {
             // Welcome Header Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                border = BorderStroke(1.5.dp, GoldAccent.copy(alpha = 0.5f)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.4f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Box(
                     modifier = Modifier
@@ -188,7 +188,7 @@ fun HomeScreen(
                                 colors = listOf(BrandPrimary, BrandPrimaryLight)
                             )
                         )
-                        .padding(20.dp)
+                        .padding(16.dp)
                 ) {
                     Column {
                         Text(
@@ -196,7 +196,7 @@ fun HomeScreen(
                             style = MaterialTheme.typography.headlineSmall.copy(
                                 color = GoldAccent,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 21.sp,
+                                fontSize = 20.sp,
                                 textAlign = TextAlign.Start
                             )
                         )
@@ -220,7 +220,7 @@ fun HomeScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Master Quran & Islamic Sciences Hero Card (Matching HomeHero.tsx)
             MasterQuranHeroCard(
@@ -229,7 +229,7 @@ fun HomeScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Daily Wisdom Card (Placing directly after Master Quran card)
             uiState.inspiration?.let { insp ->
@@ -239,10 +239,10 @@ fun HomeScreen(
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                    border = BorderStroke(1.5.dp, GoldAccent.copy(alpha = 0.6f)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
+                    border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.5f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
                     Box(
                         modifier = Modifier
@@ -252,7 +252,7 @@ fun HomeScreen(
                                     colors = listOf(BrandPrimaryLightAlt, BrandPrimaryHover)
                                 )
                             )
-                            .padding(20.dp)
+                            .padding(16.dp)
                     ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -342,21 +342,19 @@ fun HomeScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // 1. Home About Us Section Card (Matching HomeAbout.tsx)
             HomeAboutCard(
                 onNavigateToAbout = onNavigateToAbout
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // 2. 5+ Years of Experience Banner (Matching ExperienceBanner.tsx)
             ExperienceBannerCard()
 
-
-
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Academy Announcements Section
             Row(
@@ -708,10 +706,10 @@ fun MasterQuranHeroCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        border = BorderStroke(1.5.dp, GoldAccent.copy(alpha = 0.4f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.4f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Box(
             modifier = Modifier
@@ -881,10 +879,10 @@ fun HomeAboutCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        border = BorderStroke(1.5.dp, GoldAccent.copy(alpha = 0.45f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.45f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Box(
             modifier = Modifier
