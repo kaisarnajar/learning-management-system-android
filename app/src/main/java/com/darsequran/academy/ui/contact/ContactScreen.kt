@@ -2,8 +2,6 @@ package com.darsequran.academy.ui.contact
 
 import android.content.Intent
 import android.net.Uri
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -45,7 +43,6 @@ import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -64,7 +61,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.EmeraldPrimary
@@ -80,7 +76,6 @@ val INQUIRY_SUBJECTS = listOf(
 )
 
 const val GOOGLE_MAPS_URL = "https://maps.app.goo.gl/7kUvxhkrDq1Z22AUA"
-const val GOOGLE_MAPS_EMBED_URL = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3305.2213737182337!2d74.4468766!3d34.063839!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38e1a5d737d3db0d%3A0x9b0e6f00a4d7f2ae!2sDARSE-QURAN.!5e0!3m2!1sen!2sin!4v1735689600000!5m2!1sen!2sin"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -216,10 +211,31 @@ fun ContactScreen(
                 onClick = null
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // 1. Google Maps Location Card
-            GoogleMapsLocationCard(onOpenMaps = openMapsAction)
+            // Direct Button to open Google Maps Location
+            Button(
+                onClick = openMapsAction,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = EmeraldDark,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = "Maps App",
+                        tint = GoldAccent,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Open Location on Google Maps App", fontWeight = FontWeight.Bold)
+                }
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -352,101 +368,6 @@ fun ContactScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-        }
-    }
-}
-
-@Composable
-fun GoogleMapsLocationCard(
-    onOpenMaps: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.LocationOn,
-                    contentDescription = "Map Location",
-                    tint = GoldAccent,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Academy Location Map",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 16.sp
-                    )
-                )
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(220.dp),
-                shape = RoundedCornerShape(12.dp),
-                color = EmeraldDark.copy(alpha = 0.05f)
-            ) {
-                AndroidView(
-                    factory = { context ->
-                        WebView(context).apply {
-                            webViewClient = WebViewClient()
-                            settings.javaScriptEnabled = true
-                            settings.domStorageEnabled = true
-                            val htmlData = """
-                                <!DOCTYPE html>
-                                <html>
-                                <head>
-                                  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-                                  <style>
-                                    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #f8fafc; }
-                                    iframe { border: 0; width: 100%; height: 100%; }
-                                  </style>
-                                </head>
-                                <body>
-                                  <iframe src="$GOOGLE_MAPS_EMBED_URL" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-                                </body>
-                                </html>
-                            """.trimIndent()
-                            loadDataWithBaseURL("https://www.google.com", htmlData, "text/html", "UTF-8", null)
-                        }
-                    },
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Button(
-                onClick = onOpenMaps,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = EmeraldDark.copy(alpha = 0.08f),
-                    contentColor = MaterialTheme.colorScheme.primary
-                ),
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.fillMaxWidth().height(42.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.LocationOn,
-                        contentDescription = "Maps App",
-                        tint = GoldAccent,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Directions on Google Maps App", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                }
-            }
         }
     }
 }
