@@ -260,7 +260,8 @@ fun StudentPanelScreen(
                     catalogViewModel = coursesCatalogViewModel,
                     teachersViewModel = teachersViewModel,
                     blogViewModel = blogViewModel,
-                    fatwaViewModel = fatwaViewModel
+                    fatwaViewModel = fatwaViewModel,
+                    homeViewModel = homeViewModel
                 )
                 2 -> LibraryMainScreen(
                     libraryViewModel = libraryViewModel,
