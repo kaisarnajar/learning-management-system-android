@@ -200,7 +200,7 @@ fun StudentPanelScreen(
                     },
                     label = {
                         Text(
-                            text = "My Learning",
+                            text = "Learning",
                             fontWeight = if (selectedTab == 3) FontWeight.Bold else FontWeight.Normal,
                             color = if (selectedTab == 3) GoldAccent else Color.White.copy(alpha = 0.7f),
                             fontSize = 10.5.sp,
