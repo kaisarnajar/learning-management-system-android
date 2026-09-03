@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
@@ -31,15 +31,15 @@ import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.data.repository.AuthRepository
 import com.darsequran.academy.ui.blog.BlogViewModel
 import com.darsequran.academy.ui.bookstore.BookstoreViewModel
-import com.darsequran.academy.ui.community.CommunityMainScreen
 import com.darsequran.academy.ui.courses.CoursesCatalogViewModel
-import com.darsequran.academy.ui.courses.CoursesMainScreen
 import com.darsequran.academy.ui.courses.MyCoursesViewModel
+import com.darsequran.academy.ui.explore.ExploreMainScreen
 import com.darsequran.academy.ui.fatwa.FatwaViewModel
 import com.darsequran.academy.ui.home.HomeScreen
 import com.darsequran.academy.ui.home.HomeViewModel
 import com.darsequran.academy.ui.library.DigitalLibraryViewModel
 import com.darsequran.academy.ui.library.LibraryMainScreen
+import com.darsequran.academy.ui.mylearning.MyLearningMainScreen
 import com.darsequran.academy.ui.payments.PaymentsViewModel
 import com.darsequran.academy.ui.profile.ProfileMainScreen
 import com.darsequran.academy.ui.profile.ProfileViewModel
@@ -122,7 +122,7 @@ fun StudentPanelScreen(
                             text = "Home",
                             fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal,
                             color = if (selectedTab == 0) GoldAccent else Color.White.copy(alpha = 0.7f),
-                            fontSize = 11.sp,
+                            fontSize = 10.5.sp,
                             maxLines = 1,
                             softWrap = false,
                             overflow = TextOverflow.Ellipsis
@@ -133,23 +133,23 @@ fun StudentPanelScreen(
                     )
                 )
 
-                // Tab 1: Courses
+                // Tab 1: Explore (Public Academy Catalog & Community)
                 NavigationBarItem(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
                     icon = {
                         Icon(
-                            imageVector = Icons.Default.School,
-                            contentDescription = "Courses",
+                            imageVector = Icons.Default.Explore,
+                            contentDescription = "Explore",
                             tint = if (selectedTab == 1) GoldAccent else Color.White.copy(alpha = 0.7f)
                         )
                     },
                     label = {
                         Text(
-                            text = "Courses",
+                            text = "Explore",
                             fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal,
                             color = if (selectedTab == 1) GoldAccent else Color.White.copy(alpha = 0.7f),
-                            fontSize = 11.sp,
+                            fontSize = 10.5.sp,
                             maxLines = 1,
                             softWrap = false,
                             overflow = TextOverflow.Ellipsis
@@ -160,23 +160,23 @@ fun StudentPanelScreen(
                     )
                 )
 
-                // Tab 2: Library
+                // Tab 2: My Learning (User-Specific Workspace)
                 NavigationBarItem(
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 },
                     icon = {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.MenuBook,
-                            contentDescription = "Library",
+                            imageVector = Icons.Default.School,
+                            contentDescription = "My Learning",
                             tint = if (selectedTab == 2) GoldAccent else Color.White.copy(alpha = 0.7f)
                         )
                     },
                     label = {
                         Text(
-                            text = "Library",
+                            text = "My Learning",
                             fontWeight = if (selectedTab == 2) FontWeight.Bold else FontWeight.Normal,
                             color = if (selectedTab == 2) GoldAccent else Color.White.copy(alpha = 0.7f),
-                            fontSize = 11.sp,
+                            fontSize = 10.5.sp,
                             maxLines = 1,
                             softWrap = false,
                             overflow = TextOverflow.Ellipsis
@@ -187,23 +187,23 @@ fun StudentPanelScreen(
                     )
                 )
 
-                // Tab 3: Insights & Fiqh
+                // Tab 3: Library (Digital Library & Bookstore)
                 NavigationBarItem(
                     selected = selectedTab == 3,
                     onClick = { selectedTab = 3 },
                     icon = {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Article,
-                            contentDescription = "Insights",
+                            imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                            contentDescription = "Library",
                             tint = if (selectedTab == 3) GoldAccent else Color.White.copy(alpha = 0.7f)
                         )
                     },
                     label = {
                         Text(
-                            text = "Insights",
+                            text = "Library",
                             fontWeight = if (selectedTab == 3) FontWeight.Bold else FontWeight.Normal,
                             color = if (selectedTab == 3) GoldAccent else Color.White.copy(alpha = 0.7f),
-                            fontSize = 11.sp,
+                            fontSize = 10.5.sp,
                             maxLines = 1,
                             softWrap = false,
                             overflow = TextOverflow.Ellipsis
@@ -230,7 +230,7 @@ fun StudentPanelScreen(
                             text = "Profile",
                             fontWeight = if (selectedTab == 4) FontWeight.Bold else FontWeight.Normal,
                             color = if (selectedTab == 4) GoldAccent else Color.White.copy(alpha = 0.7f),
-                            fontSize = 11.sp,
+                            fontSize = 10.5.sp,
                             maxLines = 1,
                             softWrap = false,
                             overflow = TextOverflow.Ellipsis
@@ -256,18 +256,20 @@ fun StudentPanelScreen(
                     onNavigateToContact = onNavigateToContact,
                     onLogout = onLogout
                 )
-                1 -> CoursesMainScreen(
-                    myCoursesViewModel = myCoursesViewModel,
+                1 -> ExploreMainScreen(
                     catalogViewModel = coursesCatalogViewModel,
-                    teachersViewModel = teachersViewModel
-                )
-                2 -> LibraryMainScreen(
-                    libraryViewModel = libraryViewModel,
-                    bookstoreViewModel = bookstoreViewModel
-                )
-                3 -> CommunityMainScreen(
+                    teachersViewModel = teachersViewModel,
                     blogViewModel = blogViewModel,
                     fatwaViewModel = fatwaViewModel
+                )
+                2 -> MyLearningMainScreen(
+                    myCoursesViewModel = myCoursesViewModel,
+                    paymentsViewModel = paymentsViewModel,
+                    reviewsViewModel = reviewsViewModel
+                )
+                3 -> LibraryMainScreen(
+                    libraryViewModel = libraryViewModel,
+                    bookstoreViewModel = bookstoreViewModel
                 )
                 4 -> ProfileMainScreen(
                     profileViewModel = profileViewModel,
