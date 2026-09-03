@@ -3,6 +3,7 @@ package com.darsequran.academy.ui.home
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -227,6 +228,18 @@ fun HomeScreen(
                     // Smoothly scroll or focus on available courses
                 }
             )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 1. Home About Us Section Card (Matching HomeAbout.tsx)
+            HomeAboutCard(
+                onNavigateToAbout = onNavigateToAbout
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 2. 5+ Years of Experience Banner (Matching ExperienceBanner.tsx)
+            ExperienceBannerCard()
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -919,6 +932,186 @@ fun MasterQuranHeroCard(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun HomeAboutCard(
+    onNavigateToAbout: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        border = BorderStroke(1.5.dp, GoldAccent.copy(alpha = 0.45f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                        colors = listOf(
+                            Color(0xFF003527),
+                            Color(0xFF0C4A3E),
+                            Color(0xFF002117)
+                        )
+                    )
+                )
+                .padding(24.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Circular Book Icon Header
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .background(GoldAccent.copy(alpha = 0.15f), CircleShape)
+                        .border(1.dp, GoldAccent.copy(alpha = 0.4f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Book,
+                        contentDescription = "About Book",
+                        tint = GoldAccent,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Title
+                Text(
+                    text = buildAnnotatedString {
+                        append("About ")
+                        withStyle(style = SpanStyle(color = GoldAccent)) {
+                            append("Us")
+                        }
+                    },
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 26.sp
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Gold Accent Line
+                Box(
+                    modifier = Modifier
+                        .width(60.dp)
+                        .height(3.dp)
+                        .background(GoldAccent, shape = RoundedCornerShape(2.dp))
+                )
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Paragraph 1
+                Text(
+                    text = "Darse-Quran is a non-profit Sunni Islamic media group based in South Asia, serving from Jammu and Kashmir to spread the teaching of Islam worldwide through sound scholarship and da'wah.",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 13.5.sp,
+                        lineHeight = 21.sp,
+                        textAlign = TextAlign.Center
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Paragraph 2
+                Text(
+                    text = "Darse Quran Academy is our online platform for structured Quran and Islamic studies—with qualified teachers, classes are generally after Isha salah, and structured progress through each course.",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = Color.White.copy(alpha = 0.82f),
+                        fontSize = 13.sp,
+                        lineHeight = 20.sp,
+                        textAlign = TextAlign.Center
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // READ MORE Button -> Opens About Us Screen!
+                Button(
+                    onClick = onNavigateToAbout,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = GoldAccent,
+                        contentColor = Color(0xFF4E3D00)
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 28.dp, vertical = 12.dp)
+                ) {
+                    Text(
+                        text = "READ MORE",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.5.sp,
+                        letterSpacing = 1.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ExperienceBannerCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
+                        colors = listOf(
+                            Color(0xFFB38B22),
+                            Color(0xFFD4A017),
+                            Color(0xFFB38B22)
+                        )
+                    )
+                )
+                .padding(vertical = 18.dp, horizontal = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = "Experience",
+                    tint = Color.White.copy(alpha = 0.95f),
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = buildAnnotatedString {
+                        append("5+ Years ")
+                        withStyle(
+                            style = SpanStyle(
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 16.sp,
+                                color = Color.White.copy(alpha = 0.92f)
+                            )
+                        ) {
+                            append("of Experience")
+                        }
+                    },
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 23.sp
+                    )
+                )
             }
         }
     }
