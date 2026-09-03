@@ -68,6 +68,11 @@ import coil.compose.AsyncImage
 import com.darsequran.academy.R
 import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.data.model.AnnouncementDto
+import com.darsequran.academy.ui.theme.BrandPrimary
+import com.darsequran.academy.ui.theme.BrandPrimaryDark
+import com.darsequran.academy.ui.theme.BrandPrimaryHover
+import com.darsequran.academy.ui.theme.BrandPrimaryLight
+import com.darsequran.academy.ui.theme.BrandPrimaryLightAlt
 import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.EmeraldPrimary
 import com.darsequran.academy.ui.theme.GoldAccent
@@ -163,15 +168,15 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.35f)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                border = BorderStroke(1.5.dp, GoldAccent.copy(alpha = 0.5f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(
                             brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
-                                colors = listOf(EmeraldDark, Color(0xFF003527))
+                                colors = listOf(BrandPrimary, BrandPrimaryLight)
                             )
                         )
                         .padding(20.dp)
@@ -186,6 +191,7 @@ fun HomeScreen(
                                 textAlign = TextAlign.Start
                             )
                         )
+                        Spacer(modifier = Modifier.height(4.dp))
                         val displayName = if (userName.isNullOrBlank()) "Student" else userName
                         Text(
                             text = "Welcome back, $displayName",
@@ -198,7 +204,7 @@ fun HomeScreen(
                         Text(
                             text = "Continue your authentic Islamic learning journey today.",
                             style = MaterialTheme.typography.bodySmall.copy(
-                                color = Color.White.copy(alpha = 0.8f)
+                                color = Color.White.copy(alpha = 0.85f)
                             )
                         )
                     }
@@ -217,15 +223,15 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                    border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.4f)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    border = BorderStroke(1.5.dp, GoldAccent.copy(alpha = 0.6f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(
                                 brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                                    colors = listOf(EmeraldDark, Color(0xFF00291D), Color(0xFF001B13))
+                                    colors = listOf(BrandPrimaryLightAlt, BrandPrimaryHover)
                                 )
                             )
                             .padding(20.dp)
@@ -237,8 +243,8 @@ fun HomeScreen(
                             // Top Tag Pill
                             Surface(
                                 shape = RoundedCornerShape(20.dp),
-                                color = GoldAccent.copy(alpha = 0.15f),
-                                border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.5f))
+                                color = GoldAccent.copy(alpha = 0.2f),
+                                border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.6f))
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -268,7 +274,8 @@ fun HomeScreen(
                             Surface(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(14.dp),
-                                color = Color.Black.copy(alpha = 0.22f)
+                                color = Color(0xFF002418).copy(alpha = 0.45f),
+                                border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.3f))
                             ) {
                                 Text(
                                     text = arabicText,
@@ -289,7 +296,7 @@ fun HomeScreen(
                             Text(
                                 text = translation,
                                 style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = Color.White.copy(alpha = 0.92f),
+                                    color = Color.White.copy(alpha = 0.95f),
                                     textAlign = TextAlign.Center,
                                     fontStyle = FontStyle.Italic,
                                     lineHeight = 20.sp
@@ -306,7 +313,7 @@ fun HomeScreen(
                                 Text(
                                     text = "— $reference —",
                                     style = MaterialTheme.typography.labelSmall.copy(
-                                        color = EmeraldDark,
+                                        color = BrandPrimaryDark,
                                         fontWeight = FontWeight.Bold
                                     ),
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)

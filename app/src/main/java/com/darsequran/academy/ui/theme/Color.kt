@@ -2,11 +2,17 @@ package com.darsequran.academy.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Darse Quran Academy Brand Palette (Light Mode - Brand Colors)
-val EmeraldDark = Color(0xFF002117)
-val EmeraldPrimary = Color(0xFF003527)
-val EmeraldLight = Color(0xFF004D38)
-val EmeraldContainer = Color(0xFF0D4734)
+// Darse Quran Academy Brand Palette (Matching Web App globals.css)
+val BrandPrimary = Color(0xFF0F3D2E)
+val BrandPrimaryLight = Color(0xFF1A4D2E)
+val BrandPrimaryLightAlt = Color(0xFF0B4F35)
+val BrandPrimaryHover = Color(0xFF06301F)
+val BrandPrimaryDark = Color(0xFF003527)
+
+val EmeraldDark = Color(0xFF0A3326)
+val EmeraldPrimary = Color(0xFF0F3D2E)
+val EmeraldLight = Color(0xFF1A4D2E)
+val EmeraldContainer = Color(0xFF0B4F35)
 
 val GoldAccent = Color(0xFFD4AF37)
 val GoldLight = Color(0xFFE6C865)
