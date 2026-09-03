@@ -34,7 +34,7 @@ fun MyLearningMainScreen(
     reviewsViewModel: ReviewsViewModel
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("My Enrolled Courses", "My Payments & Receipts", "My Reviews & Feedback")
+    val tabs = listOf("Enrolled", "Payments", "Reviews")
 
     Surface(
         modifier = Modifier.fillMaxSize(),
