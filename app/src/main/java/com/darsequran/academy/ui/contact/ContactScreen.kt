@@ -369,34 +369,22 @@ fun GoogleMapsLocationCard(
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.LocationOn,
-                        contentDescription = "Map Location",
-                        tint = GoldAccent,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Academy Location Map",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontSize = 16.sp
-                        )
-                    )
-                }
-
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = "Map Location",
+                    tint = GoldAccent,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "Open App ↗",
-                    style = MaterialTheme.typography.labelSmall.copy(
+                    text = "Academy Location Map",
+                    style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        color = GoldAccent
-                    ),
-                    modifier = Modifier.clickable { onOpenMaps() }
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 16.sp
+                    )
                 )
             }
 
