@@ -415,7 +415,22 @@ fun GoogleMapsLocationCard(
                             webViewClient = WebViewClient()
                             settings.javaScriptEnabled = true
                             settings.domStorageEnabled = true
-                            loadUrl(GOOGLE_MAPS_EMBED_URL)
+                            val htmlData = """
+                                <!DOCTYPE html>
+                                <html>
+                                <head>
+                                  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                                  <style>
+                                    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #f8fafc; }
+                                    iframe { border: 0; width: 100%; height: 100%; }
+                                  </style>
+                                </head>
+                                <body>
+                                  <iframe src="$GOOGLE_MAPS_EMBED_URL" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                                </body>
+                                </html>
+                            """.trimIndent()
+                            loadDataWithBaseURL("https://www.google.com", htmlData, "text/html", "UTF-8", null)
                         }
                     },
                     modifier = Modifier.fillMaxSize()
