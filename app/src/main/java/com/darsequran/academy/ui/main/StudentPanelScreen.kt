@@ -39,8 +39,8 @@ import com.darsequran.academy.ui.home.HomeScreen
 import com.darsequran.academy.ui.home.HomeViewModel
 import com.darsequran.academy.ui.library.DigitalLibraryViewModel
 import com.darsequran.academy.ui.library.LibraryMainScreen
-import com.darsequran.academy.ui.mylearning.MyLearningMainScreen
 import com.darsequran.academy.ui.payments.PaymentsViewModel
+import com.darsequran.academy.ui.portal.PortalMainScreen
 import com.darsequran.academy.ui.profile.ProfileMainScreen
 import com.darsequran.academy.ui.profile.ProfileViewModel
 import com.darsequran.academy.ui.reviews.ReviewsViewModel
@@ -187,20 +187,20 @@ fun StudentPanelScreen(
                     )
                 )
 
-                // Tab 3: My Learning (User-Specific Workspace)
+                // Tab 3: Portal (Student Workspace: Enrolled, Receipts, Fee Waivers, Cart)
                 NavigationBarItem(
                     selected = selectedTab == 3,
                     onClick = { selectedTab = 3 },
                     icon = {
                         Icon(
                             imageVector = Icons.Default.School,
-                            contentDescription = "My Learning",
+                            contentDescription = "Portal",
                             tint = if (selectedTab == 3) GoldAccent else Color.White.copy(alpha = 0.7f)
                         )
                     },
                     label = {
                         Text(
-                            text = "Learning",
+                            text = "Portal",
                             fontWeight = if (selectedTab == 3) FontWeight.Bold else FontWeight.Normal,
                             color = if (selectedTab == 3) GoldAccent else Color.White.copy(alpha = 0.7f),
                             fontSize = 10.5.sp,
@@ -266,10 +266,9 @@ fun StudentPanelScreen(
                     libraryViewModel = libraryViewModel,
                     bookstoreViewModel = bookstoreViewModel
                 )
-                3 -> MyLearningMainScreen(
+                3 -> PortalMainScreen(
                     myCoursesViewModel = myCoursesViewModel,
-                    paymentsViewModel = paymentsViewModel,
-                    reviewsViewModel = reviewsViewModel
+                    paymentsViewModel = paymentsViewModel
                 )
                 4 -> ProfileMainScreen(
                     profileViewModel = profileViewModel,
