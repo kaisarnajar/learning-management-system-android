@@ -17,8 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,11 +25,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Book
-import androidx.compose.material.icons.filled.Campaign
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Event
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SupportAgent
@@ -39,51 +32,39 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.darsequran.academy.R
 import com.darsequran.academy.data.local.TokenManager
-import com.darsequran.academy.data.model.AnnouncementDto
 import com.darsequran.academy.ui.theme.BrandPrimary
 import com.darsequran.academy.ui.theme.BrandPrimaryDark
 import com.darsequran.academy.ui.theme.BrandPrimaryHover
 import com.darsequran.academy.ui.theme.BrandPrimaryLight
 import com.darsequran.academy.ui.theme.BrandPrimaryLightAlt
 import com.darsequran.academy.ui.theme.EmeraldDark
-import com.darsequran.academy.ui.theme.EmeraldPrimary
 import com.darsequran.academy.ui.theme.GoldAccent
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,9 +80,6 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val userName by tokenManager.userNameFlow.collectAsState(initial = "Student")
     val userEmail by tokenManager.userEmailFlow.collectAsState(initial = "")
-
-    var selectedAnnouncementForDetail by remember { mutableStateOf<AnnouncementDto?>(null) }
-    var showAllAnnouncementsSheet by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -222,16 +200,14 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Master Quran & Islamic Sciences Hero Card (Matching HomeHero.tsx)
+            // Master Quran & Islamic Sciences Hero Card
             MasterQuranHeroCard(
-                onExploreCoursesClick = {
-                    // Smoothly scroll or focus on available courses
-                }
+                onExploreCoursesClick = {}
             )
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Daily Wisdom Card (Placing directly after Master Quran card)
+            // Daily Wisdom Card
             uiState.inspiration?.let { insp ->
                 val arabicText = insp.arabicText ?: "فَإِنَّ مَعَ الْعُسْرِ يُسْرًا"
                 val translation = insp.englishTranslation ?: "For indeed, with hardship will be ease."
@@ -344,358 +320,15 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Academy Announcements Section (Placed ABOVE About Us Card)
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Campaign,
-                        contentDescription = "Announcements",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Academy Announcements",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    )
-                }
-
-                // "View All" Button
-                if (uiState.announcements.isNotEmpty()) {
-                    TextButton(onClick = { showAllAnnouncementsSheet = true }) {
-                        Text(
-                            text = "View All ↗",
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = GoldAccent
-                            )
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            if (uiState.isLoadingAnnouncements) {
-                Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                }
-            } else if (uiState.announcements.isNotEmpty()) {
-                uiState.announcements.take(2).forEach { notice ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 10.dp)
-                            .clickable { selectedAnnouncementForDetail = notice },
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = notice.title,
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontSize = 16.sp
-                                    ),
-                                    modifier = Modifier.weight(1f)
-                                )
-
-                                notice.createdAt?.let { date ->
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = date,
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
-                                        )
-                                    )
-                                }
-                            }
-
-                            notice.body?.let { body ->
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Text(
-                                    text = body,
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
-                                        lineHeight = 18.sp
-                                    ),
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // 1. Home About Us Section Card (Matching HomeAbout.tsx)
+            // Home About Us Section Card
             HomeAboutCard(
                 onNavigateToAbout = onNavigateToAbout
             )
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // 2. 5+ Years of Experience Banner (Matching ExperienceBanner.tsx)
+            // 5+ Years of Experience Banner
             ExperienceBannerCard()
-        }
-    }
-
-    // Modal Bottom Sheet: All Announcements
-    if (showAllAnnouncementsSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showAllAnnouncementsSheet = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Campaign,
-                            contentDescription = "Announcements",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "All Announcements",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        )
-                    }
-
-                    IconButton(onClick = { showAllAnnouncementsSheet = false }) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Close")
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(uiState.announcements) { notice ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    selectedAnnouncementForDetail = notice
-                                    showAllAnnouncementsSheet = false
-                                },
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                            shape = RoundedCornerShape(14.dp)
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = notice.title,
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            fontSize = 16.sp
-                                        ),
-                                        modifier = Modifier.weight(1f)
-                                    )
-
-                                    notice.createdAt?.let { date ->
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = date,
-                                            style = MaterialTheme.typography.labelSmall.copy(
-                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
-                                            )
-                                        )
-                                    }
-                                }
-
-                                notice.body?.let { body ->
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    Text(
-                                        text = body,
-                                        style = MaterialTheme.typography.bodySmall.copy(
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
-                                            lineHeight = 18.sp
-                                        )
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-        }
-    }
-
-    // Modal Bottom Sheet: Announcement Full Detail
-    selectedAnnouncementForDetail?.let { notice ->
-        ModalBottomSheet(
-            onDismissRequest = { selectedAnnouncementForDetail = null },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = EmeraldDark.copy(alpha = 0.1f)
-                ) {
-                    Text(
-                        text = notice.location ?: "ACADEMY ANNOUNCEMENT",
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        ),
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = notice.title,
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    notice.createdAt?.let { date ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Event,
-                                contentDescription = "Date",
-                                tint = GoldAccent,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = date,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            )
-                        }
-                    }
-                    notice.createdBy?.name?.let { author ->
-                        Spacer(modifier = Modifier.width(14.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Author",
-                                tint = GoldAccent,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = author,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                notice.body?.let { bodyText ->
-                    Text(
-                        text = bodyText,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
-                            lineHeight = 22.sp
-                        )
-                    )
-                }
-
-                if (!notice.images.isNullOrEmpty()) {
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Text(
-                        text = "Attached Media & Images",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    notice.images.forEach { img ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 12.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Column(modifier = Modifier.padding(10.dp)) {
-                                AsyncImage(
-                                    model = img.imagePath,
-                                    contentDescription = img.caption ?: "Attached Media",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(180.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                )
-                                img.caption?.let { captionText ->
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    Text(
-                                        text = captionText,
-                                        style = MaterialTheme.typography.bodySmall.copy(
-                                            fontStyle = FontStyle.Italic,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
-                                        ),
-                                        modifier = Modifier.padding(horizontal = 4.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-            }
         }
     }
 }
