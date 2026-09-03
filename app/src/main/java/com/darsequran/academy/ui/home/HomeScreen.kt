@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Campaign
@@ -31,11 +32,15 @@ import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SupportAgent
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -58,10 +63,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -210,6 +218,15 @@ fun HomeScreen(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Master Quran & Islamic Sciences Hero Card (Matching HomeHero.tsx)
+            MasterQuranHeroCard(
+                onExploreCoursesClick = {
+                    // Smoothly scroll or focus on available courses
+                }
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -413,7 +430,7 @@ fun HomeScreen(
                     )
                 }
 
-                // 1. "View All" Button
+                // "View All" Button
                 if (uiState.announcements.isNotEmpty()) {
                     TextButton(onClick = { showAllAnnouncementsSheet = true }) {
                         Text(
@@ -434,9 +451,7 @@ fun HomeScreen(
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             } else if (uiState.announcements.isNotEmpty()) {
-                // 1. Show only a few announcements on Home page (e.g. 2)
                 uiState.announcements.take(2).forEach { notice ->
-                    // 2. Removed priority tag ("High" etc.) & 3. Clickable to open details
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -595,7 +610,7 @@ fun HomeScreen(
         }
     }
 
-    // 3. Modal Bottom Sheet: Announcement Full Detail with attached images
+    // Modal Bottom Sheet: Announcement Full Detail
     selectedAnnouncementForDetail?.let { notice ->
         ModalBottomSheet(
             onDismissRequest = { selectedAnnouncementForDetail = null },
@@ -685,7 +700,6 @@ fun HomeScreen(
                     )
                 }
 
-                // Render Attached Media & Images if present
                 if (!notice.images.isNullOrEmpty()) {
                     Spacer(modifier = Modifier.height(20.dp))
                     Text(
@@ -732,6 +746,179 @@ fun HomeScreen(
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun MasterQuranHeroCard(
+    onExploreCoursesClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        border = BorderStroke(1.5.dp, GoldAccent.copy(alpha = 0.4f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                        colors = listOf(
+                            Color(0xFF003527),
+                            Color(0xFF0C4A3E),
+                            Color(0xFF002117)
+                        )
+                    )
+                )
+                .padding(20.dp)
+        ) {
+            Column {
+                // Main Headline
+                Text(
+                    text = buildAnnotatedString {
+                        append("Master the Quran and\n")
+                        withStyle(style = SpanStyle(color = Color(0xFF95D3BA))) {
+                            append("Islamic Sciences\n")
+                        }
+                        append("with Excellence")
+                    },
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 24.sp,
+                        lineHeight = 32.sp
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Subtitle Description
+                Text(
+                    text = "Join Darse Quran Academy to study Quran, Tajweed, Islamic Jurisprudence, Hadith, Arabic Language, and more with qualified teachers from anywhere in the world. Embark on a journey of spiritual and intellectual growth.",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = Color.White.copy(alpha = 0.88f),
+                        fontSize = 13.5.sp,
+                        lineHeight = 20.sp
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // CTA Button
+                Button(
+                    onClick = onExploreCoursesClick,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = GoldAccent,
+                        contentColor = Color(0xFF4E3D00)
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Explore Courses",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = "Explore",
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Glass Card Container
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.White.copy(alpha = 0.08f),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(18.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 21.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = "(THE BEST AMONG YOU ARE THOSE WHO LEARN THE QURAN AND TEACH IT)",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 9.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 1.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .width(48.dp)
+                                .height(2.dp)
+                                .background(GoldAccent)
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "Start Your Journey Today",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 17.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        HorizontalDivider(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = Color.White.copy(alpha = 0.12f),
+                            thickness = 1.dp
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = "Star",
+                                tint = GoldAccent,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Connecting Hearts with the Quran",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    color = GoldAccent,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.5.sp
+                                )
+                            )
+                        }
+                    }
+                }
             }
         }
     }
