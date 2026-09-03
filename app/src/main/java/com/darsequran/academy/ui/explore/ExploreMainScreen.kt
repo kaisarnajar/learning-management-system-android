@@ -37,7 +37,7 @@ fun ExploreMainScreen(
     fatwaViewModel: FatwaViewModel
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Courses Catalog", "Faculty & Teachers", "Articles & Blogs", "Fatwa & Fiqh Q&A")
+    val tabs = listOf("Courses", "Teachers", "Blog", "Fatwa")
 
     Surface(
         modifier = Modifier.fillMaxSize(),
