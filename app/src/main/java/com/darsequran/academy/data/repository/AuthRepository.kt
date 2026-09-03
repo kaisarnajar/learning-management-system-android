@@ -478,10 +478,45 @@ class AuthRepository(
 
     private fun getFallbackAnnouncements(search: String?): com.darsequran.academy.data.model.AnnouncementsResponse {
         val list = listOf(
-            com.darsequran.academy.data.model.AnnouncementDto("ann-1", "Annual Hifz Graduation Ceremony", "Join us to celebrate students who completed their Hifz this academic year. Families and guests are welcome after Maghrib.", "Main campus, Srinagar", "Ceremony", "High", "15 Rajab 1447 / 5 Jan 2026"),
-            com.darsequran.academy.data.model.AnnouncementDto("ann-2", "Visiting Scholar: Tajweed Workshop", "Moulana Farid Hassan will lead a two-day Tajweed intensive for intermediate students. Registration is open in the admin office.", "Online + campus lab", "Workshop", "Important", "12–13 January 2026"),
-            com.darsequran.academy.data.model.AnnouncementDto("ann-3", "Ramadan Class Timetable Released", "Revised class timings for Ramadan are now available. Evening batches start 45 minutes after Iftar.", "All campuses", "Timetable", "Normal", "February 2026"),
-            com.darsequran.academy.data.model.AnnouncementDto("ann-4", "New Nazira Batch — Open Enrollment", "A fresh Nazira batch for beginners starts next month. Limited seats; complete your profile before requesting enrollment.", "Online", "Enrollment", "High", "March 2026")
+            com.darsequran.academy.data.model.AnnouncementDto(
+                id = "ann-1",
+                title = "Annual Hifz Graduation Ceremony",
+                body = "Join us to celebrate students who completed their Hifz this academic year. Families, guests, and community members are cordially invited to attend the graduation gathering after Maghrib prayers.",
+                location = "Main Campus Auditorium, Srinagar",
+                createdAt = "15 Rajab 1447 / 5 Jan 2026",
+                createdBy = com.darsequran.academy.data.model.AnnouncementAuthorDto("Academy Admin"),
+                images = listOf(
+                    com.darsequran.academy.data.model.AnnouncementImageDto("img-1", "https://picsum.photos/seed/hifz1/800/400", "Graduation Ceremony Stage & Certificates"),
+                    com.darsequran.academy.data.model.AnnouncementImageDto("img-2", "https://picsum.photos/seed/hifz2/800/400", "Scholar Address & Recitation Session")
+                )
+            ),
+            com.darsequran.academy.data.model.AnnouncementDto(
+                id = "ann-2",
+                title = "Visiting Scholar: Tajweed Workshop",
+                body = "Moulana Farid Hassan will lead an intensive two-day Tajweed workshop for intermediate and advanced students. Registration is open at the admin office.",
+                location = "Online & Campus Audio Lab",
+                createdAt = "12–13 January 2026",
+                createdBy = com.darsequran.academy.data.model.AnnouncementAuthorDto("Tajweed Department"),
+                images = listOf(
+                    com.darsequran.academy.data.model.AnnouncementImageDto("img-3", "https://picsum.photos/seed/tajweed1/800/400", "Tajweed Makhraj & Sifaat Chart")
+                )
+            ),
+            com.darsequran.academy.data.model.AnnouncementDto(
+                id = "ann-3",
+                title = "Ramadan Class Timetable Released",
+                body = "Revised class timings for the holy month of Ramadan have been published. All evening live sessions will start 45 minutes after Iftar.",
+                location = "All Virtual & On-Campus Batches",
+                createdAt = "February 2026",
+                createdBy = com.darsequran.academy.data.model.AnnouncementAuthorDto("Academic Office")
+            ),
+            com.darsequran.academy.data.model.AnnouncementDto(
+                id = "ann-4",
+                title = "New Nazira Batch — Open Enrollment",
+                body = "A fresh Nazira batch for beginners starts next month. Seats are limited; please complete your student profile before requesting enrollment.",
+                location = "Online Portal",
+                createdAt = "March 2026",
+                createdBy = com.darsequran.academy.data.model.AnnouncementAuthorDto("Admissions Desk")
+            )
         ).filter { item ->
             search.isNullOrBlank() || item.title.contains(search, ignoreCase = true) || (item.body?.contains(search, ignoreCase = true) == true)
         }

@@ -101,5 +101,8 @@ dependencies {
     implementation(libs.androidx.credentials.play.services)
     implementation(libs.google.id)
 
+    // Coil Image Loading
+    implementation(libs.coil.compose)
+
     debugImplementation(libs.androidx.ui.tooling)
 }
