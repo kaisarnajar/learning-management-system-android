@@ -1,5 +1,11 @@
 package com.darsequran.academy.ui.navigation
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -25,7 +31,31 @@ fun AppNavGraph(
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Splash.route
+        startDestination = Screen.Splash.route,
+        enterTransition = {
+            slideInHorizontally(
+                initialOffsetX = { fullWidth -> fullWidth },
+                animationSpec = tween(durationMillis = 340, easing = FastOutSlowInEasing)
+            ) + fadeIn(animationSpec = tween(durationMillis = 340))
+        },
+        exitTransition = {
+            slideOutHorizontally(
+                targetOffsetX = { fullWidth -> -fullWidth / 4 },
+                animationSpec = tween(durationMillis = 340, easing = FastOutSlowInEasing)
+            ) + fadeOut(animationSpec = tween(durationMillis = 340))
+        },
+        popEnterTransition = {
+            slideInHorizontally(
+                initialOffsetX = { fullWidth -> -fullWidth / 4 },
+                animationSpec = tween(durationMillis = 340, easing = FastOutSlowInEasing)
+            ) + fadeIn(animationSpec = tween(durationMillis = 340))
+        },
+        popExitTransition = {
+            slideOutHorizontally(
+                targetOffsetX = { fullWidth -> fullWidth },
+                animationSpec = tween(durationMillis = 340, easing = FastOutSlowInEasing)
+            ) + fadeOut(animationSpec = tween(durationMillis = 340))
+        }
     ) {
         composable(Screen.Splash.route) {
             SplashScreen(
