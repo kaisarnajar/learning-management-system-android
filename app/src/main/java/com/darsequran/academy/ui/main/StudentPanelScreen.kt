@@ -160,20 +160,20 @@ fun StudentPanelScreen(
                     )
                 )
 
-                // Tab 2: My Learning (User-Specific Workspace)
+                // Tab 2: Library (Digital Library & Bookstore)
                 NavigationBarItem(
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 },
                     icon = {
                         Icon(
-                            imageVector = Icons.Default.School,
-                            contentDescription = "My Learning",
+                            imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                            contentDescription = "Library",
                             tint = if (selectedTab == 2) GoldAccent else Color.White.copy(alpha = 0.7f)
                         )
                     },
                     label = {
                         Text(
-                            text = "My Learning",
+                            text = "Library",
                             fontWeight = if (selectedTab == 2) FontWeight.Bold else FontWeight.Normal,
                             color = if (selectedTab == 2) GoldAccent else Color.White.copy(alpha = 0.7f),
                             fontSize = 10.5.sp,
@@ -187,20 +187,20 @@ fun StudentPanelScreen(
                     )
                 )
 
-                // Tab 3: Library (Digital Library & Bookstore)
+                // Tab 3: My Learning (User-Specific Workspace)
                 NavigationBarItem(
                     selected = selectedTab == 3,
                     onClick = { selectedTab = 3 },
                     icon = {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.MenuBook,
-                            contentDescription = "Library",
+                            imageVector = Icons.Default.School,
+                            contentDescription = "My Learning",
                             tint = if (selectedTab == 3) GoldAccent else Color.White.copy(alpha = 0.7f)
                         )
                     },
                     label = {
                         Text(
-                            text = "Library",
+                            text = "My Learning",
                             fontWeight = if (selectedTab == 3) FontWeight.Bold else FontWeight.Normal,
                             color = if (selectedTab == 3) GoldAccent else Color.White.copy(alpha = 0.7f),
                             fontSize = 10.5.sp,
@@ -262,14 +262,14 @@ fun StudentPanelScreen(
                     blogViewModel = blogViewModel,
                     fatwaViewModel = fatwaViewModel
                 )
-                2 -> MyLearningMainScreen(
+                2 -> LibraryMainScreen(
+                    libraryViewModel = libraryViewModel,
+                    bookstoreViewModel = bookstoreViewModel
+                )
+                3 -> MyLearningMainScreen(
                     myCoursesViewModel = myCoursesViewModel,
                     paymentsViewModel = paymentsViewModel,
                     reviewsViewModel = reviewsViewModel
-                )
-                3 -> LibraryMainScreen(
-                    libraryViewModel = libraryViewModel,
-                    bookstoreViewModel = bookstoreViewModel
                 )
                 4 -> ProfileMainScreen(
                     profileViewModel = profileViewModel,
