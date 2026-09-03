@@ -23,12 +23,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ContactSupport
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Campaign
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -112,7 +112,7 @@ fun HomeScreen(
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Info,
+                                imageVector = Icons.Default.School,
                                 contentDescription = "About Us",
                                 tint = GoldAccent,
                                 modifier = Modifier.size(22.dp)
@@ -124,7 +124,7 @@ fun HomeScreen(
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ContactSupport,
+                                imageVector = Icons.Default.SupportAgent,
                                 contentDescription = "Contact Us",
                                 tint = GoldAccent,
                                 modifier = Modifier.size(22.dp)
