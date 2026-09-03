@@ -46,8 +46,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -108,7 +110,9 @@ fun LoginScreen(
                     Image(
                         painter = painterResource(id = R.drawable.logo),
                         contentDescription = "Darse Quran Academy Logo",
-                        modifier = Modifier.size(72.dp)
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(CircleShape)
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))

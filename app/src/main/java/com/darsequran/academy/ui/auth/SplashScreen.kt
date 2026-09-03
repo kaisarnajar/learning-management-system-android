@@ -16,8 +16,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -58,7 +60,9 @@ fun SplashScreen(
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = "Darse Quran Academy Logo",
-                modifier = Modifier.size(100.dp)
+                modifier = Modifier
+                    .size(110.dp)
+                    .clip(CircleShape)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
