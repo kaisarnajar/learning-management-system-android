@@ -1,4 +1,4 @@
-package com.darsequran.academy.ui.mylearning
+package com.darsequran.academy.ui.portal
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,23 +18,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.darsequran.academy.ui.bookstore.BookstoreCartScreen
 import com.darsequran.academy.ui.courses.MyCoursesScreen
 import com.darsequran.academy.ui.courses.MyCoursesViewModel
+import com.darsequran.academy.ui.payments.FeeWaiverScreen
 import com.darsequran.academy.ui.payments.PaymentsScreen
 import com.darsequran.academy.ui.payments.PaymentsViewModel
-import com.darsequran.academy.ui.reviews.ReviewsScreen
-import com.darsequran.academy.ui.reviews.ReviewsViewModel
 import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.GoldAccent
 
 @Composable
-fun MyLearningMainScreen(
+fun PortalMainScreen(
     myCoursesViewModel: MyCoursesViewModel,
-    paymentsViewModel: PaymentsViewModel,
-    reviewsViewModel: ReviewsViewModel
+    paymentsViewModel: PaymentsViewModel
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Enrolled", "Payments", "Reviews")
+    val tabs = listOf("Enrolled", "Fee Receipts", "Fee Waivers", "Cart")
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -71,7 +70,8 @@ fun MyLearningMainScreen(
             when (selectedTabIndex) {
                 0 -> MyCoursesScreen(viewModel = myCoursesViewModel)
                 1 -> PaymentsScreen(viewModel = paymentsViewModel)
-                2 -> ReviewsScreen(viewModel = reviewsViewModel)
+                2 -> FeeWaiverScreen()
+                3 -> BookstoreCartScreen()
             }
         }
     }
