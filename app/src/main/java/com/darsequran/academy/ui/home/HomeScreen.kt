@@ -231,19 +231,7 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 1. Home About Us Section Card (Matching HomeAbout.tsx)
-            HomeAboutCard(
-                onNavigateToAbout = onNavigateToAbout
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // 2. 5+ Years of Experience Banner (Matching ExperienceBanner.tsx)
-            ExperienceBannerCard()
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Daily Wisdom Card
+            // Daily Wisdom Card (Placing directly after Master Quran card)
             uiState.inspiration?.let { insp ->
                 val arabicText = insp.arabicText ?: "فَإِنَّ مَعَ الْعُسْرِ يُسْرًا"
                 val translation = insp.englishTranslation ?: "For indeed, with hardship will be ease."
@@ -353,6 +341,18 @@ fun HomeScreen(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 1. Home About Us Section Card (Matching HomeAbout.tsx)
+            HomeAboutCard(
+                onNavigateToAbout = onNavigateToAbout
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 2. 5+ Years of Experience Banner (Matching ExperienceBanner.tsx)
+            ExperienceBannerCard()
 
 
 
