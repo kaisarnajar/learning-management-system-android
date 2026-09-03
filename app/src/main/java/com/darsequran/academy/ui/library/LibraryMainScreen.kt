@@ -28,7 +28,7 @@ fun LibraryMainScreen(
     bookstoreViewModel: BookstoreViewModel
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Digital Library", "Bookstore & Quran")
+    val tabs = listOf("Digital Library", "Bookstore")
 
     Surface(
         modifier = Modifier.fillMaxSize(),
