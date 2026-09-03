@@ -344,19 +344,7 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // 1. Home About Us Section Card (Matching HomeAbout.tsx)
-            HomeAboutCard(
-                onNavigateToAbout = onNavigateToAbout
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // 2. 5+ Years of Experience Banner (Matching ExperienceBanner.tsx)
-            ExperienceBannerCard()
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Academy Announcements Section
+            // Academy Announcements Section (Placed ABOVE About Us Card)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -393,7 +381,7 @@ fun HomeScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             if (uiState.isLoadingAnnouncements) {
                 Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
@@ -453,6 +441,18 @@ fun HomeScreen(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // 1. Home About Us Section Card (Matching HomeAbout.tsx)
+            HomeAboutCard(
+                onNavigateToAbout = onNavigateToAbout
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // 2. 5+ Years of Experience Banner (Matching ExperienceBanner.tsx)
+            ExperienceBannerCard()
         }
     }
 
