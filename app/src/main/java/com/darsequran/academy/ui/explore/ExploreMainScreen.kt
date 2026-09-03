@@ -18,10 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.darsequran.academy.ui.blog.BlogScreen
 import com.darsequran.academy.ui.blog.BlogViewModel
-import com.darsequran.academy.ui.community.CommunityMainScreen
 import com.darsequran.academy.ui.courses.CoursesCatalogScreen
 import com.darsequran.academy.ui.courses.CoursesCatalogViewModel
+import com.darsequran.academy.ui.fatwa.FatwaScreen
 import com.darsequran.academy.ui.fatwa.FatwaViewModel
 import com.darsequran.academy.ui.teachers.TeachersScreen
 import com.darsequran.academy.ui.teachers.TeachersViewModel
@@ -36,7 +37,7 @@ fun ExploreMainScreen(
     fatwaViewModel: FatwaViewModel
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("All Available Courses", "Faculty & Instructors", "Articles & Fatwa")
+    val tabs = listOf("Courses Catalog", "Faculty & Teachers", "Articles & Blogs", "Fatwa & Fiqh Q&A")
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -73,7 +74,8 @@ fun ExploreMainScreen(
             when (selectedTabIndex) {
                 0 -> CoursesCatalogScreen(viewModel = catalogViewModel, onBackPress = {})
                 1 -> TeachersScreen(viewModel = teachersViewModel, onBackPress = {})
-                2 -> CommunityMainScreen(blogViewModel = blogViewModel, fatwaViewModel = fatwaViewModel)
+                2 -> BlogScreen(viewModel = blogViewModel, onBackPress = {})
+                3 -> FatwaScreen(viewModel = fatwaViewModel, onBackPress = {})
             }
         }
     }
