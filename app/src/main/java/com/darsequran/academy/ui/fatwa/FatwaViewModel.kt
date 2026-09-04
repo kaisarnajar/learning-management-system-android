@@ -49,8 +49,10 @@ class FatwaViewModel(
             val categoryParam = if (_uiState.value.selectedCategory == "All") null else _uiState.value.selectedCategory
             when (val result = authRepository.getFatwas(page = page, pageSize = pageSize, search = searchParam, category = categoryParam)) {
                 is NetworkResult.Success -> {
-                    val list = result.data.data ?: emptyList()
-                    val totalCount = result.data.totalCount ?: list.size
+                    val apiList = result.data.data ?: emptyList()
+                    // TODO: Remove fake fallback data once server API endpoints return live data
+                    val list = if (apiList.isEmpty()) com.darsequran.academy.data.mock.FakeData.fakeFatwas else apiList
+                    val totalCount = if (apiList.isEmpty()) list.size else (result.data.totalCount ?: list.size)
                     val totalPages = kotlin.math.max(1, kotlin.math.ceil(totalCount.toDouble() / pageSize.toDouble()).toInt())
                     val apiCategories = list.mapNotNull { it.category.trim() }
                         .filter { it.isNotBlank() }
@@ -61,7 +63,7 @@ class FatwaViewModel(
                         state.copy(
                             fatwas = list,
                             categories = if (apiCategories.isEmpty()) listOf("All", "Fiqh & Worship", "Tajweed & Salah", "Zakat & Finance", "General") else dynamicCategories,
-                            filteredFatwas = list,
+                            filteredFatwas = filterFatwas(list, search, state.selectedCategory),
                             currentPage = page,
                             totalCount = totalCount,
                             totalPages = totalPages,
@@ -70,7 +72,19 @@ class FatwaViewModel(
                     }
                 }
                 is NetworkResult.Error -> {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
+                    // TODO: Remove fake fallback data once server API endpoints return live data
+                    val list = com.darsequran.academy.data.mock.FakeData.fakeFatwas
+                    val apiCategories = list.mapNotNull { it.category.trim() }.filter { it.isNotBlank() }.distinct()
+                    _uiState.update { state ->
+                        state.copy(
+                            fatwas = list,
+                            categories = listOf("All") + apiCategories,
+                            filteredFatwas = filterFatwas(list, search, state.selectedCategory),
+                            totalCount = list.size,
+                            totalPages = 1,
+                            isLoading = false
+                        )
+                    }
                 }
                 else -> {
                     _uiState.update { it.copy(isLoading = false) }

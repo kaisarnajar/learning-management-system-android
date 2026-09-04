@@ -45,8 +45,10 @@ class BlogViewModel(
             val pageSize = _uiState.value.pageSize
             when (val result = authRepository.getBlogPosts(page = page, pageSize = pageSize, search = searchParam)) {
                 is NetworkResult.Success -> {
-                    val posts = result.data.data ?: emptyList()
-                    val totalCount = result.data.totalCount ?: posts.size
+                    val apiPosts = result.data.data ?: emptyList()
+                    // TODO: Remove fake fallback data once server API endpoints return live data
+                    val posts = if (apiPosts.isEmpty()) com.darsequran.academy.data.mock.FakeData.fakeBlogPosts else apiPosts
+                    val totalCount = if (apiPosts.isEmpty()) posts.size else (result.data.totalCount ?: posts.size)
                     val totalPages = kotlin.math.max(1, kotlin.math.ceil(totalCount.toDouble() / pageSize.toDouble()).toInt())
                     val apiCategories = posts.mapNotNull { it.category?.trim() }
                         .filter { it.isNotBlank() }
@@ -56,8 +58,8 @@ class BlogViewModel(
                     _uiState.update { state ->
                         state.copy(
                             posts = posts,
-                            categories = if (apiCategories.isEmpty()) listOf("All", "Tajweed Tips", "Spiritual Growth", "Reflections") else dynamicCategories,
-                            filteredPosts = posts,
+                            categories = if (apiCategories.isEmpty()) listOf("All", "Tajweed Tips", "Spiritual Growth", "Reflections", "Adab & Ethics") else dynamicCategories,
+                            filteredPosts = filterPosts(posts, search, state.selectedCategory),
                             currentPage = page,
                             totalCount = totalCount,
                             totalPages = totalPages,
@@ -66,7 +68,19 @@ class BlogViewModel(
                     }
                 }
                 is NetworkResult.Error -> {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
+                    // TODO: Remove fake fallback data once server API endpoints return live data
+                    val posts = com.darsequran.academy.data.mock.FakeData.fakeBlogPosts
+                    val apiCategories = posts.mapNotNull { it.category?.trim() }.filter { it.isNotBlank() }.distinct()
+                    _uiState.update { state ->
+                        state.copy(
+                            posts = posts,
+                            categories = listOf("All") + apiCategories,
+                            filteredPosts = filterPosts(posts, search, state.selectedCategory),
+                            totalCount = posts.size,
+                            totalPages = 1,
+                            isLoading = false
+                        )
+                    }
                 }
                 else -> {
                     _uiState.update { it.copy(isLoading = false) }
