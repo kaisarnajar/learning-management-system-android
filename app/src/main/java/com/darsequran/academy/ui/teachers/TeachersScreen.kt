@@ -138,62 +138,10 @@ fun TeachersScreen(
 
     // Teacher Detail Sheet Modal
     uiState.selectedTeacherDetail?.let { teacher ->
-        ModalBottomSheet(
-            onDismissRequest = { viewModel.selectTeacherDetail(null) },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(72.dp)
-                        .background(EmeraldDark, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = teacher.initials ?: teacher.name.take(2).uppercase(),
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = GoldAccent,
-                            fontSize = 26.sp
-                        )
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = teacher.name,
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                )
-
-                teacher.specialization?.let { spec ->
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = GoldAccent.copy(alpha = 0.2f)
-                    ) {
-                        Text(
-                            text = spec,
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = EmeraldDark
-                            ),
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-        }
+        TeacherDetailBottomSheet(
+            teacher = teacher,
+            onDismissRequest = { viewModel.selectTeacherDetail(null) }
+        )
     }
 }
 
