@@ -43,14 +43,16 @@ class AnnouncementsViewModel(
             val pageSize = _uiState.value.pageSize
             when (val result = authRepository.getAnnouncements(page = page, pageSize = pageSize, search = searchParam)) {
                 is NetworkResult.Success -> {
-                    val list = result.data.data ?: emptyList()
-                    val totalCount = result.data.totalCount ?: list.size
+                    val apiList = result.data.data ?: emptyList()
+                    // TODO: Remove fake fallback data once server API endpoints return live data
+                    val list = if (apiList.isEmpty()) com.darsequran.academy.data.mock.FakeData.fakeAnnouncements else apiList
+                    val totalCount = if (apiList.isEmpty()) list.size else (result.data.totalCount ?: list.size)
                     val totalPages = kotlin.math.max(1, kotlin.math.ceil(totalCount.toDouble() / pageSize.toDouble()).toInt())
 
                     _uiState.update { state ->
                         state.copy(
                             announcements = list,
-                            filteredAnnouncements = list,
+                            filteredAnnouncements = filterAnnouncements(list, search),
                             currentPage = page,
                             totalCount = totalCount,
                             totalPages = totalPages,
@@ -59,7 +61,17 @@ class AnnouncementsViewModel(
                     }
                 }
                 is NetworkResult.Error -> {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
+                    // TODO: Remove fake fallback data once server API endpoints return live data
+                    val list = com.darsequran.academy.data.mock.FakeData.fakeAnnouncements
+                    _uiState.update {
+                        it.copy(
+                            announcements = list,
+                            filteredAnnouncements = filterAnnouncements(list, search),
+                            totalCount = list.size,
+                            totalPages = 1,
+                            isLoading = false
+                        )
+                    }
                 }
                 else -> {
                     _uiState.update { it.copy(isLoading = false) }

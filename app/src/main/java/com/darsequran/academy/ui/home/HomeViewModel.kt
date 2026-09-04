@@ -62,15 +62,24 @@ class HomeViewModel(
             _uiState.update { it.copy(isLoadingAnnouncements = true) }
             when (val result = authRepository.getAnnouncements()) {
                 is NetworkResult.Success -> {
+                    val apiList = result.data.data ?: emptyList()
+                    // TODO: Remove fake fallback data once server API endpoints return live data
+                    val list = if (apiList.isEmpty()) com.darsequran.academy.data.mock.FakeData.fakeAnnouncements else apiList
                     _uiState.update {
                         it.copy(
                             isLoadingAnnouncements = false,
-                            announcements = result.data.data ?: emptyList()
+                            announcements = list
                         )
                     }
                 }
                 is NetworkResult.Error -> {
-                    _uiState.update { it.copy(isLoadingAnnouncements = false) }
+                    // TODO: Remove fake fallback data once server API endpoints return live data
+                    _uiState.update {
+                        it.copy(
+                            isLoadingAnnouncements = false,
+                            announcements = com.darsequran.academy.data.mock.FakeData.fakeAnnouncements
+                        )
+                    }
                 }
                 is NetworkResult.Loading -> {}
             }
