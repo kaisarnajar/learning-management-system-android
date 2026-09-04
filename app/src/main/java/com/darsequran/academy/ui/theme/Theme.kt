@@ -63,6 +63,7 @@ fun DarseQuranAcademyTheme(
 
             // Dynamic status bar background: EmeraldDark in light mode, DarkBackground (#121212) in dark mode
             val statusBarColor = if (darkTheme) DarkBackground else EmeraldDark
+            @Suppress("DEPRECATION")
             window.statusBarColor = statusBarColor.toArgb()
 
             // Dynamic status bar icons:
