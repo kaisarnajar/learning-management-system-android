@@ -19,6 +19,10 @@ data class BookstoreUiState(
     val searchQuery: String = "",
     val selectedCategory: String = "All",
     val selectedBookDetail: BookstoreItemDto? = null,
+    val currentPage: Int = 1,
+    val totalPages: Int = 1,
+    val totalCount: Int = 0,
+    val pageSize: Int = 20,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
@@ -34,12 +38,16 @@ class BookstoreViewModel(
         loadBookstore()
     }
 
-    fun loadBookstore() {
+    fun loadBookstore(page: Int = _uiState.value.currentPage, search: String = _uiState.value.searchQuery) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = authRepository.getBookstoreItems()) {
+            val searchParam = search.trim().ifEmpty { null }
+            val pageSize = _uiState.value.pageSize
+            when (val result = authRepository.getBookstoreItems(page = page, pageSize = pageSize, search = searchParam)) {
                 is NetworkResult.Success -> {
                     val list = result.data.data ?: emptyList()
+                    val totalCount = result.data.totalCount ?: list.size
+                    val totalPages = kotlin.math.max(1, kotlin.math.ceil(totalCount.toDouble() / pageSize.toDouble()).toInt())
                     val apiCategories = list.mapNotNull { it.category?.trim() }
                         .filter { it.isNotBlank() }
                         .distinct()
@@ -49,7 +57,10 @@ class BookstoreViewModel(
                         state.copy(
                             books = list,
                             categories = if (apiCategories.isEmpty()) listOf("All", "Quran Editions", "Seerah", "Arabic Literature", "Hadith Studies") else dynamicCategories,
-                            filteredBooks = filterBooks(list, state.searchQuery, state.selectedCategory),
+                            filteredBooks = list,
+                            currentPage = page,
+                            totalCount = totalCount,
+                            totalPages = totalPages,
                             isLoading = false
                         )
                     }
@@ -65,11 +76,13 @@ class BookstoreViewModel(
     }
 
     fun onSearchQueryChanged(query: String) {
-        _uiState.update { state ->
-            state.copy(
-                searchQuery = query,
-                filteredBooks = filterBooks(state.books, query, state.selectedCategory)
-            )
+        _uiState.update { it.copy(searchQuery = query, currentPage = 1) }
+        loadBookstore(page = 1, search = query)
+    }
+
+    fun onPageSelected(page: Int) {
+        if (page != _uiState.value.currentPage && page in 1.._uiState.value.totalPages) {
+            loadBookstore(page = page)
         }
     }
 

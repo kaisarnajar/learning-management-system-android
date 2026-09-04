@@ -22,6 +22,10 @@ data class FatwaUiState(
     val isAskFatwaDialogOpen: Boolean = false,
     val isSubmitting: Boolean = false,
     val submitSuccessMessage: String? = null,
+    val currentPage: Int = 1,
+    val totalPages: Int = 1,
+    val totalCount: Int = 0,
+    val pageSize: Int = 20,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
@@ -37,12 +41,17 @@ class FatwaViewModel(
         loadFatwas()
     }
 
-    fun loadFatwas() {
+    fun loadFatwas(page: Int = _uiState.value.currentPage, search: String = _uiState.value.searchQuery) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = authRepository.getFatwas()) {
+            val searchParam = search.trim().ifEmpty { null }
+            val pageSize = _uiState.value.pageSize
+            val categoryParam = if (_uiState.value.selectedCategory == "All") null else _uiState.value.selectedCategory
+            when (val result = authRepository.getFatwas(page = page, pageSize = pageSize, search = searchParam, category = categoryParam)) {
                 is NetworkResult.Success -> {
                     val list = result.data.data ?: emptyList()
+                    val totalCount = result.data.totalCount ?: list.size
+                    val totalPages = kotlin.math.max(1, kotlin.math.ceil(totalCount.toDouble() / pageSize.toDouble()).toInt())
                     val apiCategories = list.mapNotNull { it.category.trim() }
                         .filter { it.isNotBlank() }
                         .distinct()
@@ -52,7 +61,10 @@ class FatwaViewModel(
                         state.copy(
                             fatwas = list,
                             categories = if (apiCategories.isEmpty()) listOf("All", "Fiqh & Worship", "Tajweed & Salah", "Zakat & Finance", "General") else dynamicCategories,
-                            filteredFatwas = filterFatwas(list, state.searchQuery, state.selectedCategory),
+                            filteredFatwas = list,
+                            currentPage = page,
+                            totalCount = totalCount,
+                            totalPages = totalPages,
                             isLoading = false
                         )
                     }
@@ -68,11 +80,13 @@ class FatwaViewModel(
     }
 
     fun onSearchQueryChanged(query: String) {
-        _uiState.update { state ->
-            state.copy(
-                searchQuery = query,
-                filteredFatwas = filterFatwas(state.fatwas, query, state.selectedCategory)
-            )
+        _uiState.update { it.copy(searchQuery = query, currentPage = 1) }
+        loadFatwas(page = 1, search = query)
+    }
+
+    fun onPageSelected(page: Int) {
+        if (page != _uiState.value.currentPage && page in 1.._uiState.value.totalPages) {
+            loadFatwas(page = page)
         }
     }
 

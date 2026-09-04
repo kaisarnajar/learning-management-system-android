@@ -19,6 +19,10 @@ data class TeachersUiState(
     val selectedSpecialization: String = "All",
     val searchQuery: String = "",
     val selectedTeacherDetail: TeacherProfileDto? = null,
+    val currentPage: Int = 1,
+    val totalPages: Int = 1,
+    val totalCount: Int = 0,
+    val pageSize: Int = 20,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
@@ -34,12 +38,16 @@ class TeachersViewModel(
         loadTeachers()
     }
 
-    fun loadTeachers() {
+    fun loadTeachers(page: Int = _uiState.value.currentPage, search: String = _uiState.value.searchQuery) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = authRepository.getTeachers()) {
+            val searchParam = search.trim().ifEmpty { null }
+            val pageSize = _uiState.value.pageSize
+            when (val result = authRepository.getTeachers(page = page, pageSize = pageSize, search = searchParam)) {
                 is NetworkResult.Success -> {
                     val list = result.data.data ?: emptyList()
+                    val totalCount = result.data.totalCount ?: list.size
+                    val totalPages = kotlin.math.max(1, kotlin.math.ceil(totalCount.toDouble() / pageSize.toDouble()).toInt())
                     val apiSpecs = list.mapNotNull { it.specialization?.trim() }
                         .filter { it.isNotBlank() }
                         .distinct()
@@ -49,7 +57,10 @@ class TeachersViewModel(
                         state.copy(
                             teachers = list,
                             specializations = dynamicSpecs,
-                            filteredTeachers = filterTeachers(list, state.searchQuery, state.selectedSpecialization),
+                            filteredTeachers = list,
+                            currentPage = page,
+                            totalCount = totalCount,
+                            totalPages = totalPages,
                             isLoading = false
                         )
                     }
@@ -65,11 +76,13 @@ class TeachersViewModel(
     }
 
     fun onSearchQueryChanged(query: String) {
-        _uiState.update { state ->
-            state.copy(
-                searchQuery = query,
-                filteredTeachers = filterTeachers(state.teachers, query, state.selectedSpecialization)
-            )
+        _uiState.update { it.copy(searchQuery = query, currentPage = 1) }
+        loadTeachers(page = 1, search = query)
+    }
+
+    fun onPageSelected(page: Int) {
+        if (page != _uiState.value.currentPage && page in 1.._uiState.value.totalPages) {
+            loadTeachers(page = page)
         }
     }
 

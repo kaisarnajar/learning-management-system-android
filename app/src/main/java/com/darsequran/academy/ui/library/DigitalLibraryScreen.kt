@@ -131,6 +131,14 @@ fun DigitalLibraryScreen(
                             onBookClick = { viewModel.selectBookDetail(book) }
                         )
                     }
+                    item {
+                        com.darsequran.academy.ui.components.PaginationBar(
+                            currentPage = uiState.currentPage,
+                            totalPages = uiState.totalPages,
+                            totalCount = uiState.totalCount,
+                            onPageSelected = { viewModel.onPageSelected(it) }
+                        )
+                    }
                 }
             }
         }

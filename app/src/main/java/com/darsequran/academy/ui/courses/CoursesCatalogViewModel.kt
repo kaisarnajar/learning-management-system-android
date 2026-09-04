@@ -19,6 +19,10 @@ data class CoursesCatalogUiState(
     val searchQuery: String = "",
     val selectedCategory: String = "All",
     val selectedCourseDetail: CourseDto? = null,
+    val currentPage: Int = 1,
+    val totalPages: Int = 1,
+    val totalCount: Int = 0,
+    val pageSize: Int = 20,
     val isLoading: Boolean = false,
     val isEnrolling: Boolean = false,
     val enrollmentSuccessMessage: String? = null,
@@ -36,12 +40,16 @@ class CoursesCatalogViewModel(
         loadCourses()
     }
 
-    fun loadCourses() {
+    fun loadCourses(page: Int = _uiState.value.currentPage, search: String = _uiState.value.searchQuery) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = authRepository.getCourses()) {
+            val searchParam = search.trim().ifEmpty { null }
+            val pageSize = _uiState.value.pageSize
+            when (val result = authRepository.getCourses(page = page, pageSize = pageSize, search = searchParam)) {
                 is NetworkResult.Success -> {
                     val courses = result.data.data ?: emptyList()
+                    val totalCount = result.data.totalCount ?: courses.size
+                    val totalPages = kotlin.math.max(1, kotlin.math.ceil(totalCount.toDouble() / pageSize.toDouble()).toInt())
                     val apiCategories = courses.mapNotNull { it.category?.trim() }
                         .filter { it.isNotBlank() }
                         .distinct()
@@ -51,7 +59,10 @@ class CoursesCatalogViewModel(
                         state.copy(
                             courses = courses,
                             categories = if (apiCategories.isEmpty()) listOf("All", "Quran", "Tajweed", "Arabic", "Fiqh") else dynamicCategories,
-                            filteredCourses = filterCoursesList(courses, state.searchQuery, state.selectedCategory),
+                            filteredCourses = courses,
+                            currentPage = page,
+                            totalCount = totalCount,
+                            totalPages = totalPages,
                             isLoading = false
                         )
                     }
@@ -67,11 +78,13 @@ class CoursesCatalogViewModel(
     }
 
     fun onSearchQueryChanged(query: String) {
-        _uiState.update { state ->
-            state.copy(
-                searchQuery = query,
-                filteredCourses = filterCoursesList(state.courses, query, state.selectedCategory)
-            )
+        _uiState.update { it.copy(searchQuery = query, currentPage = 1) }
+        loadCourses(page = 1, search = query)
+    }
+
+    fun onPageSelected(page: Int) {
+        if (page != _uiState.value.currentPage && page in 1.._uiState.value.totalPages) {
+            loadCourses(page = page)
         }
     }
 

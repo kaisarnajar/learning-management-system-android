@@ -123,6 +123,14 @@ fun BlogScreen(
                             onClick = { viewModel.selectPostDetail(post) }
                         )
                     }
+                    item {
+                        com.darsequran.academy.ui.components.PaginationBar(
+                            currentPage = uiState.currentPage,
+                            totalPages = uiState.totalPages,
+                            totalCount = uiState.totalCount,
+                            onPageSelected = { viewModel.onPageSelected(it) }
+                        )
+                    }
                 }
             }
         }

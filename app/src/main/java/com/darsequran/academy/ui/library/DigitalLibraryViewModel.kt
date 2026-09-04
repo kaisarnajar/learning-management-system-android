@@ -19,6 +19,10 @@ data class DigitalLibraryUiState(
     val searchQuery: String = "",
     val selectedTopic: String = "All",
     val selectedBookDetail: LibraryBookDto? = null,
+    val currentPage: Int = 1,
+    val totalPages: Int = 1,
+    val totalCount: Int = 0,
+    val pageSize: Int = 20,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
@@ -34,12 +38,17 @@ class DigitalLibraryViewModel(
         loadBooks()
     }
 
-    fun loadBooks() {
+    fun loadBooks(page: Int = _uiState.value.currentPage, search: String = _uiState.value.searchQuery) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = authRepository.getLibraryBooks()) {
+            val searchParam = search.trim().ifEmpty { null }
+            val pageSize = _uiState.value.pageSize
+            val topicParam = if (_uiState.value.selectedTopic == "All") null else _uiState.value.selectedTopic
+            when (val result = authRepository.getLibraryBooks(page = page, pageSize = pageSize, search = searchParam, topic = topicParam)) {
                 is NetworkResult.Success -> {
                     val books = result.data.data ?: emptyList()
+                    val totalCount = result.data.totalCount ?: books.size
+                    val totalPages = kotlin.math.max(1, kotlin.math.ceil(totalCount.toDouble() / pageSize.toDouble()).toInt())
                     val apiTopics = books.flatMap { listOfNotNull(it.topic, it.category) }
                         .map { it.trim() }
                         .filter { it.isNotBlank() }
@@ -50,7 +59,10 @@ class DigitalLibraryViewModel(
                         state.copy(
                             books = books,
                             topics = if (apiTopics.isEmpty()) listOf("All", "Quran", "Tajweed", "Hadith", "Seerah", "Arabic", "Fiqh") else dynamicTopics,
-                            filteredBooks = filterBooksList(books, state.searchQuery, state.selectedTopic),
+                            filteredBooks = books,
+                            currentPage = page,
+                            totalCount = totalCount,
+                            totalPages = totalPages,
                             isLoading = false
                         )
                     }
@@ -66,11 +78,13 @@ class DigitalLibraryViewModel(
     }
 
     fun onSearchQueryChanged(query: String) {
-        _uiState.update { state ->
-            state.copy(
-                searchQuery = query,
-                filteredBooks = filterBooksList(state.books, query, state.selectedTopic)
-            )
+        _uiState.update { it.copy(searchQuery = query, currentPage = 1) }
+        loadBooks(page = 1, search = query)
+    }
+
+    fun onPageSelected(page: Int) {
+        if (page != _uiState.value.currentPage && page in 1.._uiState.value.totalPages) {
+            loadBooks(page = page)
         }
     }
 
