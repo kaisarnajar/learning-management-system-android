@@ -161,227 +161,16 @@ fun CoursesCatalogScreen(
 
     // Detail Bottom Sheet Modal
     uiState.selectedCourseDetail?.let { course ->
-        ModalBottomSheet(
+        CourseDetailBottomSheet(
+            course = course,
+            isEnrolling = uiState.isEnrolling,
             onDismissRequest = { viewModel.selectCourseDetail(null) },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                // Badges Row + Share Icon
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CourseBadge(
-                            text = (course.category ?: "ISLAMIC STUDIES").uppercase(),
-                            bgColor = GoldAccent.copy(alpha = 0.18f),
-                            textColor = GoldDark
-                        )
-                        CourseBadge(
-                            text = (course.level ?: "Beginner"),
-                            bgColor = Color(0xFFEFEBE9),
-                            textColor = Color(0xFF5D4037)
-                        )
-                        CourseBadge(
-                            text = (course.status ?: "Published"),
-                            bgColor = Color(0xFFEDE7F6),
-                            textColor = Color(0xFF512DA8)
-                        )
-                    }
-
-                    val context = LocalContext.current
-                    IconButton(
-                        onClick = {
-                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_SUBJECT, course.title)
-                                putExtra(Intent.EXTRA_TEXT, "Check out the course: ${course.title} at Darse Quran Academy!\nhttps://staging-learning-management-system-teal-ten.vercel.app/courses/${course.id}")
-                            }
-                            context.startActivity(Intent.createChooser(shareIntent, "Share Course"))
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Share,
-                            contentDescription = "Share",
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Course Title
-                Text(
-                    text = course.title,
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 22.sp
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                // Meta Info
-                Text(
-                    text = "Starts: ${course.startDate ?: "Ongoing"}",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                )
-                Text(
-                    text = "Duration: ${course.duration ?: "Self-paced"}",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Course Description (Dynamic API Driven)
-                if (!course.description.isNullOrBlank()) {
-                    Text(
-                        text = course.description,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                            lineHeight = 22.sp
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-
-                // Instructor Card
-                val teacherName = course.teacher?.name ?: "Moulana Abdul Rahman"
-                val instructorSubtitle = course.teacher?.specialization ?: course.title
-                InstructorCard(
-                    teacherName = teacherName,
-                    subtitle = instructorSubtitle,
-                    onClick = {
-                        viewModel.selectCourseDetail(null)
-                        viewModel.selectTeacherDetailByName(teacherName, instructorSubtitle)
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(18.dp))
-
-                // Fees Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "FEES",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = GoldDark,
-                                letterSpacing = 1.sp,
-                                fontSize = 10.sp
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        val regFee = course.displayEnrollmentFee
-                        val regFeeText = if (regFee > 0) "₹$regFee" else "Free"
-                        SpecRow(label = "Enrollment:", value = regFeeText)
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        val monthlyFee = course.displayMonthlyFee
-                        val cycle = course.displayFeeFrequency
-                        SpecRow(label = "Fee:", value = "₹$monthlyFee / month ($cycle)")
-
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = "Fees are set by the academy for each course. Paid courses require an enrollment fee before access is granted; monthly fees are paid from your profile after enrollment is active.",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
-                                lineHeight = 18.sp,
-                                fontSize = 12.sp
-                            )
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Dynamic Syllabus & Learning Outcomes (API Driven)
-                if (!course.syllabus.isNullOrBlank()) {
-                    Text(
-                        text = "Course Curriculum & Syllabus",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = course.syllabus,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                            lineHeight = 22.sp
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(20.dp))
-                }
-
-                if (!course.learningOutcomes.isNullOrBlank()) {
-                    Text(
-                        text = "What You'll Learn",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = course.learningOutcomes,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                            lineHeight = 22.sp
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(20.dp))
-                }
-
-                // Request / Pay Enrollment Button
-                Button(
-                    onClick = { viewModel.requestEnrollment(course.id) },
-                    enabled = !uiState.isEnrolling,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = GoldDark,
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(24.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                ) {
-                    if (uiState.isEnrolling) {
-                        CircularProgressIndicator(
-                            color = Color.White,
-                            modifier = Modifier.size(22.dp),
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        val buttonText = if (course.displayEnrollmentFee > 0) "Pay enrollment fee" else "Request enrollment"
-                        Text(buttonText, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
+            onRequestEnrollment = { courseId -> viewModel.requestEnrollment(courseId) },
+            onTeacherClick = { teacherName, specialization ->
+                viewModel.selectCourseDetail(null)
+                viewModel.selectTeacherDetailByName(teacherName, specialization)
             }
-        }
+        )
     }
 
     // Teacher Detail Bottom Sheet Modal
@@ -392,6 +181,237 @@ fun CoursesCatalogScreen(
             onCourseClick = { course -> viewModel.selectCourseDetail(course) },
             onDismissRequest = { viewModel.selectTeacherDetail(null) }
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CourseDetailBottomSheet(
+    course: CourseDto,
+    isEnrolling: Boolean,
+    onDismissRequest: () -> Unit,
+    onRequestEnrollment: (String) -> Unit,
+    onTeacherClick: (String, String?) -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            // Badges Row + Share Icon
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CourseBadge(
+                        text = (course.category ?: "ISLAMIC STUDIES").uppercase(),
+                        bgColor = GoldAccent.copy(alpha = 0.18f),
+                        textColor = GoldDark
+                    )
+                    CourseBadge(
+                        text = (course.level ?: "Beginner"),
+                        bgColor = Color(0xFFEFEBE9),
+                        textColor = Color(0xFF5D4037)
+                    )
+                    CourseBadge(
+                        text = (course.status ?: "Published"),
+                        bgColor = Color(0xFFEDE7F6),
+                        textColor = Color(0xFF512DA8)
+                    )
+                }
+
+                val context = LocalContext.current
+                IconButton(
+                    onClick = {
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_SUBJECT, course.title)
+                            putExtra(Intent.EXTRA_TEXT, "Check out the course: ${course.title} at Darse Quran Academy!\nhttps://staging-learning-management-system-teal-ten.vercel.app/courses/${course.id}")
+                        }
+                        context.startActivity(Intent.createChooser(shareIntent, "Share Course"))
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Share",
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Course Title
+            Text(
+                text = course.title,
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 22.sp
+                )
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // Meta Info
+            Text(
+                text = "Starts: ${course.startDate ?: "Ongoing"}",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            )
+            Text(
+                text = "Duration: ${course.duration ?: "Self-paced"}",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Course Description (Dynamic API Driven)
+            if (!course.description.isNullOrBlank()) {
+                Text(
+                    text = course.description,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        lineHeight = 22.sp
+                    )
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            // Instructor Card
+            val teacherName = course.teacher?.name ?: "Moulana Abdul Rahman"
+            val instructorSubtitle = course.teacher?.specialization ?: course.title
+            InstructorCard(
+                teacherName = teacherName,
+                subtitle = instructorSubtitle,
+                onClick = {
+                    onTeacherClick(teacherName, instructorSubtitle)
+                }
+            )
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            // Fees Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "FEES",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = GoldDark,
+                            letterSpacing = 1.sp,
+                            fontSize = 10.sp
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    val regFee = course.displayEnrollmentFee
+                    val regFeeText = if (regFee > 0) "₹$regFee" else "Free"
+                    SpecRow(label = "Enrollment:", value = regFeeText)
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    val monthlyFee = course.displayMonthlyFee
+                    val cycle = course.displayFeeFrequency
+                    SpecRow(label = "Fee:", value = "₹$monthlyFee / month ($cycle)")
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "Fees are set by the academy for each course. Paid courses require an enrollment fee before access is granted; monthly fees are paid from your profile after enrollment is active.",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+                            lineHeight = 18.sp,
+                            fontSize = 12.sp
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Dynamic Syllabus & Learning Outcomes (API Driven)
+            if (!course.syllabus.isNullOrBlank()) {
+                Text(
+                    text = "Course Curriculum & Syllabus",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = course.syllabus,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        lineHeight = 22.sp
+                    )
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+
+            if (!course.learningOutcomes.isNullOrBlank()) {
+                Text(
+                    text = "What You'll Learn",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = course.learningOutcomes,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        lineHeight = 22.sp
+                    )
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+
+            // Request / Pay Enrollment Button
+            Button(
+                onClick = { onRequestEnrollment(course.id) },
+                enabled = !isEnrolling,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = GoldDark,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(24.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            ) {
+                if (isEnrolling) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(22.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    val buttonText = if (course.displayEnrollmentFee > 0) "Pay enrollment fee" else "Request enrollment"
+                    Text(buttonText, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
     }
 }
 
