@@ -158,13 +158,13 @@ fun TeacherCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(18.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(20.dp)
         ) {
+            // Avatar Circle (Emerald Dark Teal background with White initials)
             Box(
                 modifier = Modifier
-                    .size(54.dp)
+                    .size(64.dp)
                     .background(EmeraldDark, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
@@ -172,35 +172,66 @@ fun TeacherCard(
                     text = teacher.initials ?: teacher.name.take(2).uppercase(),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        color = GoldAccent,
+                        color = Color.White,
                         fontSize = 20.sp
                     )
                 )
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
+            // Teacher Name
+            Text(
+                text = teacher.name,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 18.sp
+                )
+            )
+
+            // Specialization Subtitle
+            teacher.specialization?.let { spec ->
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = teacher.name,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = EmeraldPrimary,
-                        fontSize = 17.sp
+                    text = spec,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = com.darsequran.academy.ui.theme.GoldDark,
+                        fontSize = 14.sp
                     )
                 )
+            }
 
-                teacher.specialization?.let { spec ->
-                    Spacer(modifier = Modifier.height(2.dp))
+            // Bio / Description Paragraph
+            teacher.bio?.let { bioText ->
+                if (bioText.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = spec,
+                        text = bioText,
                         style = MaterialTheme.typography.bodySmall.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = GoldAccent
-                        )
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                            fontSize = 13.5.sp,
+                            lineHeight = 19.sp
+                        ),
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // VIEW PROFILE → Action Button Link
+            Text(
+                text = "VIEW PROFILE →",
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = com.darsequran.academy.ui.theme.GoldDark,
+                    fontSize = 12.sp,
+                    letterSpacing = 0.5.sp
+                )
+            )
         }
     }
 }

@@ -85,6 +85,19 @@ fun TeacherDetailBottomSheet(
                 }
             }
 
+            teacher.bio?.let { bioText ->
+                if (bioText.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = bioText,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            lineHeight = 22.sp
+                        )
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
