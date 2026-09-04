@@ -90,8 +90,7 @@ class TeachersViewModel(
         return list.filter { teacher ->
             val matchesSearch = query.isBlank() ||
                     teacher.name.contains(query, ignoreCase = true) ||
-                    (teacher.specialization?.contains(query, ignoreCase = true) == true) ||
-                    (teacher.bio?.contains(query, ignoreCase = true) == true)
+                    (teacher.specialization?.contains(query, ignoreCase = true) == true)
             val matchesSpec = spec == "All" ||
                     (teacher.specialization?.equals(spec, ignoreCase = true) == true)
             matchesSearch && matchesSpec
