@@ -19,6 +19,10 @@ data class BlogUiState(
     val searchQuery: String = "",
     val selectedCategory: String = "All",
     val selectedPostDetail: BlogPostDto? = null,
+    val currentPage: Int = 1,
+    val totalPages: Int = 1,
+    val totalCount: Int = 0,
+    val pageSize: Int = 20,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
@@ -34,12 +38,16 @@ class BlogViewModel(
         loadPosts()
     }
 
-    fun loadPosts() {
+    fun loadPosts(page: Int = _uiState.value.currentPage, search: String = _uiState.value.searchQuery) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = authRepository.getBlogPosts()) {
+            val searchParam = search.trim().ifEmpty { null }
+            val pageSize = _uiState.value.pageSize
+            when (val result = authRepository.getBlogPosts(page = page, pageSize = pageSize, search = searchParam)) {
                 is NetworkResult.Success -> {
                     val posts = result.data.data ?: emptyList()
+                    val totalCount = result.data.totalCount ?: posts.size
+                    val totalPages = kotlin.math.max(1, kotlin.math.ceil(totalCount.toDouble() / pageSize.toDouble()).toInt())
                     val apiCategories = posts.mapNotNull { it.category?.trim() }
                         .filter { it.isNotBlank() }
                         .distinct()
@@ -49,7 +57,10 @@ class BlogViewModel(
                         state.copy(
                             posts = posts,
                             categories = if (apiCategories.isEmpty()) listOf("All", "Tajweed Tips", "Spiritual Growth", "Reflections") else dynamicCategories,
-                            filteredPosts = filterPosts(posts, state.searchQuery, state.selectedCategory),
+                            filteredPosts = posts,
+                            currentPage = page,
+                            totalCount = totalCount,
+                            totalPages = totalPages,
                             isLoading = false
                         )
                     }
@@ -65,11 +76,13 @@ class BlogViewModel(
     }
 
     fun onSearchQueryChanged(query: String) {
-        _uiState.update { state ->
-            state.copy(
-                searchQuery = query,
-                filteredPosts = filterPosts(state.posts, query, state.selectedCategory)
-            )
+        _uiState.update { it.copy(searchQuery = query, currentPage = 1) }
+        loadPosts(page = 1, search = query)
+    }
+
+    fun onPageSelected(page: Int) {
+        if (page != _uiState.value.currentPage && page in 1.._uiState.value.totalPages) {
+            loadPosts(page = page)
         }
     }
 

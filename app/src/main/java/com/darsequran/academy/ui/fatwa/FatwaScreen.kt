@@ -156,6 +156,14 @@ fun FatwaScreen(
                         items(uiState.filteredFatwas) { fatwa ->
                             FatwaCard(fatwa = fatwa)
                         }
+                        item {
+                            com.darsequran.academy.ui.components.PaginationBar(
+                                currentPage = uiState.currentPage,
+                                totalPages = uiState.totalPages,
+                                totalCount = uiState.totalCount,
+                                onPageSelected = { viewModel.onPageSelected(it) }
+                            )
+                        }
                     }
                 }
             }

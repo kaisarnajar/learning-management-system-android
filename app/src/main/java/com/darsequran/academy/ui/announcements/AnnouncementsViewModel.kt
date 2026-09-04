@@ -17,6 +17,10 @@ data class AnnouncementsUiState(
     val filteredAnnouncements: List<AnnouncementDto> = emptyList(),
     val searchQuery: String = "",
     val selectedAnnouncementDetail: AnnouncementDto? = null,
+    val currentPage: Int = 1,
+    val totalPages: Int = 1,
+    val totalCount: Int = 0,
+    val pageSize: Int = 20,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
@@ -32,16 +36,24 @@ class AnnouncementsViewModel(
         loadAnnouncements()
     }
 
-    fun loadAnnouncements() {
+    fun loadAnnouncements(page: Int = _uiState.value.currentPage, search: String = _uiState.value.searchQuery) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = authRepository.getAnnouncements()) {
+            val searchParam = search.trim().ifEmpty { null }
+            val pageSize = _uiState.value.pageSize
+            when (val result = authRepository.getAnnouncements(page = page, pageSize = pageSize, search = searchParam)) {
                 is NetworkResult.Success -> {
                     val list = result.data.data ?: emptyList()
+                    val totalCount = result.data.totalCount ?: list.size
+                    val totalPages = kotlin.math.max(1, kotlin.math.ceil(totalCount.toDouble() / pageSize.toDouble()).toInt())
+
                     _uiState.update { state ->
                         state.copy(
                             announcements = list,
-                            filteredAnnouncements = filterAnnouncements(list, state.searchQuery),
+                            filteredAnnouncements = list,
+                            currentPage = page,
+                            totalCount = totalCount,
+                            totalPages = totalPages,
                             isLoading = false
                         )
                     }
@@ -57,11 +69,13 @@ class AnnouncementsViewModel(
     }
 
     fun onSearchQueryChanged(query: String) {
-        _uiState.update { state ->
-            state.copy(
-                searchQuery = query,
-                filteredAnnouncements = filterAnnouncements(state.announcements, query)
-            )
+        _uiState.update { it.copy(searchQuery = query, currentPage = 1) }
+        loadAnnouncements(page = 1, search = query)
+    }
+
+    fun onPageSelected(page: Int) {
+        if (page != _uiState.value.currentPage && page in 1.._uiState.value.totalPages) {
+            loadAnnouncements(page = page)
         }
     }
 

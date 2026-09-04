@@ -144,6 +144,14 @@ fun CoursesCatalogScreen(
                             onTeacherClick = onTeacherClick
                         )
                     }
+                    item {
+                        com.darsequran.academy.ui.components.PaginationBar(
+                            currentPage = uiState.currentPage,
+                            totalPages = uiState.totalPages,
+                            totalCount = uiState.totalCount,
+                            onPageSelected = { viewModel.onPageSelected(it) }
+                        )
+                    }
                 }
             }
         }
