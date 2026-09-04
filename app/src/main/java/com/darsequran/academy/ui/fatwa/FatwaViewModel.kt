@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 data class FatwaUiState(
     val fatwas: List<FatwaItemDto> = emptyList(),
     val filteredFatwas: List<FatwaItemDto> = emptyList(),
+    val categories: List<String> = listOf("All"),
     val searchQuery: String = "",
     val selectedCategory: String = "All",
     val selectedFatwaDetail: FatwaItemDto? = null,
@@ -32,8 +33,6 @@ class FatwaViewModel(
     private val _uiState = MutableStateFlow(FatwaUiState())
     val uiState: StateFlow<FatwaUiState> = _uiState.asStateFlow()
 
-    val categories = listOf("All", "Fiqh & Worship", "Tajweed & Salah", "Zakat & Finance", "General")
-
     init {
         loadFatwas()
     }
@@ -44,9 +43,15 @@ class FatwaViewModel(
             when (val result = authRepository.getFatwas()) {
                 is NetworkResult.Success -> {
                     val list = result.data.data ?: emptyList()
+                    val apiCategories = list.mapNotNull { it.category.trim() }
+                        .filter { it.isNotBlank() }
+                        .distinct()
+                    val dynamicCategories = listOf("All") + apiCategories
+
                     _uiState.update { state ->
                         state.copy(
                             fatwas = list,
+                            categories = if (apiCategories.isEmpty()) listOf("All", "Fiqh & Worship", "Tajweed & Salah", "Zakat & Finance", "General") else dynamicCategories,
                             filteredFatwas = filterFatwas(list, state.searchQuery, state.selectedCategory),
                             isLoading = false
                         )

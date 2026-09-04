@@ -94,7 +94,7 @@ fun BookstoreScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                items(viewModel.categories) { category ->
+                items(uiState.categories) { category ->
                     val isSelected = uiState.selectedCategory == category
                     FilterChip(
                         selected = isSelected,

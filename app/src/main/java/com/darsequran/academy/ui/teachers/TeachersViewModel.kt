@@ -15,6 +15,8 @@ import kotlinx.coroutines.launch
 data class TeachersUiState(
     val teachers: List<TeacherProfileDto> = emptyList(),
     val filteredTeachers: List<TeacherProfileDto> = emptyList(),
+    val specializations: List<String> = listOf("All"),
+    val selectedSpecialization: String = "All",
     val searchQuery: String = "",
     val selectedTeacherDetail: TeacherProfileDto? = null,
     val isLoading: Boolean = false,
@@ -38,10 +40,16 @@ class TeachersViewModel(
             when (val result = authRepository.getTeachers()) {
                 is NetworkResult.Success -> {
                     val list = result.data.data ?: emptyList()
+                    val apiSpecs = list.mapNotNull { it.specialization?.trim() }
+                        .filter { it.isNotBlank() }
+                        .distinct()
+                    val dynamicSpecs = listOf("All") + apiSpecs
+
                     _uiState.update { state ->
                         state.copy(
                             teachers = list,
-                            filteredTeachers = filterTeachers(list, state.searchQuery),
+                            specializations = dynamicSpecs,
+                            filteredTeachers = filterTeachers(list, state.searchQuery, state.selectedSpecialization),
                             isLoading = false
                         )
                     }
@@ -60,7 +68,16 @@ class TeachersViewModel(
         _uiState.update { state ->
             state.copy(
                 searchQuery = query,
-                filteredTeachers = filterTeachers(state.teachers, query)
+                filteredTeachers = filterTeachers(state.teachers, query, state.selectedSpecialization)
+            )
+        }
+    }
+
+    fun onSpecializationSelected(spec: String) {
+        _uiState.update { state ->
+            state.copy(
+                selectedSpecialization = spec,
+                filteredTeachers = filterTeachers(state.teachers, state.searchQuery, spec)
             )
         }
     }
@@ -69,12 +86,15 @@ class TeachersViewModel(
         _uiState.update { it.copy(selectedTeacherDetail = teacher) }
     }
 
-    private fun filterTeachers(list: List<TeacherProfileDto>, query: String): List<TeacherProfileDto> {
+    private fun filterTeachers(list: List<TeacherProfileDto>, query: String, spec: String): List<TeacherProfileDto> {
         return list.filter { teacher ->
-            query.isBlank() ||
+            val matchesSearch = query.isBlank() ||
                     teacher.name.contains(query, ignoreCase = true) ||
                     (teacher.specialization?.contains(query, ignoreCase = true) == true) ||
                     (teacher.bio?.contains(query, ignoreCase = true) == true)
+            val matchesSpec = spec == "All" ||
+                    (teacher.specialization?.equals(spec, ignoreCase = true) == true)
+            matchesSearch && matchesSpec
         }
     }
 
