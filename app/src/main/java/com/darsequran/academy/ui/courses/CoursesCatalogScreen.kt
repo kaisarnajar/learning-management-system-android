@@ -23,13 +23,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -51,17 +47,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.darsequran.academy.data.model.CourseDto
 import com.darsequran.academy.ui.components.CompactSearchBar
-import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.EmeraldPrimary
 import com.darsequran.academy.ui.theme.GoldAccent
 import com.darsequran.academy.ui.theme.GoldDark
@@ -186,55 +179,6 @@ fun CoursesCatalogScreen(
                     .padding(24.dp)
                     .verticalScroll(rememberScrollState())
             ) {
-                // Header Banner
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
-                            .background(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color(0xFF0D1B2A),
-                                        Color(0xFF1B263B),
-                                        EmeraldDark
-                                    )
-                                )
-                            )
-                            .padding(14.dp)
-                    ) {
-                        Text(
-                            text = "DARSE QURAN ACADEMY",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = GoldAccent.copy(alpha = 0.7f),
-                                letterSpacing = 1.5.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
-
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .size(50.dp)
-                                .background(GoldAccent.copy(alpha = 0.2f), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.School,
-                                contentDescription = "Course Icon",
-                                tint = GoldAccent,
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
                 // Badges Row
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -396,171 +340,127 @@ fun PublicCourseCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column {
-            // Dark Header Banner
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(95.dp)
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFF0D1B2A),
-                                Color(0xFF1B263B),
-                                EmeraldDark
-                            )
-                        )
-                    )
-                    .padding(14.dp)
+        Column(modifier = Modifier.padding(18.dp)) {
+            // Badges Row
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "DARSE QURAN ACADEMY",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = GoldAccent.copy(alpha = 0.7f),
-                        letterSpacing = 1.5.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                CourseBadge(
+                    text = (course.category ?: "ISLAMIC STUDIES").uppercase(),
+                    bgColor = GoldAccent.copy(alpha = 0.18f),
+                    textColor = GoldDark
                 )
-
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .size(46.dp)
-                        .background(GoldAccent.copy(alpha = 0.2f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.School,
-                        contentDescription = "Course Banner Icon",
-                        tint = GoldAccent,
-                        modifier = Modifier.size(26.dp)
-                    )
-                }
+                CourseBadge(
+                    text = (course.level ?: "Beginner"),
+                    bgColor = Color(0xFFEFEBE9),
+                    textColor = Color(0xFF5D4037)
+                )
+                CourseBadge(
+                    text = (course.status ?: "Published"),
+                    bgColor = Color(0xFFEDE7F6),
+                    textColor = Color(0xFF512DA8)
+                )
             }
 
-            // Body Area
-            Column(modifier = Modifier.padding(18.dp)) {
-                // Badges Row
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CourseBadge(
-                        text = (course.category ?: "ISLAMIC STUDIES").uppercase(),
-                        bgColor = GoldAccent.copy(alpha = 0.18f),
-                        textColor = GoldDark
-                    )
-                    CourseBadge(
-                        text = (course.level ?: "Beginner"),
-                        bgColor = Color(0xFFEFEBE9),
-                        textColor = Color(0xFF5D4037)
-                    )
-                    CourseBadge(
-                        text = (course.status ?: "Published"),
-                        bgColor = Color(0xFFEDE7F6),
-                        textColor = Color(0xFF512DA8)
-                    )
-                }
+            Spacer(modifier = Modifier.height(14.dp))
 
-                Spacer(modifier = Modifier.height(14.dp))
+            // Course Title
+            Text(
+                text = course.title,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 19.sp
+                )
+            )
 
-                // Course Title
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Description Paragraph
+            course.description?.let { desc ->
                 Text(
-                    text = course.title,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 19.sp
-                    )
+                    text = desc,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                        lineHeight = 20.sp
+                    ),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
+                Spacer(modifier = Modifier.height(14.dp))
+            }
 
-                Spacer(modifier = Modifier.height(8.dp))
+            // Instructor Card (Clickable to Land on Teacher Page!)
+            InstructorCard(
+                teacherName = teacherName,
+                teacherBio = teacherBio,
+                onClick = { onTeacherClick(teacherName) }
+            )
 
-                // Description Paragraph
-                course.description?.let { desc ->
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Course Specs Summary
+            Column(modifier = Modifier.fillMaxWidth()) {
+                SpecRow(label = "Starts:", value = course.startDate ?: "Ongoing")
+                Spacer(modifier = Modifier.height(4.dp))
+                SpecRow(label = "Duration:", value = course.duration ?: "8 weeks")
+                Spacer(modifier = Modifier.height(4.dp))
+                val regFee = course.registrationFee?.toInt() ?: 0
+                SpecRow(label = "Enrollment:", value = "₹$regFee")
+                Spacer(modifier = Modifier.height(4.dp))
+                val monthlyFee = course.fee?.toInt() ?: 349
+                val cycle = course.billingCycle ?: "Monthly"
+                SpecRow(label = "Fee:", value = "₹$monthlyFee / month ($cycle)")
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            // Action Buttons
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                // Button 1: COURSE DETAILS (Outlined)
+                OutlinedButton(
+                    onClick = onViewDetails,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.5.dp, GoldDark)
+                ) {
                     Text(
-                        text = desc,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
-                            lineHeight = 20.sp
-                        ),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                        text = "COURSE DETAILS",
+                        fontWeight = FontWeight.Bold,
+                        color = GoldDark,
+                        fontSize = 13.5.sp,
+                        letterSpacing = 0.5.sp
                     )
-                    Spacer(modifier = Modifier.height(14.dp))
                 }
 
-                // Instructor Card (Clickable to Land on Teacher Page!)
-                InstructorCard(
-                    teacherName = teacherName,
-                    teacherBio = teacherBio,
-                    onClick = { onTeacherClick(teacherName) }
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Course Specs Summary
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    SpecRow(label = "Starts:", value = course.startDate ?: "Ongoing")
-                    Spacer(modifier = Modifier.height(4.dp))
-                    SpecRow(label = "Duration:", value = course.duration ?: "8 weeks")
-                    Spacer(modifier = Modifier.height(4.dp))
-                    val regFee = course.registrationFee?.toInt() ?: 0
-                    SpecRow(label = "Enrollment:", value = "₹$regFee")
-                    Spacer(modifier = Modifier.height(4.dp))
-                    val monthlyFee = course.fee?.toInt() ?: 349
-                    val cycle = course.billingCycle ?: "Monthly"
-                    SpecRow(label = "Fee:", value = "₹$monthlyFee / month ($cycle)")
-                }
-
-                Spacer(modifier = Modifier.height(18.dp))
-
-                // Action Buttons
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    // Button 1: COURSE DETAILS (Outlined)
-                    OutlinedButton(
-                        onClick = onViewDetails,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(44.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        border = BorderStroke(1.5.dp, GoldDark)
-                    ) {
+                // Button 2: Request enrollment (Solid Gold)
+                Button(
+                    onClick = onRequestEnrollment,
+                    enabled = !isEnrolling,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp),
+                    shape = RoundedCornerShape(22.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = GoldDark,
+                        contentColor = Color.White
+                    )
+                ) {
+                    if (isEnrolling) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
                         Text(
-                            text = "COURSE DETAILS",
+                            text = "Request enrollment",
                             fontWeight = FontWeight.Bold,
-                            color = GoldDark,
-                            fontSize = 13.5.sp,
-                            letterSpacing = 0.5.sp
+                            fontSize = 14.sp
                         )
-                    }
-
-                    // Button 2: Request enrollment (Solid Gold)
-                    Button(
-                        onClick = onRequestEnrollment,
-                        enabled = !isEnrolling,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(44.dp),
-                        shape = RoundedCornerShape(22.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = GoldDark,
-                            contentColor = Color.White
-                        )
-                    ) {
-                        if (isEnrolling) {
-                            CircularProgressIndicator(
-                                color = Color.White,
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(
-                                text = "Request enrollment",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
-                            )
-                        }
                     }
                 }
             }
