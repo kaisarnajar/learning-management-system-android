@@ -10,6 +10,7 @@ import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -40,6 +41,7 @@ fun ExploreMainScreen(
     homeViewModel: HomeViewModel
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
+    val coursesState by catalogViewModel.uiState.collectAsState()
     val tabs = listOf("Courses", "Teachers", "Announcements", "Blog", "Fatwa")
 
     Surface(
@@ -82,7 +84,15 @@ fun ExploreMainScreen(
                         catalogViewModel.selectTeacherDetailByName(teacherName)
                     }
                 )
-                1 -> TeachersScreen(viewModel = teachersViewModel, onBackPress = {})
+                1 -> TeachersScreen(
+                    viewModel = teachersViewModel,
+                    courses = coursesState.courses,
+                    onCourseClick = { course ->
+                        catalogViewModel.selectCourseDetail(course)
+                        selectedTabIndex = 0
+                    },
+                    onBackPress = {}
+                )
                 2 -> AnnouncementsScreen(viewModel = homeViewModel)
                 3 -> BlogScreen(viewModel = blogViewModel, onBackPress = {})
                 4 -> FatwaScreen(viewModel = fatwaViewModel, onBackPress = {})
