@@ -228,10 +228,8 @@ fun CoursesCatalogScreen(
 
                 // Instructor Card (Clickable)
                 val teacherName = course.teacher?.name ?: "Moulana Abdul Rahman"
-                val teacherBio = course.teacher?.bio ?: "Fiqh & Islamic Studies"
                 InstructorCard(
                     teacherName = teacherName,
-                    teacherBio = teacherBio,
                     onClick = {
                         viewModel.selectCourseDetail(null)
                         onTeacherClick(teacherName)
@@ -332,7 +330,6 @@ fun PublicCourseCard(
     onTeacherClick: (String?) -> Unit
 ) {
     val teacherName = course.teacher?.name ?: "Moulana Abdul Rahman"
-    val teacherBio = course.teacher?.bio ?: "Fiqh & Islamic Studies"
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -394,7 +391,6 @@ fun PublicCourseCard(
             // Instructor Card (Clickable to Land on Teacher Page!)
             InstructorCard(
                 teacherName = teacherName,
-                teacherBio = teacherBio,
                 onClick = { onTeacherClick(teacherName) }
             )
 
@@ -471,7 +467,6 @@ fun PublicCourseCard(
 @Composable
 fun InstructorCard(
     teacherName: String,
-    teacherBio: String,
     onClick: () -> Unit
 ) {
     Surface(
@@ -525,24 +520,15 @@ fun InstructorCard(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = teacherName,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontSize = 15.sp
-                        )
-                    )
-                    Text(
-                        text = teacherBio,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = GoldDark,
-                            fontSize = 12.5.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    )
-                }
+                Text(
+                    text = teacherName,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 15.sp
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
 
                 Icon(
                     imageVector = Icons.Default.ChevronRight,

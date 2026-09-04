@@ -204,18 +204,6 @@ fun TeachersScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                teacher.bio?.let { bio ->
-                    Text(
-                        text = bio,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                            lineHeight = 22.sp
-                        )
-                    )
-                }
-
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
@@ -275,18 +263,6 @@ fun TeacherCard(
                             fontWeight = FontWeight.SemiBold,
                             color = GoldAccent
                         )
-                    )
-                }
-
-                teacher.bio?.let { bio ->
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = bio,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        ),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
