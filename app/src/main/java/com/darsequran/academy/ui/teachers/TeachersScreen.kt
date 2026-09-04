@@ -62,6 +62,8 @@ import com.darsequran.academy.ui.theme.GoldDark
 @Composable
 fun TeachersScreen(
     viewModel: TeachersViewModel,
+    courses: List<com.darsequran.academy.data.model.CourseDto> = emptyList(),
+    onCourseClick: ((com.darsequran.academy.data.model.CourseDto) -> Unit)? = null,
     onBackPress: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -143,6 +145,8 @@ fun TeachersScreen(
     uiState.selectedTeacherDetail?.let { teacher ->
         TeacherDetailBottomSheet(
             teacher = teacher,
+            courses = courses,
+            onCourseClick = onCourseClick,
             onDismissRequest = { viewModel.selectTeacherDetail(null) }
         )
     }

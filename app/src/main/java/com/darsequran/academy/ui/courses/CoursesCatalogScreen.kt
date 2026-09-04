@@ -388,6 +388,8 @@ fun CoursesCatalogScreen(
     uiState.selectedTeacherDetail?.let { teacher ->
         com.darsequran.academy.ui.teachers.TeacherDetailBottomSheet(
             teacher = teacher,
+            courses = uiState.courses,
+            onCourseClick = { course -> viewModel.selectCourseDetail(course) },
             onDismissRequest = { viewModel.selectTeacherDetail(null) }
         )
     }
