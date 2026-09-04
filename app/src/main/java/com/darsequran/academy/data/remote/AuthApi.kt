@@ -16,13 +16,15 @@ import com.darsequran.academy.data.model.RegisterRequest
 import com.darsequran.academy.data.model.StudentAttendanceResponse
 import com.darsequran.academy.data.model.StudentGradesResponse
 import com.darsequran.academy.data.model.StudentReviewsResponse
-import com.darsequran.academy.data.model.SubmitPaymentRequest
 import com.darsequran.academy.data.model.UpdateProfileRequest
 import com.darsequran.academy.data.model.UserProfileResponse
+import com.darsequran.academy.data.model.SingleCourseResponse
+import com.darsequran.academy.data.model.SubmitPaymentRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.PATCH
+import retrofit2.http.Path
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Query
@@ -107,6 +109,11 @@ interface AuthApi {
         @Query("pageSize") pageSize: Int = 20,
         @Query("search") search: String? = null
     ): Response<CoursesResponse>
+
+    @GET("courses/{id}")
+    suspend fun getCourseDetails(
+        @Path("id") courseId: String
+    ): Response<SingleCourseResponse>
 
     @GET("enrollments")
     suspend fun getEnrollments(): Response<EnrollmentsResponse>

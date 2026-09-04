@@ -1,5 +1,6 @@
 package com.darsequran.academy.ui.courses
 
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -35,6 +37,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -158,26 +161,50 @@ fun CoursesCatalogScreen(
                     .padding(24.dp)
                     .verticalScroll(rememberScrollState())
             ) {
-                // Badges Row
+                // Badges Row + Share Icon
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    CourseBadge(
-                        text = (course.category ?: "ISLAMIC STUDIES").uppercase(),
-                        bgColor = GoldAccent.copy(alpha = 0.18f),
-                        textColor = GoldDark
-                    )
-                    CourseBadge(
-                        text = (course.level ?: "Beginner"),
-                        bgColor = Color(0xFFEFEBE9),
-                        textColor = Color(0xFF5D4037)
-                    )
-                    CourseBadge(
-                        text = (course.status ?: "Published"),
-                        bgColor = Color(0xFFEDE7F6),
-                        textColor = Color(0xFF512DA8)
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CourseBadge(
+                            text = (course.category ?: "ISLAMIC STUDIES").uppercase(),
+                            bgColor = GoldAccent.copy(alpha = 0.18f),
+                            textColor = GoldDark
+                        )
+                        CourseBadge(
+                            text = (course.level ?: "Beginner"),
+                            bgColor = Color(0xFFEFEBE9),
+                            textColor = Color(0xFF5D4037)
+                        )
+                        CourseBadge(
+                            text = (course.status ?: "Published"),
+                            bgColor = Color(0xFFEDE7F6),
+                            textColor = Color(0xFF512DA8)
+                        )
+                    }
+
+                    val context = LocalContext.current
+                    IconButton(
+                        onClick = {
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_SUBJECT, course.title)
+                                putExtra(Intent.EXTRA_TEXT, "Check out the course: ${course.title} at Darse Quran Academy!\nhttps://staging-learning-management-system-teal-ten.vercel.app/courses/${course.id}")
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "Share Course"))
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Share",
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
@@ -187,28 +214,47 @@ fun CoursesCatalogScreen(
                     text = course.title,
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 20.sp
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 22.sp
                     )
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
-                // Course Description
+                // Meta Info
                 Text(
-                    text = course.description ?: "Memorize essential duas, study authentic Quranic sciences, and learn prophetic etiquette with qualified instructors.",
+                    text = "Starts: ${course.startDate ?: "Ongoing"}",
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.78f),
-                        lineHeight = 22.sp
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                )
+                Text(
+                    text = "Duration: ${course.duration ?: "Self-paced"}",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
-                // Instructor Card (Clickable)
+                // Course Description (Dynamic API Driven)
+                if (!course.description.isNullOrBlank()) {
+                    Text(
+                        text = course.description,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            lineHeight = 22.sp
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                // Instructor Card
                 val teacherName = course.teacher?.name ?: "Moulana Abdul Rahman"
+                val instructorSubtitle = course.teacher?.specialization ?: course.title
                 InstructorCard(
                     teacherName = teacherName,
+                    subtitle = instructorSubtitle,
                     onClick = {
                         viewModel.selectCourseDetail(null)
                         onTeacherClick(teacherName)
@@ -217,60 +263,88 @@ fun CoursesCatalogScreen(
 
                 Spacer(modifier = Modifier.height(18.dp))
 
-                // Course Specs Summary
+                // Fees Card
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
                 ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        SpecRow(label = "Starts:", value = course.startDate ?: "Ongoing")
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "FEES",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = GoldDark,
+                                letterSpacing = 1.sp,
+                                fontSize = 10.sp
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        val regFee = course.displayEnrollmentFee
+                        val regFeeText = if (regFee > 0) "₹$regFee" else "Free"
+                        SpecRow(label = "Enrollment:", value = regFeeText)
                         Spacer(modifier = Modifier.height(6.dp))
-                        SpecRow(label = "Duration:", value = course.duration ?: "8 weeks")
-                        Spacer(modifier = Modifier.height(6.dp))
-                        val regFee = course.registrationFee?.toInt() ?: 0
-                        SpecRow(label = "Enrollment:", value = "₹$regFee")
-                        Spacer(modifier = Modifier.height(6.dp))
-                        val monthlyFee = course.fee?.toInt() ?: 349
-                        val cycle = course.billingCycle ?: "Monthly"
+
+                        val monthlyFee = course.displayMonthlyFee
+                        val cycle = course.displayFeeFrequency
                         SpecRow(label = "Fee:", value = "₹$monthlyFee / month ($cycle)")
+
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "Fees are set by the academy for each course. Paid courses require an enrollment fee before access is granted; monthly fees are paid from your profile after enrollment is active.",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+                                lineHeight = 18.sp,
+                                fontSize = 12.sp
+                            )
+                        )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Detailed Syllabus Section
-                Text(
-                    text = "Course Curriculum & Syllabus",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                // Dynamic Syllabus & Learning Outcomes (API Driven)
+                if (!course.syllabus.isNullOrBlank()) {
+                    Text(
+                        text = "Course Curriculum & Syllabus",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     )
-                )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = course.syllabus,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            lineHeight = 22.sp
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                if (!course.learningOutcomes.isNullOrBlank()) {
+                    Text(
+                        text = "What You'll Learn",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = course.learningOutcomes,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            lineHeight = 22.sp
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
 
-                SyllabusModuleItem(
-                    moduleNumber = "Module 1",
-                    title = "Foundational Principles & Etiquette",
-                    description = "Introduction to prophetic manners, intentions in learning, and daily home etiquette."
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                SyllabusModuleItem(
-                    moduleNumber = "Module 2",
-                    title = "Daily Recitations & Authentic Duas",
-                    description = "Memorization of essential morning & evening supplications with correct pronunciation."
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                SyllabusModuleItem(
-                    moduleNumber = "Module 3",
-                    title = "Practical Application & Community Adab",
-                    description = "Implementing Sunnah etiquettes in social interactions, masjid, and family life."
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Request Enrollment Button
+                // Request / Pay Enrollment Button
                 Button(
                     onClick = { viewModel.requestEnrollment(course.id) },
                     enabled = !uiState.isEnrolling,
@@ -278,7 +352,7 @@ fun CoursesCatalogScreen(
                         containerColor = GoldDark,
                         contentColor = Color.White
                     ),
-                    shape = RoundedCornerShape(10.dp),
+                    shape = RoundedCornerShape(24.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp)
@@ -290,7 +364,8 @@ fun CoursesCatalogScreen(
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text("Request enrollment", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        val buttonText = if (course.displayEnrollmentFee > 0) "Pay enrollment fee" else "Request enrollment"
+                        Text(buttonText, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
                 }
 
@@ -446,6 +521,7 @@ fun PublicCourseCard(
 @Composable
 fun InstructorCard(
     teacherName: String,
+    subtitle: String? = null,
     onClick: () -> Unit
 ) {
     Surface(
@@ -499,15 +575,26 @@ fun InstructorCard(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                Text(
-                    text = teacherName,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 15.sp
-                    ),
-                    modifier = Modifier.weight(1f)
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = teacherName,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 15.sp
+                        )
+                    )
+                    subtitle?.let { sub ->
+                        Text(
+                            text = sub,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = GoldDark,
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        )
+                    }
+                }
 
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
