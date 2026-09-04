@@ -54,28 +54,7 @@ fun BookstoreCartScreen() {
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Header Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ShoppingCart,
-                    contentDescription = "Cart",
-                    tint = EmeraldPrimary,
-                    modifier = Modifier.size(26.dp)
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = "Bookstore Orders & Cart",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = EmeraldPrimary
-                    )
-                )
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
 
             // Cart Items List Container
             LazyColumn(

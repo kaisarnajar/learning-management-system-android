@@ -70,28 +70,7 @@ fun AnnouncementsScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Header Row
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Campaign,
-                    contentDescription = "Announcements",
-                    tint = EmeraldPrimary,
-                    modifier = Modifier.size(28.dp)
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = "Academy Announcements",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = EmeraldPrimary
-                    )
-                )
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
 
             if (uiState.isLoadingAnnouncements) {
                 Box(
