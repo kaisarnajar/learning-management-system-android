@@ -81,28 +81,7 @@ fun TeachersScreen(
                 placeholderText = "Search by scholar name or specialization..."
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            if (uiState.specializations.size > 1) {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    items(uiState.specializations) { spec ->
-                        val isSelected = uiState.selectedSpecialization == spec
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { viewModel.onSpecializationSelected(spec) },
-                            label = { Text(spec, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                selectedLabelColor = Color.White
-                            )
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-            }
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Content Area
             if (uiState.isLoading) {

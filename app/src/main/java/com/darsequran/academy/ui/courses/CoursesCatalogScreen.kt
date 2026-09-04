@@ -96,28 +96,7 @@ fun CoursesCatalogScreen(
                 placeholderText = "Search by title, category, or teacher..."
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Category Filter Chips
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(uiState.categories) { category ->
-                    val isSelected = uiState.selectedCategory == category
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { viewModel.onCategorySelected(category) },
-                        label = { Text(category, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = Color.White
-                        )
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Courses Feed Area
             if (uiState.isLoading) {

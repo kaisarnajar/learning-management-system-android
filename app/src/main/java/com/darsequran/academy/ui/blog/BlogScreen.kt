@@ -81,30 +81,7 @@ fun BlogScreen(
                 placeholderText = "Search articles & reflections..."
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Category Chips
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(uiState.categories) { category ->
-                    val isSelected = uiState.selectedCategory == category
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { viewModel.onCategorySelected(category) },
-                        label = { Text(category, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = Color.White,
-                            containerColor = EmeraldDark.copy(alpha = 0.08f),
-                            labelColor = EmeraldDark
-                        )
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Content Area
             if (uiState.isLoading) {
