@@ -3,6 +3,7 @@ package com.darsequran.academy.data.repository
 import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.data.model.AuthResponse
 import com.darsequran.academy.data.model.CoursesResponse
+import com.darsequran.academy.data.model.SingleCourseResponse
 import com.darsequran.academy.data.model.CreateReviewRequest
 import com.darsequran.academy.data.model.DailyInspirationResponse
 import com.darsequran.academy.data.model.DeviceTokenRequest
@@ -357,6 +358,19 @@ class AuthRepository(
                 NetworkResult.Success(response.body()!!)
             } else {
                 NetworkResult.Error("Failed to fetch courses.")
+            }
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
+        }
+    }
+
+    suspend fun getCourseDetails(courseId: String): NetworkResult<SingleCourseResponse> {
+        return try {
+            val response = authApi.getCourseDetails(courseId)
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Error("Failed to fetch course details.")
             }
         } catch (ex: Exception) {
             NetworkResult.Error(ex.localizedMessage ?: "Network error.")

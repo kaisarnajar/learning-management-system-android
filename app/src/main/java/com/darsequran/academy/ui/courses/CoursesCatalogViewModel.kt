@@ -86,6 +86,18 @@ class CoursesCatalogViewModel(
 
     fun selectCourseDetail(course: CourseDto?) {
         _uiState.update { it.copy(selectedCourseDetail = course) }
+        if (course != null) {
+            viewModelScope.launch {
+                when (val result = authRepository.getCourseDetails(course.id)) {
+                    is NetworkResult.Success -> {
+                        result.data.course?.let { freshCourse ->
+                            _uiState.update { state -> state.copy(selectedCourseDetail = freshCourse) }
+                        }
+                    }
+                    else -> {}
+                }
+            }
+        }
     }
 
     fun requestEnrollment(courseId: String) {
