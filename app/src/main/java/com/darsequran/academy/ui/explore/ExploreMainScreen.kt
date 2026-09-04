@@ -75,7 +75,16 @@ fun ExploreMainScreen(
             }
 
             when (selectedTabIndex) {
-                0 -> CoursesCatalogScreen(viewModel = catalogViewModel, onBackPress = {})
+                0 -> CoursesCatalogScreen(
+                    viewModel = catalogViewModel,
+                    onBackPress = {},
+                    onTeacherClick = { teacherName ->
+                        if (!teacherName.isNullOrBlank()) {
+                            teachersViewModel.onSearchQueryChanged(teacherName)
+                        }
+                        selectedTabIndex = 1
+                    }
+                )
                 1 -> TeachersScreen(viewModel = teachersViewModel, onBackPress = {})
                 2 -> AnnouncementsScreen(viewModel = homeViewModel)
                 3 -> BlogScreen(viewModel = blogViewModel, onBackPress = {})
