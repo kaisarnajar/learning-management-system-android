@@ -89,30 +89,7 @@ fun DigitalLibraryScreen(
                 placeholderText = "Search by book title, author, or topic..."
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Topic Filter Chips
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(uiState.topics) { topic ->
-                    val isSelected = uiState.selectedTopic == topic
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { viewModel.onTopicSelected(topic) },
-                        label = { Text(topic, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = Color.White,
-                            containerColor = EmeraldDark.copy(alpha = 0.08f),
-                            labelColor = EmeraldDark
-                        )
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Content Area
             if (uiState.isLoading) {
