@@ -88,20 +88,12 @@ fun PaymentsScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Header Row
+            // Action Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Payments & Fee Receipts",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = EmeraldPrimary
-                    )
-                )
-
                 Button(
                     onClick = { viewModel.openSubmitDialog() },
                     colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
