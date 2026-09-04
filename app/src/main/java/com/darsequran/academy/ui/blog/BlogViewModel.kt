@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 data class BlogUiState(
     val posts: List<BlogPostDto> = emptyList(),
     val filteredPosts: List<BlogPostDto> = emptyList(),
+    val categories: List<String> = listOf("All"),
     val searchQuery: String = "",
     val selectedCategory: String = "All",
     val selectedPostDetail: BlogPostDto? = null,
@@ -29,8 +30,6 @@ class BlogViewModel(
     private val _uiState = MutableStateFlow(BlogUiState())
     val uiState: StateFlow<BlogUiState> = _uiState.asStateFlow()
 
-    val categories = listOf("All", "Tajweed Tips", "Spiritual Growth", "Arabic Language", "Reflections")
-
     init {
         loadPosts()
     }
@@ -41,9 +40,15 @@ class BlogViewModel(
             when (val result = authRepository.getBlogPosts()) {
                 is NetworkResult.Success -> {
                     val posts = result.data.data ?: emptyList()
+                    val apiCategories = posts.mapNotNull { it.category?.trim() }
+                        .filter { it.isNotBlank() }
+                        .distinct()
+                    val dynamicCategories = listOf("All") + apiCategories
+
                     _uiState.update { state ->
                         state.copy(
                             posts = posts,
+                            categories = if (apiCategories.isEmpty()) listOf("All", "Tajweed Tips", "Spiritual Growth", "Reflections") else dynamicCategories,
                             filteredPosts = filterPosts(posts, state.searchQuery, state.selectedCategory),
                             isLoading = false
                         )

@@ -96,7 +96,7 @@ fun DigitalLibraryScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                items(viewModel.topics) { topic ->
+                items(uiState.topics) { topic ->
                     val isSelected = uiState.selectedTopic == topic
                     FilterChip(
                         selected = isSelected,

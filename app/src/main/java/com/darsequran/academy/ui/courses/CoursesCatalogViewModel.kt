@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 data class CoursesCatalogUiState(
     val courses: List<CourseDto> = emptyList(),
     val filteredCourses: List<CourseDto> = emptyList(),
+    val categories: List<String> = listOf("All"),
     val searchQuery: String = "",
     val selectedCategory: String = "All",
     val selectedCourseDetail: CourseDto? = null,
@@ -31,8 +32,6 @@ class CoursesCatalogViewModel(
     private val _uiState = MutableStateFlow(CoursesCatalogUiState())
     val uiState: StateFlow<CoursesCatalogUiState> = _uiState.asStateFlow()
 
-    val categories = listOf("All", "Quran", "Tajweed", "Arabic", "Fiqh", "Tafsir", "Qiraat", "Seerah")
-
     init {
         loadCourses()
     }
@@ -43,9 +42,15 @@ class CoursesCatalogViewModel(
             when (val result = authRepository.getCourses()) {
                 is NetworkResult.Success -> {
                     val courses = result.data.data ?: emptyList()
+                    val apiCategories = courses.mapNotNull { it.category?.trim() }
+                        .filter { it.isNotBlank() }
+                        .distinct()
+                    val dynamicCategories = listOf("All") + apiCategories
+
                     _uiState.update { state ->
                         state.copy(
                             courses = courses,
+                            categories = if (apiCategories.isEmpty()) listOf("All", "Quran", "Tajweed", "Arabic", "Fiqh") else dynamicCategories,
                             filteredCourses = filterCoursesList(courses, state.searchQuery, state.selectedCategory),
                             isLoading = false
                         )

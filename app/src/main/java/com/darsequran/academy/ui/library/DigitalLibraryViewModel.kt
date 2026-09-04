@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 data class DigitalLibraryUiState(
     val books: List<LibraryBookDto> = emptyList(),
     val filteredBooks: List<LibraryBookDto> = emptyList(),
+    val topics: List<String> = listOf("All"),
     val searchQuery: String = "",
     val selectedTopic: String = "All",
     val selectedBookDetail: LibraryBookDto? = null,
@@ -29,8 +30,6 @@ class DigitalLibraryViewModel(
     private val _uiState = MutableStateFlow(DigitalLibraryUiState())
     val uiState: StateFlow<DigitalLibraryUiState> = _uiState.asStateFlow()
 
-    val topics = listOf("All", "Quran", "Tajweed", "Hadith", "Seerah", "Arabic", "Fiqh")
-
     init {
         loadBooks()
     }
@@ -41,9 +40,16 @@ class DigitalLibraryViewModel(
             when (val result = authRepository.getLibraryBooks()) {
                 is NetworkResult.Success -> {
                     val books = result.data.data ?: emptyList()
+                    val apiTopics = books.flatMap { listOfNotNull(it.topic, it.category) }
+                        .map { it.trim() }
+                        .filter { it.isNotBlank() }
+                        .distinct()
+                    val dynamicTopics = listOf("All") + apiTopics
+
                     _uiState.update { state ->
                         state.copy(
                             books = books,
+                            topics = if (apiTopics.isEmpty()) listOf("All", "Quran", "Tajweed", "Hadith", "Seerah", "Arabic", "Fiqh") else dynamicTopics,
                             filteredBooks = filterBooksList(books, state.searchQuery, state.selectedTopic),
                             isLoading = false
                         )

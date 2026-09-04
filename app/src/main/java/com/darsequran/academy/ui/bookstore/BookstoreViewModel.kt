@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 data class BookstoreUiState(
     val books: List<BookstoreItemDto> = emptyList(),
     val filteredBooks: List<BookstoreItemDto> = emptyList(),
+    val categories: List<String> = listOf("All"),
     val searchQuery: String = "",
     val selectedCategory: String = "All",
     val selectedBookDetail: BookstoreItemDto? = null,
@@ -29,8 +30,6 @@ class BookstoreViewModel(
     private val _uiState = MutableStateFlow(BookstoreUiState())
     val uiState: StateFlow<BookstoreUiState> = _uiState.asStateFlow()
 
-    val categories = listOf("All", "Quran Editions", "Seerah", "Arabic Literature", "Hadith Studies")
-
     init {
         loadBookstore()
     }
@@ -41,9 +40,15 @@ class BookstoreViewModel(
             when (val result = authRepository.getBookstoreItems()) {
                 is NetworkResult.Success -> {
                     val list = result.data.data ?: emptyList()
+                    val apiCategories = list.mapNotNull { it.category?.trim() }
+                        .filter { it.isNotBlank() }
+                        .distinct()
+                    val dynamicCategories = listOf("All") + apiCategories
+
                     _uiState.update { state ->
                         state.copy(
                             books = list,
+                            categories = if (apiCategories.isEmpty()) listOf("All", "Quran Editions", "Seerah", "Arabic Literature", "Hadith Studies") else dynamicCategories,
                             filteredBooks = filterBooks(list, state.searchQuery, state.selectedCategory),
                             isLoading = false
                         )
