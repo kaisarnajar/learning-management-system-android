@@ -1,8 +1,7 @@
 package com.darsequran.academy.ui.courses
 
-import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,15 +18,18 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -37,40 +39,44 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.darsequran.academy.data.model.CourseDto
+import com.darsequran.academy.ui.components.CompactSearchBar
 import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.EmeraldPrimary
 import com.darsequran.academy.ui.theme.GoldAccent
+import com.darsequran.academy.ui.theme.GoldDark
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CoursesCatalogScreen(
     viewModel: CoursesCatalogViewModel,
-    onBackPress: () -> Unit = {}
+    onBackPress: () -> Unit = {},
+    onTeacherClick: (String?) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    androidx.compose.runtime.LaunchedEffect(uiState.enrollmentSuccessMessage, uiState.errorMessage) {
+    LaunchedEffect(uiState.enrollmentSuccessMessage, uiState.errorMessage) {
         uiState.enrollmentSuccessMessage?.let { msg ->
             Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
             viewModel.clearMessages()
@@ -91,7 +97,7 @@ fun CoursesCatalogScreen(
                 .padding(16.dp)
         ) {
             // Compact Search Bar
-            com.darsequran.academy.ui.components.CompactSearchBar(
+            CompactSearchBar(
                 query = uiState.searchQuery,
                 onQueryChange = { viewModel.onSearchQueryChanged(it) },
                 placeholderText = "Search by title, category, or teacher..."
@@ -112,17 +118,15 @@ fun CoursesCatalogScreen(
                         label = { Text(category, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = Color.White,
-                            containerColor = EmeraldDark.copy(alpha = 0.08f),
-                            labelColor = EmeraldDark
+                            selectedLabelColor = Color.White
                         )
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Content Area
+            // Courses Feed Area
             if (uiState.isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -154,12 +158,15 @@ fun CoursesCatalogScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(uiState.filteredCourses) { course ->
                         PublicCourseCard(
                             course = course,
-                            onViewDetails = { viewModel.selectCourseDetail(course) }
+                            onViewDetails = { viewModel.selectCourseDetail(course) },
+                            onRequestEnrollment = { viewModel.requestEnrollment(course.id) },
+                            isEnrolling = uiState.isEnrolling,
+                            onTeacherClick = onTeacherClick
                         )
                     }
                 }
@@ -177,69 +184,177 @@ fun CoursesCatalogScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = EmeraldDark.copy(alpha = 0.1f)
+                // Header Banner
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
                 ) {
-                    Text(
-                        text = course.category ?: "QURANIC STUDIES",
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        ),
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color(0xFF0D1B2A),
+                                        Color(0xFF1B263B),
+                                        EmeraldDark
+                                    )
+                                )
+                            )
+                            .padding(14.dp)
+                    ) {
+                        Text(
+                            text = "DARSE QURAN ACADEMY",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = GoldAccent.copy(alpha = 0.7f),
+                                letterSpacing = 1.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .size(50.dp)
+                                .background(GoldAccent.copy(alpha = 0.2f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.School,
+                                contentDescription = "Course Icon",
+                                tint = GoldAccent,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Badges Row
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CourseBadge(
+                        text = (course.category ?: "ISLAMIC STUDIES").uppercase(),
+                        bgColor = GoldAccent.copy(alpha = 0.18f),
+                        textColor = GoldDark
+                    )
+                    CourseBadge(
+                        text = (course.level ?: "Beginner"),
+                        bgColor = Color(0xFFEFEBE9),
+                        textColor = Color(0xFF5D4037)
+                    )
+                    CourseBadge(
+                        text = (course.status ?: "Published"),
+                        bgColor = Color(0xFFEDE7F6),
+                        textColor = Color(0xFF512DA8)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
+                // Course Title
                 Text(
                     text = course.title,
                     style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 20.sp
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Course Description
+                Text(
+                    text = course.description ?: "Memorize essential duas, study authentic Quranic sciences, and learn prophetic etiquette with qualified instructors.",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.78f),
+                        lineHeight = 22.sp
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Instructor Card (Clickable)
+                val teacherName = course.teacher?.name ?: "Moulana Abdul Rahman"
+                val teacherBio = course.teacher?.bio ?: "Fiqh & Islamic Studies"
+                InstructorCard(
+                    teacherName = teacherName,
+                    teacherBio = teacherBio,
+                    onClick = {
+                        viewModel.selectCourseDetail(null)
+                        onTeacherClick(teacherName)
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Course Specs Summary
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        SpecRow(label = "Starts:", value = course.startDate ?: "Ongoing")
+                        Spacer(modifier = Modifier.height(6.dp))
+                        SpecRow(label = "Duration:", value = course.duration ?: "8 weeks")
+                        Spacer(modifier = Modifier.height(6.dp))
+                        val regFee = course.registrationFee?.toInt() ?: 0
+                        SpecRow(label = "Enrollment:", value = "₹$regFee")
+                        Spacer(modifier = Modifier.height(6.dp))
+                        val monthlyFee = course.fee?.toInt() ?: 349
+                        val cycle = course.billingCycle ?: "Monthly"
+                        SpecRow(label = "Fee:", value = "₹$monthlyFee / month ($cycle)")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Detailed Syllabus Section
+                Text(
+                    text = "Course Curriculum & Syllabus",
+                    style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
                 )
 
-                course.teacher?.name?.let { teacherName ->
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Teacher",
-                            tint = GoldAccent,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Instructor: $teacherName",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                            )
-                        )
-                    }
-                }
+                Spacer(modifier = Modifier.height(10.dp))
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = course.description ?: "Comprehensive course designed to build a strong foundation in Islamic studies with qualified scholars.",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        lineHeight = 22.sp
-                    )
+                SyllabusModuleItem(
+                    moduleNumber = "Module 1",
+                    title = "Foundational Principles & Etiquette",
+                    description = "Introduction to prophetic manners, intentions in learning, and daily home etiquette."
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                SyllabusModuleItem(
+                    moduleNumber = "Module 2",
+                    title = "Daily Recitations & Authentic Duas",
+                    description = "Memorization of essential morning & evening supplications with correct pronunciation."
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                SyllabusModuleItem(
+                    moduleNumber = "Module 3",
+                    title = "Practical Application & Community Adab",
+                    description = "Implementing Sunnah etiquettes in social interactions, masjid, and family life."
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-                // Action Button: Request Enrollment via Web API
+                // Request Enrollment Button
                 Button(
                     onClick = { viewModel.requestEnrollment(course.id) },
                     enabled = !uiState.isEnrolling,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
+                        containerColor = GoldDark,
                         contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(10.dp),
@@ -254,7 +369,7 @@ fun CoursesCatalogScreen(
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text("Apply & Request Enrollment", fontWeight = FontWeight.Bold)
+                        Text("Request enrollment", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
                 }
 
@@ -267,99 +382,361 @@ fun CoursesCatalogScreen(
 @Composable
 fun PublicCourseCard(
     course: CourseDto,
-    onViewDetails: () -> Unit
+    onViewDetails: () -> Unit,
+    onRequestEnrollment: () -> Unit,
+    isEnrolling: Boolean,
+    onTeacherClick: (String?) -> Unit
 ) {
+    val teacherName = course.teacher?.name ?: "Moulana Abdul Rahman"
+    val teacherBio = course.teacher?.bio ?: "Fiqh & Islamic Studies"
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onViewDetails() },
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = EmeraldDark.copy(alpha = 0.1f)
-                ) {
-                    Text(
-                        text = course.category?.uppercase() ?: "GENERAL",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        ),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-
-                course.teacher?.name?.let { teacherName ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Teacher",
-                            tint = GoldAccent,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = teacherName,
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+        Column {
+            // Dark Header Banner
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(95.dp)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF0D1B2A),
+                                Color(0xFF1B263B),
+                                EmeraldDark
                             )
                         )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = course.title,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontSize = 17.sp
-                )
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            course.description?.let { desc ->
-                Text(
-                    text = desc,
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    ),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    )
+                    .padding(14.dp)
             ) {
                 Text(
-                    text = "Detailed Curriculum & Schedule",
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        color = MaterialTheme.colorScheme.primary,
+                    text = "DARSE QURAN ACADEMY",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = GoldAccent.copy(alpha = 0.7f),
+                        letterSpacing = 1.5.sp,
                         fontWeight = FontWeight.Bold
                     )
                 )
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(46.dp)
+                        .background(GoldAccent.copy(alpha = 0.2f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.School,
+                        contentDescription = "Course Banner Icon",
+                        tint = GoldAccent,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+            }
+
+            // Body Area
+            Column(modifier = Modifier.padding(18.dp)) {
+                // Badges Row
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CourseBadge(
+                        text = (course.category ?: "ISLAMIC STUDIES").uppercase(),
+                        bgColor = GoldAccent.copy(alpha = 0.18f),
+                        textColor = GoldDark
+                    )
+                    CourseBadge(
+                        text = (course.level ?: "Beginner"),
+                        bgColor = Color(0xFFEFEBE9),
+                        textColor = Color(0xFF5D4037)
+                    )
+                    CourseBadge(
+                        text = (course.status ?: "Published"),
+                        bgColor = Color(0xFFEDE7F6),
+                        textColor = Color(0xFF512DA8)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Course Title
+                Text(
+                    text = course.title,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 19.sp
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Description Paragraph
+                course.description?.let { desc ->
+                    Text(
+                        text = desc,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                            lineHeight = 20.sp
+                        ),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
+
+                // Instructor Card (Clickable to Land on Teacher Page!)
+                InstructorCard(
+                    teacherName = teacherName,
+                    teacherBio = teacherBio,
+                    onClick = { onTeacherClick(teacherName) }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Course Specs Summary
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    SpecRow(label = "Starts:", value = course.startDate ?: "Ongoing")
+                    Spacer(modifier = Modifier.height(4.dp))
+                    SpecRow(label = "Duration:", value = course.duration ?: "8 weeks")
+                    Spacer(modifier = Modifier.height(4.dp))
+                    val regFee = course.registrationFee?.toInt() ?: 0
+                    SpecRow(label = "Enrollment:", value = "₹$regFee")
+                    Spacer(modifier = Modifier.height(4.dp))
+                    val monthlyFee = course.fee?.toInt() ?: 349
+                    val cycle = course.billingCycle ?: "Monthly"
+                    SpecRow(label = "Fee:", value = "₹$monthlyFee / month ($cycle)")
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Action Buttons
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // Button 1: COURSE DETAILS (Outlined)
+                    OutlinedButton(
+                        onClick = onViewDetails,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.5.dp, GoldDark)
+                    ) {
+                        Text(
+                            text = "COURSE DETAILS",
+                            fontWeight = FontWeight.Bold,
+                            color = GoldDark,
+                            fontSize = 13.5.sp,
+                            letterSpacing = 0.5.sp
+                        )
+                    }
+
+                    // Button 2: Request enrollment (Solid Gold)
+                    Button(
+                        onClick = onRequestEnrollment,
+                        enabled = !isEnrolling,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp),
+                        shape = RoundedCornerShape(22.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = GoldDark,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        if (isEnrolling) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text(
+                                text = "Request enrollment",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun InstructorCard(
+    teacherName: String,
+    teacherBio: String,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Text(
+                text = "INSTRUCTOR",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = GoldDark,
+                    letterSpacing = 1.sp,
+                    fontSize = 10.sp
+                )
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Avatar Circle
+                val initials = teacherName.split(" ")
+                    .mapNotNull { it.firstOrNull()?.toString() }
+                    .take(2)
+                    .joinToString("")
+                    .uppercase()
+                    .ifEmpty { "AR" }
+
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(EmeraldPrimary, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = initials,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = teacherName,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 15.sp
+                        )
+                    )
+                    Text(
+                        text = teacherBio,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = GoldDark,
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    )
+                }
+
                 Icon(
-                    imageVector = Icons.Default.Info,
-                    contentDescription = "Details",
-                    tint = GoldAccent,
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = "View Instructor",
+                    tint = GoldDark,
                     modifier = Modifier.size(20.dp)
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun CourseBadge(
+    text: String,
+    bgColor: Color,
+    textColor: Color
+) {
+    Surface(
+        shape = RoundedCornerShape(6.dp),
+        color = bgColor
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = FontWeight.Bold,
+                color = textColor,
+                fontSize = 10.5.sp
+            ),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        )
+    }
+}
+
+@Composable
+fun SpecRow(label: String, value: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                fontSize = 13.5.sp
+            )
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 13.5.sp
+            )
+        )
+    }
+}
+
+@Composable
+fun SyllabusModuleItem(
+    moduleNumber: String,
+    title: String,
+    description: String
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "Check",
+                    tint = EmeraldPrimary,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "$moduleNumber: $title",
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = EmeraldPrimary,
+                        fontSize = 13.5.sp
+                    )
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    lineHeight = 17.sp,
+                    fontSize = 12.sp
+                )
+            )
         }
     }
 }

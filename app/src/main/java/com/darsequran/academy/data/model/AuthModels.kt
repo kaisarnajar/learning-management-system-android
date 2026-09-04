@@ -89,9 +89,15 @@ data class CourseDto(
     @SerializedName("description") val description: String? = null,
     @SerializedName("status") val status: String? = null,
     @SerializedName("category") val category: String? = null,
+    @SerializedName("level") val level: String? = null,
+    @SerializedName("startDate") val startDate: String? = null,
+    @SerializedName("duration") val duration: String? = null,
     @SerializedName("fee") val fee: Double? = null,
+    @SerializedName("billingCycle") val billingCycle: String? = null,
     @SerializedName("registrationFee") val registrationFee: Double? = null,
-    @SerializedName("teacher") val teacher: TeacherDto? = null
+    @SerializedName("teacher") val teacher: TeacherDto? = null,
+    @SerializedName("syllabus") val syllabus: String? = null,
+    @SerializedName("learningOutcomes") val learningOutcomes: String? = null
 )
 
 data class EnrollmentDto(
