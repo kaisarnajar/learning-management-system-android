@@ -141,7 +141,9 @@ fun CoursesCatalogScreen(
                             onViewDetails = { viewModel.selectCourseDetail(course) },
                             onRequestEnrollment = { viewModel.requestEnrollment(course.id) },
                             isEnrolling = uiState.isEnrolling,
-                            onTeacherClick = onTeacherClick
+                            onTeacherClick = { teacherName ->
+                                viewModel.selectTeacherDetailByName(teacherName, course.teacher?.specialization)
+                            }
                         )
                     }
                     item {
@@ -265,7 +267,7 @@ fun CoursesCatalogScreen(
                     subtitle = instructorSubtitle,
                     onClick = {
                         viewModel.selectCourseDetail(null)
-                        onTeacherClick(teacherName)
+                        viewModel.selectTeacherDetailByName(teacherName, instructorSubtitle)
                     }
                 )
 
@@ -381,6 +383,14 @@ fun CoursesCatalogScreen(
             }
         }
     }
+
+    // Teacher Detail Bottom Sheet Modal
+    uiState.selectedTeacherDetail?.let { teacher ->
+        com.darsequran.academy.ui.teachers.TeacherDetailBottomSheet(
+            teacher = teacher,
+            onDismissRequest = { viewModel.selectTeacherDetail(null) }
+        )
+    }
 }
 
 @Composable
@@ -450,9 +460,10 @@ fun PublicCourseCard(
                 Spacer(modifier = Modifier.height(14.dp))
             }
 
-            // Instructor Card (Clickable to Land on Teacher Page!)
+            // Instructor Card (Clickable to open Teacher Detail bottom sheet!)
             InstructorCard(
                 teacherName = teacherName,
+                subtitle = course.teacher?.specialization,
                 onClick = { onTeacherClick(teacherName) }
             )
 

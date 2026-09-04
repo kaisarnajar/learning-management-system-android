@@ -79,10 +79,7 @@ fun ExploreMainScreen(
                     viewModel = catalogViewModel,
                     onBackPress = {},
                     onTeacherClick = { teacherName ->
-                        if (!teacherName.isNullOrBlank()) {
-                            teachersViewModel.onSearchQueryChanged(teacherName)
-                        }
-                        selectedTabIndex = 1
+                        catalogViewModel.selectTeacherDetailByName(teacherName)
                     }
                 )
                 1 -> TeachersScreen(viewModel = teachersViewModel, onBackPress = {})

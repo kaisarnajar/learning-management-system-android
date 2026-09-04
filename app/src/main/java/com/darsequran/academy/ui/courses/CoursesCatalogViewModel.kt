@@ -19,6 +19,7 @@ data class CoursesCatalogUiState(
     val searchQuery: String = "",
     val selectedCategory: String = "All",
     val selectedCourseDetail: CourseDto? = null,
+    val selectedTeacherDetail: com.darsequran.academy.data.model.TeacherProfileDto? = null,
     val currentPage: Int = 1,
     val totalPages: Int = 1,
     val totalCount: Int = 0,
@@ -111,6 +112,23 @@ class CoursesCatalogViewModel(
                 }
             }
         }
+    }
+
+    fun selectTeacherDetail(teacher: com.darsequran.academy.data.model.TeacherProfileDto?) {
+        _uiState.update { it.copy(selectedTeacherDetail = teacher) }
+    }
+
+    fun selectTeacherDetailByName(name: String?, specialization: String? = null) {
+        if (name.isNullOrBlank()) return
+        val existingCourseTeacher = _uiState.value.courses.mapNotNull { it.teacher }.firstOrNull { it.name?.equals(name, ignoreCase = true) == true }
+        val teacherProfile = com.darsequran.academy.data.model.TeacherProfileDto(
+            id = existingCourseTeacher?.id ?: "teacher-$name",
+            name = existingCourseTeacher?.name ?: name,
+            specialization = existingCourseTeacher?.specialization ?: specialization ?: "Islamic Scholar & Teacher",
+            bio = existingCourseTeacher?.bio,
+            initials = existingCourseTeacher?.initials
+        )
+        _uiState.update { it.copy(selectedTeacherDetail = teacherProfile) }
     }
 
     fun requestEnrollment(courseId: String) {
