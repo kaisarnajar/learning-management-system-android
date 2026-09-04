@@ -1,5 +1,6 @@
 package com.darsequran.academy.ui.teachers
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +36,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -54,6 +56,7 @@ import com.darsequran.academy.data.model.TeacherProfileDto
 import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.EmeraldPrimary
 import com.darsequran.academy.ui.theme.GoldAccent
+import com.darsequran.academy.ui.theme.GoldDark
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -159,54 +162,59 @@ fun TeacherCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp)
+            modifier = Modifier.padding(18.dp)
         ) {
-            // Avatar Circle (Emerald Dark Teal background with White initials)
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .background(EmeraldDark, CircleShape),
-                contentAlignment = Alignment.Center
+            // Header Row: Avatar Circle on Left, Name & Specialization on Right
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = teacher.initials ?: teacher.name.take(2).uppercase(),
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        fontSize = 20.sp
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .background(EmeraldDark, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = teacher.initials ?: teacher.name.take(2).uppercase(),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            fontSize = 19.sp
+                        )
                     )
-                )
-            }
+                }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.width(14.dp))
 
-            // Teacher Name
-            Text(
-                text = teacher.name,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 18.sp
-                )
-            )
-
-            // Specialization Subtitle
-            teacher.specialization?.let { spec ->
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = spec,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = com.darsequran.academy.ui.theme.GoldDark,
-                        fontSize = 14.sp
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = teacher.name,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 17.5.sp
+                        )
                     )
-                )
+
+                    teacher.specialization?.let { spec ->
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Text(
+                            text = spec,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = GoldDark,
+                                fontSize = 13.5.sp
+                            )
+                        )
+                    }
+                }
             }
 
             // Bio / Description Paragraph
             teacher.bio?.let { bioText ->
                 if (bioText.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
                     Text(
                         text = bioText,
                         style = MaterialTheme.typography.bodySmall.copy(
@@ -222,16 +230,22 @@ fun TeacherCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // VIEW PROFILE → Action Button Link
-            Text(
-                text = "VIEW PROFILE →",
-                style = MaterialTheme.typography.labelMedium.copy(
+            // Action Button: VIEW PROFILE (Outlined Button matching Course Details style)
+            OutlinedButton(
+                onClick = onClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp),
+                shape = RoundedCornerShape(10.dp),
+                border = BorderStroke(1.5.dp, GoldDark)
+            ) {
+                Text(
+                    text = "VIEW PROFILE",
                     fontWeight = FontWeight.Bold,
-                    color = com.darsequran.academy.ui.theme.GoldDark,
-                    fontSize = 12.sp,
-                    letterSpacing = 0.5.sp
+                    color = GoldDark,
+                    fontSize = 13.5.sp
                 )
-            )
+            }
         }
     }
 }
