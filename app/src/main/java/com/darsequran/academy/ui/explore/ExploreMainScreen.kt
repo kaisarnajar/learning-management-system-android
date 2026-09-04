@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.darsequran.academy.ui.announcements.AnnouncementsScreen
 import com.darsequran.academy.ui.blog.BlogScreen
 import com.darsequran.academy.ui.blog.BlogViewModel
+import com.darsequran.academy.ui.courses.CourseDetailBottomSheet
 import com.darsequran.academy.ui.courses.CoursesCatalogScreen
 import com.darsequran.academy.ui.courses.CoursesCatalogViewModel
 import com.darsequran.academy.ui.fatwa.FatwaScreen
@@ -89,7 +90,6 @@ fun ExploreMainScreen(
                     courses = coursesState.courses,
                     onCourseClick = { course ->
                         catalogViewModel.selectCourseDetail(course)
-                        selectedTabIndex = 0
                     },
                     onBackPress = {}
                 )
@@ -98,5 +98,19 @@ fun ExploreMainScreen(
                 4 -> FatwaScreen(viewModel = fatwaViewModel, onBackPress = {})
             }
         }
+    }
+
+    // Global Course Detail Bottom Sheet Modal (renders on current active tab without changing tabs)
+    coursesState.selectedCourseDetail?.let { course ->
+        CourseDetailBottomSheet(
+            course = course,
+            isEnrolling = coursesState.isEnrolling,
+            onDismissRequest = { catalogViewModel.selectCourseDetail(null) },
+            onRequestEnrollment = { courseId -> catalogViewModel.requestEnrollment(courseId) },
+            onTeacherClick = { teacherName, specialization ->
+                catalogViewModel.selectCourseDetail(null)
+                catalogViewModel.selectTeacherDetailByName(teacherName, specialization)
+            }
+        )
     }
 }
