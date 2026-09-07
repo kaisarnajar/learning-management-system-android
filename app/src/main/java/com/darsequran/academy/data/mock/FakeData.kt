@@ -181,6 +181,16 @@ Register now: www.darsequranacademy.com
     // TODO: Remove fake fatwas data when server API has live fatwa queries
     val fakeFatwas: List<FatwaItemDto> = listOf(
         FatwaItemDto(
+            id = "fatwa-salam-handshake",
+            title = "How to shake hands during salam?",
+            question = "Please tell us how to shake hands during salam. In the US we are from different countries and evidently Asians shake hands with two and...",
+            answer = "In Islamic etiquette (Adab), shaking hands (Musafahah) upon greeting with Salam is a Sunnah of the Prophet Muhammad (PBUH) that brings forgiveness of sins. According to the Hanafi school and classical scholars, Musafahah is recommended using both hands with warmth and respect. Other scholars consider single right-hand Musafahah as also fulfilling the Sunnah. Both forms are valid in Islamic tradition, emphasizing affection and brotherhood.",
+            category = "RIGHTS & ETIQUETTES",
+            scholarName = "DARUL IFTA-DQA",
+            answeredAt = "28 Jun 2026",
+            approvalStatus = "APPROVED"
+        ),
+        FatwaItemDto(
             id = "fatwa-1",
             title = "Ruling on combining missed prayers during travel",
             question = "As-salamu alaykum. I travel frequently for work across cities. What are the conditions under which I can shorten (Qasr) or combine (Jam') my prayers according to Fiqh?",
