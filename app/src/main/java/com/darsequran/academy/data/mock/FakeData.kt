@@ -183,11 +183,11 @@ Register now: www.darsequranacademy.com
         FatwaItemDto(
             id = "fatwa-salam-handshake",
             title = "How to shake hands during salam?",
-            question = "Please tell us how to shake hands during salam. In the US we are from different countries and evidently Asians shake hands with two and...",
-            answer = "In Islamic etiquette (Adab), shaking hands (Musafahah) upon greeting with Salam is a Sunnah of the Prophet Muhammad (PBUH) that brings forgiveness of sins. According to the Hanafi school and classical scholars, Musafahah is recommended using both hands with warmth and respect. Other scholars consider single right-hand Musafahah as also fulfilling the Sunnah. Both forms are valid in Islamic tradition, emphasizing affection and brotherhood.",
+            question = "Please tell us how to shake hands during salam. In the US we are from different countries and evidently Asians shake hands with two and other people shake hands by one. I am confused which way is the correct according to sunnah and more adequate.",
+            answer = "Answer ID: 145587--(Fatwa: 166/156/L=2/1438) Bismillah hir-Rahman nir-Rahim !\n\nMusafaha(shaking hand) is sunnah with two hands. It is narrated in Bukhari Sharif: علمنى النبي صلى الله عليه وسلم التشهد وكفى بين كفيه. The hadith clearly speaks that at the time of shaking hand the palm of Hadhrat Abdullah Ibn Masood (may Allah be pleased with him) was between both the palms of the Holy Prophet Muhammad (may peace and blessings of Allah be upon him). And it seems impossible that the Holy Prophet Muhammad (may peace and blessings of Allah be upon him) did musafaha with both the hands and Hadhrat Abdullah Ibn Masood (may Allah be pleased with him) did it with single hand. In case we acknowledge it then also the act of the Prophet (may peace and blessings of Allah be upon him) shall be preferred. Imam Bukhari has proved doing musafaha by this Hadith and he has also quoted that “صافح حماد بكلتا يديه” which says that it was the way of the salaf. Hence you should do musafaha with both the hands and should not be confused.\n\nAllah (Subhana Wa Ta'ala) knows Best\nDarul Ifta, Darul Uloom Deoband, India",
             category = "RIGHTS & ETIQUETTES",
             scholarName = "DARUL IFTA-DQA",
-            answeredAt = "28 Jun 2026",
+            answeredAt = "28 June 2026",
             approvalStatus = "APPROVED"
         ),
         FatwaItemDto(
