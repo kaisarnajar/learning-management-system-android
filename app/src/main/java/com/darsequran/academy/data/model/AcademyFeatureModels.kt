@@ -169,6 +169,7 @@ data class BookstoreItemDto(
     @SerializedName("category") val category: String? = "Islamic Books"
 ) {
     val priceInRupees: Double get() = priceInrPaise / 100.0
+    val mrpInRupees: Double? get() = mrpInrPaise?.let { it / 100.0 }
 }
 
 data class BookstoreResponse(

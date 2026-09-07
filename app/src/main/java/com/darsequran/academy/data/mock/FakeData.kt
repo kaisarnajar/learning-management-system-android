@@ -5,6 +5,7 @@ import com.darsequran.academy.data.model.AnnouncementDto
 import com.darsequran.academy.data.model.AnnouncementImageDto
 import com.darsequran.academy.data.model.BlogAuthorDto
 import com.darsequran.academy.data.model.BlogPostDto
+import com.darsequran.academy.data.model.BookstoreItemDto
 import com.darsequran.academy.data.model.FatwaItemDto
 import com.darsequran.academy.data.model.LibraryBookDto
 
@@ -316,6 +317,54 @@ Register now: www.darsequranacademy.com
             level = "Beginner",
             language = "Urdu",
             pages = 240
+        )
+    )
+
+    // TODO: Remove fake bookstore items data when server API has live bookstore items
+    val fakeBookstoreItems: List<BookstoreItemDto> = listOf(
+        BookstoreItemDto(
+            id = "bookstore-1",
+            title = "Custom Books Combo",
+            author = "Custom",
+            description = "Kitabus Saraf Part-1 Maulana Ilyas ghuman Kitabun Nahaw Part-1 Maulana...",
+            priceInrPaise = 42000L,
+            mrpInrPaise = 100000L,
+            status = "Available",
+            imagePath = "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c",
+            category = "Combos"
+        ),
+        BookstoreItemDto(
+            id = "bookstore-2",
+            title = "Kashmiri Tarjuma e Quran (Coloured & Premium)",
+            author = "حضرت نور اسلام مہاجر ملت مولانا محمد یوسف شاہ صاحب رح میر واعظ کشمیر",
+            description = "Kashmiri Tarjuma-e-Quran (Coloured & Premium Print) 2 VOLUMES By Hazrat Noor...",
+            priceInrPaise = 140000L,
+            mrpInrPaise = 299900L,
+            status = "Available",
+            imagePath = "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f",
+            category = "Quran Editions"
+        ),
+        BookstoreItemDto(
+            id = "bookstore-3",
+            title = "کتاب الصرف سوم",
+            author = "Hz Maulana Ilyas Ghuman Sb Hfz",
+            description = "Kitab al-Sarf (3-Volume Set) By Maulana Muhammad Ilyas Ghuman A...",
+            priceInrPaise = 11900L,
+            mrpInrPaise = 49900L,
+            status = "Available",
+            imagePath = "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f",
+            category = "Arabic Literature"
+        ),
+        BookstoreItemDto(
+            id = "bookstore-4",
+            title = "کتاب الصرف دوم",
+            author = "Hz Maulana Ilyas Ghuman Sb Hfz",
+            description = "Kitab al-Sarf (3-Volume Set) By Maulana Muhammad Ilyas Ghuman A...",
+            priceInrPaise = 12900L,
+            mrpInrPaise = 49900L,
+            status = "Available",
+            imagePath = "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f",
+            category = "Arabic Literature"
         )
     )
 }

@@ -3,6 +3,7 @@ package com.darsequran.academy.ui.bookstore
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,15 +18,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -33,14 +32,10 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -49,16 +44,19 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.darsequran.academy.data.model.BookstoreItemDto
 import com.darsequran.academy.ui.theme.EmeraldDark
-import com.darsequran.academy.ui.theme.EmeraldPrimary
-import com.darsequran.academy.ui.theme.GoldAccent
+import com.darsequran.academy.ui.theme.GoldDark
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,7 +76,49 @@ fun BookstoreScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
+            // Header Row: Count & VIEW CART button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "${uiState.totalCount} books available",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+                        fontSize = 14.sp
+                    )
+                )
 
+                Button(
+                    onClick = {
+                        Toast.makeText(context, "Shopping Cart feature coming soon!", Toast.LENGTH_SHORT).show()
+                    },
+                    shape = RoundedCornerShape(20.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = GoldDark,
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier.height(38.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ShoppingCart,
+                        contentDescription = "Cart",
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "VIEW CART",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Compact Search Bar
             com.darsequran.academy.ui.components.CompactSearchBar(
@@ -121,7 +161,7 @@ fun BookstoreScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(uiState.filteredBooks) { book ->
                         BookstoreItemCard(
@@ -151,19 +191,21 @@ fun BookstoreScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp)
+                    .padding(horizontal = 24.dp, vertical = 12.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = EmeraldDark.copy(alpha = 0.1f)
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color(0xFFDCFCE7)
                 ) {
                     Text(
-                        text = book.category?.uppercase() ?: "BOOK",
-                        style = MaterialTheme.typography.labelMedium.copy(
+                        text = (book.status ?: "AVAILABLE").uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = Color(0xFF15803D),
+                            fontSize = 11.5.sp
                         ),
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                     )
                 }
 
@@ -173,7 +215,9 @@ fun BookstoreScreen(
                     text = book.title,
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 22.sp,
+                        lineHeight = 28.sp
                     )
                 )
 
@@ -183,15 +227,16 @@ fun BookstoreScreen(
                         Icon(
                             imageVector = Icons.Default.Person,
                             contentDescription = "Author",
-                            tint = GoldAccent,
+                            tint = GoldDark,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Author: $author",
+                            text = author,
                             style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+                                fontSize = 14.sp
                             )
                         )
                     }
@@ -199,20 +244,50 @@ fun BookstoreScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text(
-                    text = "Price: ₹${book.priceInRupees.toInt()}",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "₹${book.priceInRupees.toInt()}.00",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = GoldDark,
+                            fontSize = 20.sp
+                        )
                     )
-                )
+                    val mrpVal = book.mrpInRupees
+                    if (mrpVal != null && mrpVal > 0) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "₹${mrpVal.toInt()}.00",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = Color.Gray,
+                                fontSize = 14.sp,
+                                textDecoration = TextDecoration.LineThrough
+                            )
+                        )
+                    }
+                }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                val imageUrl = book.imagePath
+                if (!imageUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = book.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
                 Text(
                     text = book.description ?: "High-quality Islamic literature published and recommended by Darse Quran Academy.",
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        fontSize = 15.sp,
                         lineHeight = 22.sp
                     )
                 )
@@ -230,25 +305,31 @@ fun BookstoreScreen(
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
+                        containerColor = GoldDark,
                         contentColor = Color.White
                     ),
-                    shape = RoundedCornerShape(10.dp),
+                    shape = RoundedCornerShape(25.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp)
+                        .height(50.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.ShoppingCart,
                         contentDescription = "Order on WhatsApp",
-                        tint = GoldAccent,
+                        tint = Color.White,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Order on WhatsApp", fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "Order on WhatsApp",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.5.sp
+                        )
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
@@ -265,78 +346,176 @@ fun BookstoreItemCard(
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .background(EmeraldDark.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.MenuBook,
-                    contentDescription = "Book",
-                    tint = GoldAccent,
-                    modifier = Modifier.size(30.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = EmeraldDark.copy(alpha = 0.08f)
-                ) {
-                    Text(
-                        text = book.status ?: "AVAILABLE",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontSize = 10.sp
-                        ),
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // 1. Featured Cover Banner & Availability Badge
+            Box(modifier = Modifier.fillMaxWidth()) {
+                val imageUrl = book.imagePath
+                if (!imageUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = book.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
                     )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(160.dp)
+                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                            .background(EmeraldDark.copy(alpha = 0.08f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                            contentDescription = "Book",
+                            tint = GoldDark,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                // Available Badge (Top Right)
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color(0xFFDCFCE7),
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = (book.status ?: "Available").lowercase().replaceFirstChar { it.uppercase() },
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF15803D),
+                            fontSize = 11.5.sp
+                        ),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
 
+            Column(modifier = Modifier.padding(18.dp)) {
+                // 2. Main Title
                 Text(
                     text = book.title,
-                    style = MaterialTheme.typography.titleMedium.copy(
+                    style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 16.sp
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 18.sp,
+                        lineHeight = 24.sp
                     ),
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
 
+                // 3. Author Subtitle
                 book.author?.let { author ->
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "By $author",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        text = author,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            fontSize = 13.5.sp
                         ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                // 4. Description Snippet
+                book.description?.let { desc ->
+                    if (desc.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = desc,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                fontSize = 13.sp,
+                                lineHeight = 19.sp
+                            ),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
 
-                Text(
-                    text = "₹${book.priceInRupees.toInt()}",
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = EmeraldPrimary
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // 5. Price & MRP Line
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "₹${book.priceInRupees.toInt()}.00",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = GoldDark,
+                            fontSize = 17.sp
+                        )
                     )
-                )
+
+                    val mrpVal = book.mrpInRupees
+                    if (mrpVal != null && mrpVal > 0) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "₹${mrpVal.toInt()}.00",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = Color.Gray,
+                                fontSize = 13.sp,
+                                textDecoration = TextDecoration.LineThrough
+                            )
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 6. Action Buttons: BOOK DETAILS & Add to Cart
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = { onClick() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(42.dp),
+                        shape = RoundedCornerShape(6.dp),
+                        border = BorderStroke(1.dp, GoldDark)
+                    ) {
+                        Text(
+                            text = "BOOK DETAILS",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = GoldDark,
+                                fontSize = 13.5.sp
+                            )
+                        )
+                    }
+
+                    Button(
+                        onClick = { onClick() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp),
+                        shape = RoundedCornerShape(22.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = GoldDark,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text(
+                            text = "Add to Cart",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.5.sp
+                            )
+                        )
+                    }
+                }
             }
         }
     }
