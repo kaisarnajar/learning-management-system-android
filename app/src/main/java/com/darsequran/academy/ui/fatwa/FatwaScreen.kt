@@ -23,23 +23,28 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.AddComment
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -59,7 +64,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.darsequran.academy.data.model.FatwaItemDto
 import com.darsequran.academy.ui.theme.EmeraldDark
-import com.darsequran.academy.ui.theme.EmeraldPrimary
 import com.darsequran.academy.ui.theme.GoldAccent
 import com.darsequran.academy.ui.theme.GoldDark
 
@@ -302,13 +306,13 @@ fun FatwaScreen(
         }
     }
 
-    // Submit Fatwa Dialog
+    // Submit Fatwa / Ask Question Sheet (Matching Web UI Form Spec)
     if (uiState.isAskFatwaDialogOpen) {
-        AskFatwaDialog(
+        AskQuestionSheet(
             isSubmitting = uiState.isSubmitting,
             onDismiss = { viewModel.toggleAskFatwaDialog(false) },
-            onSubmit = { title, question, category, name, email ->
-                viewModel.submitFatwaQuestion(title, question, category, name, email)
+            onSubmit = { subject, question, category, name, email ->
+                viewModel.submitFatwaQuestion(subject, question, category, name, email)
             }
         )
     }
@@ -419,87 +423,314 @@ fun FatwaCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AskFatwaDialog(
+fun AskQuestionSheet(
     isSubmitting: Boolean,
     onDismiss: () -> Unit,
     onSubmit: (title: String, question: String, category: String, name: String, email: String) -> Unit
 ) {
-    var title by remember { mutableStateOf("") }
-    var question by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf("Fiqh & Worship") }
-    var name by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("") }
+    var subject by remember { mutableStateOf("") }
+    var questionDetail by remember { mutableStateOf("") }
+    var isAnonymous by remember { mutableStateOf(false) }
+    var name by remember { mutableStateOf("Kaisar Ahmad Najar") }
+    var email by remember { mutableStateOf("kaisarnajar11114@gmail.com") }
 
-    AlertDialog(
+    val categories = listOf(
+        "Islam",
+        "Quran",
+        "Hadith",
+        "Fiqh",
+        "Tajweed",
+        "Seerah",
+        "Arabic Language",
+        "Atheism",
+        "Fatwa",
+        "Others"
+    )
+
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "Ask Scholar a Question",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = EmeraldPrimary
-                )
-            )
-        },
-        text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 12.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            // Sheet Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Your Name") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                Text(
+                    text = "Ask a Question",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 20.sp
+                    )
                 )
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Your Email") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Question Title / Topic") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = question,
-                    onValueChange = { question = it },
-                    label = { Text("Detailed Question") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 3
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    if (title.isNotBlank() && question.isNotBlank() && name.isNotBlank() && email.isNotBlank()) {
-                        onSubmit(title, question, category, name, email)
-                    }
-                },
-                enabled = !isSubmitting,
-                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
-            ) {
-                if (isSubmitting) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp))
-                } else {
-                    Text("Submit Query", fontWeight = FontWeight.Bold)
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
                 }
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 1. Category Dropdown Field
+            Row {
+                Text(
+                    text = "Category ",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                )
+                Text(
+                    text = "*",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color.Red
+                    )
+                )
             }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            var dropdownExpanded by remember { mutableStateOf(false) }
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = if (category.isBlank()) "Select a topic" else category,
+                    onValueChange = {},
+                    readOnly = true,
+                    enabled = false,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Dropdown",
+                            tint = GoldDark
+                        )
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = if (category.isBlank()) Color.Gray else MaterialTheme.colorScheme.onSurface,
+                        disabledBorderColor = GoldDark,
+                        disabledContainerColor = Color.Transparent
+                    )
+                )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable { dropdownExpanded = true }
+                )
+
+                DropdownMenu(
+                    expanded = dropdownExpanded,
+                    onDismissRequest = { dropdownExpanded = false },
+                    modifier = Modifier.fillMaxWidth(0.88f)
+                ) {
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = "Select a topic",
+                                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray)
+                            )
+                        },
+                        onClick = {
+                            category = ""
+                            dropdownExpanded = false
+                        }
+                    )
+                    categories.forEach { cat ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = cat,
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = if (category == cat) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (category == cat) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                    )
+                                )
+                            },
+                            onClick = {
+                                category = cat
+                                dropdownExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 2. Subject Field
+            Row {
+                Text(
+                    text = "Subject ",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                )
+                Text(
+                    text = "*",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color.Red
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            OutlinedTextField(
+                value = subject,
+                onValueChange = { subject = it },
+                placeholder = { Text("Brief summary of your question", color = Color.Gray, fontSize = 14.sp) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = GoldDark,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                )
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 3. Your Question Field
+            Row {
+                Text(
+                    text = "Your question ",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                )
+                Text(
+                    text = "*",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color.Red
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            OutlinedTextField(
+                value = questionDetail,
+                onValueChange = { questionDetail = it },
+                placeholder = {
+                    Text(
+                        "Describe your question in detail (e.g. Fiqh, Quran, Tajweed, daily practice)",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                },
+                minLines = 4,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = GoldDark,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                )
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 4. Send Question Anonymously Checkbox
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { isAnonymous = !isAnonymous }
+            ) {
+                Checkbox(
+                    checked = isAnonymous,
+                    onCheckedChange = { isAnonymous = it },
+                    colors = CheckboxDefaults.colors(checkedColor = GoldDark)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "Send Question Anonymously",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 14.5.sp
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Helper text
+            val helperText = if (isAnonymous) {
+                "Submitting anonymously. We will email you when answered."
+            } else {
+                "Submitting as $name ($email). We will email you when answered."
+            }
+            Text(
+                text = helperText,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp
+                )
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // 5. Submit Question Button
+            val isFormValid = category.isNotBlank() && subject.isNotBlank() && questionDetail.isNotBlank()
+            Button(
+                onClick = {
+                    if (isFormValid) {
+                        val submitName = if (isAnonymous) "Anonymous" else name
+                        onSubmit(subject, questionDetail, category, submitName, email)
+                    }
+                },
+                enabled = isFormValid && !isSubmitting,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(25.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = GoldDark,
+                    disabledContainerColor = GoldDark.copy(alpha = 0.4f),
+                    contentColor = Color.White,
+                    disabledContentColor = Color.White.copy(alpha = 0.7f)
+                )
+            ) {
+                if (isSubmitting) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
+                } else {
+                    Text(
+                        text = "Submit question",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
-    )
+    }
 }
