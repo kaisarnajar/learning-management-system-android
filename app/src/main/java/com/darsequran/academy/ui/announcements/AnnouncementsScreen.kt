@@ -250,38 +250,38 @@ fun AnnouncementCard(
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
         shape = RoundedCornerShape(14.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column(modifier = Modifier.padding(18.dp)) {
             // 1. Large Bold Title
             Text(
                 text = notice.title,
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 19.sp,
-                    lineHeight = 25.sp
+                    fontSize = 18.5.sp,
+                    lineHeight = 24.sp
                 ),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
 
-            // 2. Body Text Paragraph
+            // 2. Body Text Paragraph (Max 2 lines for compact card height)
             notice.body?.let { bodyText ->
                 if (bodyText.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     Text(
                         text = bodyText,
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f),
                             fontSize = 14.sp,
-                            lineHeight = 21.sp
+                            lineHeight = 20.sp
                         ),
-                        maxLines = 4,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // 3. Posted Date
             val dateText = notice.createdAt?.let { date ->
@@ -296,7 +296,7 @@ fun AnnouncementCard(
                 )
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // 4. "Read more" Action Link
             Text(
@@ -304,7 +304,7 @@ fun AnnouncementCard(
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = GoldDark,
-                    fontSize = 14.5.sp
+                    fontSize = 14.sp
                 )
             )
         }
