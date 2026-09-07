@@ -83,7 +83,8 @@ fun ExploreMainScreen(
                     onBackPress = {},
                     onTeacherClick = { teacherName ->
                         catalogViewModel.selectTeacherDetailByName(teacherName)
-                    }
+                    },
+                    renderCourseDetailSheet = false
                 )
                 1 -> TeachersScreen(
                     viewModel = teachersViewModel,

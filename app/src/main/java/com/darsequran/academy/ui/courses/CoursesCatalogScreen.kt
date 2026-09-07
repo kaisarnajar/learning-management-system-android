@@ -67,7 +67,8 @@ import com.darsequran.academy.ui.theme.GoldDark
 fun CoursesCatalogScreen(
     viewModel: CoursesCatalogViewModel,
     onBackPress: () -> Unit = {},
-    onTeacherClick: (String?) -> Unit = {}
+    onTeacherClick: (String?) -> Unit = {},
+    renderCourseDetailSheet: Boolean = true
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -160,17 +161,19 @@ fun CoursesCatalogScreen(
     }
 
     // Detail Bottom Sheet Modal
-    uiState.selectedCourseDetail?.let { course ->
-        CourseDetailBottomSheet(
-            course = course,
-            isEnrolling = uiState.isEnrolling,
-            onDismissRequest = { viewModel.selectCourseDetail(null) },
-            onRequestEnrollment = { courseId -> viewModel.requestEnrollment(courseId) },
-            onTeacherClick = { teacherName, specialization ->
-                viewModel.selectCourseDetail(null)
-                viewModel.selectTeacherDetailByName(teacherName, specialization)
-            }
-        )
+    if (renderCourseDetailSheet) {
+        uiState.selectedCourseDetail?.let { course ->
+            CourseDetailBottomSheet(
+                course = course,
+                isEnrolling = uiState.isEnrolling,
+                onDismissRequest = { viewModel.selectCourseDetail(null) },
+                onRequestEnrollment = { courseId -> viewModel.requestEnrollment(courseId) },
+                onTeacherClick = { teacherName, specialization ->
+                    viewModel.selectCourseDetail(null)
+                    viewModel.selectTeacherDetailByName(teacherName, specialization)
+                }
+            )
+        }
     }
 
     // Teacher Detail Bottom Sheet Modal
