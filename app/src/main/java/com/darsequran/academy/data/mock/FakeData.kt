@@ -90,6 +90,27 @@ Register now: www.darsequranacademy.com
     // TODO: Remove fake blog posts data when server API has live blog posts
     val fakeBlogPosts: List<BlogPostDto> = listOf(
         BlogPostDto(
+            id = "blog-mawlid-al-nabi",
+            title = "Rabi' al-Awwal and the Celebration of Mawlid al-Nabi ﷺ",
+            excerpt = "This article examines the significance of the blessed month of Rabi' al-Awwal and emphasizes that true love for Prophet Muhammad ﷺ is demonstrated through sincere obedience, following the Sunnah, and embodying prophetic character in daily life.",
+            body = """
+                The month of Rabi' al-Awwal holds a special place in the hearts of Muslims worldwide as the birth month of the final Messenger of Allah, Prophet Muhammad (PBUH).
+
+                True celebration of the Prophet's legacy lies in reviving his Sunnah, increasing sending blessings (Salawat) upon him, practicing kindness, and seeking sacred Islamic knowledge.
+            """.trimIndent(),
+            category = "Reflections",
+            readTime = "6 min read",
+            createdAt = "10 July 2026",
+            images = listOf(
+                com.darsequran.academy.data.model.BlogImageDto(
+                    id = "img-mawlid",
+                    imagePath = "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f",
+                    caption = "Rabi' al-Awwal Banner"
+                )
+            ),
+            createdBy = BlogAuthorDto(name = "Talib Ul Islam", email = "talib@darsequran.com")
+        ),
+        BlogPostDto(
             id = "blog-1",
             title = "5 Essential Tajweed Rules Every Reciter Should Master",
             excerpt = "Mastering proper pronunciation and Makharij is the foundation of beautiful Quranic recitation. Here are five practical tips from our senior Tajweed scholars.",
