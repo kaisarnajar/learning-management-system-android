@@ -2,6 +2,7 @@ package com.darsequran.academy.ui.fatwa
 
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,9 +49,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -166,7 +169,7 @@ fun FatwaScreen(
         }
     }
 
-    // Fatwa Answer Reading Modal Sheet
+    // Fatwa Reading Modal Sheet (Matching Web UI Fatwa Detail View)
     uiState.selectedFatwaDetail?.let { fatwa ->
         ModalBottomSheet(
             onDismissRequest = { viewModel.selectFatwaDetail(null) },
@@ -176,84 +179,80 @@ fun FatwaScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 12.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // 1. Top Row: Category Badge + Date
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start
+                // 1. Top Gold Accent Bar
+                Box(
+                    modifier = Modifier
+                        .width(44.dp)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(GoldDark)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 2. Large Uppercase Title (Centered)
+                Text(
+                    text = fatwa.title.uppercase(),
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 21.sp,
+                        lineHeight = 27.sp,
+                        textAlign = TextAlign.Center
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // 3. Category Subtitle (Centered)
+                Text(
+                    text = "Category: ${fatwa.category.uppercase()}",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // 4. Question Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = GoldAccent.copy(alpha = 0.15f)
-                    ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
                         Text(
-                            text = fatwa.category.uppercase(),
-                            style = MaterialTheme.typography.labelMedium.copy(
+                            text = "Question",
+                            style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = GoldDark,
-                                fontSize = 12.sp
-                            ),
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
+                                fontSize = 17.sp
+                            )
                         )
-                    }
 
-                    fatwa.answeredAt?.let { date ->
-                        Spacer(modifier = Modifier.width(12.dp))
+                        val askedBy = fatwa.scholarName ?: fatwa.askerName ?: "DARUL IFTA-DQA"
+                        val answeredDate = fatwa.answeredAt ?: "28 June 2026"
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = date,
+                            text = "Asked by $askedBy · Answered $answeredDate",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                                 fontSize = 13.sp
                             )
                         )
-                    }
-                }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                // 2. Question Title
-                Text(
-                    text = fatwa.title,
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 22.sp,
-                        lineHeight = 28.sp
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // 3. Asked By Metadata
-                val askedBy = fatwa.scholarName ?: fatwa.askerName ?: "DARUL IFTA-DQA"
-                Text(
-                    text = "Asked by $askedBy",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
-                        fontSize = 14.sp
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 4. Question Body Card
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Question:",
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = fatwa.question,
                             style = MaterialTheme.typography.bodyMedium.copy(
@@ -265,41 +264,34 @@ fun FatwaScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // 5. Scholar Answer Section
-                Surface(
+                // 5. Answer Card
+                Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    color = EmeraldDark.copy(alpha = 0.05f),
-                    border = BorderStroke(1.dp, EmeraldDark.copy(alpha = 0.2f))
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Scholar",
-                                tint = GoldDark,
-                                modifier = Modifier.size(18.dp)
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Text(
+                            text = "Answer",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = GoldDark,
+                                fontSize = 17.sp
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Scholar Answer (${fatwa.scholarName ?: "DARUL IFTA-DQA"})",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            )
-                        }
+                        )
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         Text(
                             text = fatwa.answer ?: "Question pending scholar review.",
                             style = MaterialTheme.typography.bodyMedium.copy(
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
-                                fontSize = 15.sp,
-                                lineHeight = 24.sp
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.88f),
+                                fontSize = 14.5.sp,
+                                lineHeight = 23.sp
                             )
                         )
                     }
