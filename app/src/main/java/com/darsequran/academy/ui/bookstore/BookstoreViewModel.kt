@@ -45,8 +45,10 @@ class BookstoreViewModel(
             val pageSize = _uiState.value.pageSize
             when (val result = authRepository.getBookstoreItems(page = page, pageSize = pageSize, search = searchParam)) {
                 is NetworkResult.Success -> {
-                    val list = result.data.data ?: emptyList()
-                    val totalCount = result.data.totalCount ?: list.size
+                    val apiList = result.data.data ?: emptyList()
+                    // TODO: Remove fake fallback data once server API endpoints return live data
+                    val list = if (apiList.isEmpty()) com.darsequran.academy.data.mock.FakeData.fakeBookstoreItems else apiList
+                    val totalCount = if (apiList.isEmpty()) list.size else (result.data.totalCount ?: list.size)
                     val totalPages = kotlin.math.max(1, kotlin.math.ceil(totalCount.toDouble() / pageSize.toDouble()).toInt())
                     val apiCategories = list.mapNotNull { it.category?.trim() }
                         .filter { it.isNotBlank() }
@@ -57,7 +59,7 @@ class BookstoreViewModel(
                         state.copy(
                             books = list,
                             categories = if (apiCategories.isEmpty()) listOf("All", "Quran Editions", "Seerah", "Arabic Literature", "Hadith Studies") else dynamicCategories,
-                            filteredBooks = list,
+                            filteredBooks = filterBooks(list, search, state.selectedCategory),
                             currentPage = page,
                             totalCount = totalCount,
                             totalPages = totalPages,
@@ -66,7 +68,19 @@ class BookstoreViewModel(
                     }
                 }
                 is NetworkResult.Error -> {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
+                    // TODO: Remove fake fallback data once server API endpoints return live data
+                    val list = com.darsequran.academy.data.mock.FakeData.fakeBookstoreItems
+                    val apiCategories = list.mapNotNull { it.category?.trim() }.filter { it.isNotBlank() }.distinct()
+                    _uiState.update { state ->
+                        state.copy(
+                            books = list,
+                            categories = listOf("All") + apiCategories,
+                            filteredBooks = filterBooks(list, search, state.selectedCategory),
+                            totalCount = list.size,
+                            totalPages = 1,
+                            isLoading = false
+                        )
+                    }
                 }
                 else -> {
                     _uiState.update { it.copy(isLoading = false) }
