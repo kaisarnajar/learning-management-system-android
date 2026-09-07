@@ -424,10 +424,8 @@ fun PublicCourseCard(
     onViewDetails: () -> Unit,
     onRequestEnrollment: () -> Unit,
     isEnrolling: Boolean,
-    onTeacherClick: (String?) -> Unit
+    onTeacherClick: ((String?) -> Unit)? = null
 ) {
-    val teacherName = course.teacher?.name ?: "Moulana Abdul Rahman"
-
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -484,15 +482,6 @@ fun PublicCourseCard(
                 )
                 Spacer(modifier = Modifier.height(14.dp))
             }
-
-            // Instructor Card (Clickable to open Teacher Detail bottom sheet!)
-            InstructorCard(
-                teacherName = teacherName,
-                subtitle = course.teacher?.specialization,
-                onClick = { onTeacherClick(teacherName) }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             // Course Specs Summary
             Column(modifier = Modifier.fillMaxWidth()) {
