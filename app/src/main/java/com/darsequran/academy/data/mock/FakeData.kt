@@ -13,6 +13,36 @@ object FakeData {
     // TODO: Remove fake announcements data when server API has live announcements
     val fakeAnnouncements: List<AnnouncementDto> = listOf(
         AnnouncementDto(
+            id = "announcement-friday-bayaan",
+            title = "Friday Bayaan",
+            body = """
+*Jummah Bayaan*
+
+📍 Join us for an enlightening Jummah Bayaan at Markazi Jamia Masjid Shareef, Treran Tangmarg.
+
+Guest Speaker:
+Hazrat Mufti Abdur Rashid Qasmi Naqshbandi Sahib (DB)
+
+Alhamdulillah, Darse Quran Academy *is honored to function under his esteemed supervision.
+
+📖 Admissions Open – Hifz-e-Quran Batch 2
+Register now: www.darsequranacademy.com
+📱 WhatsApp: 9622966911
+            """.trimIndent(),
+            location = "MARKAZI JAMIA MASJID SHAREEF, TRERAN TANGMARG 193402",
+            tag = "31 JULY 2026",
+            priority = "High",
+            createdAt = "28 July 2026",
+            images = listOf(
+                AnnouncementImageDto(
+                    id = "img-bayaan",
+                    imagePath = "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f",
+                    caption = "Jummah Bayaan Poster"
+                )
+            ),
+            createdBy = AnnouncementAuthorDto(name = "Darse Quran Academy")
+        ),
+        AnnouncementDto(
             id = "announcement-1",
             title = "Ramadan Quran Recitation & Tajweed Competition 2026",
             body = "We are delighted to announce our annual Ramadan Quran Recitation Competition. Open for all registered students across beginner and advanced levels. Exciting rewards and scholar certificates will be awarded by senior Moulanas.",

@@ -109,7 +109,7 @@ fun AnnouncementsScreen(
         }
     }
 
-    // Modal Bottom Sheet: Announcement Full Detail
+    // Modal Bottom Sheet: Announcement Full Detail (Matching Web UI Spec)
     selectedAnnouncementForDetail?.let { notice ->
         ModalBottomSheet(
             onDismissRequest = { selectedAnnouncementForDetail = null },
@@ -121,115 +121,101 @@ fun AnnouncementsScreen(
                     .padding(24.dp)
                     .verticalScroll(rememberScrollState())
             ) {
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = EmeraldDark.copy(alpha = 0.1f)
-                ) {
-                    Text(
-                        text = notice.location ?: "ACADEMY ANNOUNCEMENT",
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        ),
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                    )
+                // 1. Tag / Event Date Subtitle (Gold uppercase)
+                notice.tag?.let { tagText ->
+                    if (tagText.isNotBlank()) {
+                        Text(
+                            text = tagText.uppercase(),
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = GoldDark,
+                                fontSize = 13.sp,
+                                letterSpacing = 0.5.sp
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                // 2. Location Subtitle (Gold uppercase)
+                notice.location?.let { locText ->
+                    if (locText.isNotBlank()) {
+                        Text(
+                            text = locText.uppercase(),
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = GoldDark,
+                                fontSize = 13.sp,
+                                letterSpacing = 0.5.sp
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
 
+                // 3. Main Title (Large Bold Headline)
                 Text(
                     text = notice.title,
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 26.sp,
+                        lineHeight = 32.sp
                     )
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    notice.createdAt?.let { date ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Event,
-                                contentDescription = "Date",
-                                tint = GoldAccent,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = date,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            )
-                        }
-                    }
-                    notice.createdBy?.name?.let { author ->
-                        Spacer(modifier = Modifier.width(14.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Author",
-                                tint = GoldAccent,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = author,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            )
-                        }
-                    }
-                }
+                // 4. Posted Date Subtitle
+                val dateText = notice.createdAt?.let { date ->
+                    if (date.startsWith("Posted", ignoreCase = true)) date else "Posted $date"
+                } ?: "Posted recently"
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = dateText,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        fontSize = 14.sp
+                    )
+                )
 
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // 5. Body Text Content
                 notice.body?.let { bodyText ->
                     Text(
                         text = bodyText,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
-                            lineHeight = 22.sp
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.88f),
+                            fontSize = 15.5.sp,
+                            lineHeight = 24.sp
                         )
                     )
                 }
 
+                // 6. Attached Poster / Media Images
                 if (!notice.images.isNullOrEmpty()) {
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Text(
-                        text = "Attached Media & Images",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-
+                    Spacer(modifier = Modifier.height(24.dp))
                     notice.images.forEach { img ->
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 12.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
-                            shape = RoundedCornerShape(12.dp)
+                                .padding(bottom = 16.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                         ) {
-                            Column(modifier = Modifier.padding(10.dp)) {
+                            Column(modifier = Modifier.padding(12.dp)) {
                                 AsyncImage(
                                     model = img.imagePath,
-                                    contentDescription = img.caption ?: "Attached Media",
-                                    contentScale = ContentScale.Crop,
+                                    contentDescription = img.caption ?: "Announcement Poster",
+                                    contentScale = ContentScale.FillWidth,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(180.dp)
-                                        .clip(RoundedCornerShape(8.dp))
+                                        .clip(RoundedCornerShape(12.dp))
                                 )
                                 img.caption?.let { captionText ->
-                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Spacer(modifier = Modifier.height(8.dp))
                                     Text(
                                         text = captionText,
                                         style = MaterialTheme.typography.bodySmall.copy(
@@ -244,7 +230,7 @@ fun AnnouncementsScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
