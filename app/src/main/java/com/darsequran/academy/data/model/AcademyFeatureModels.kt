@@ -16,6 +16,8 @@ data class LibraryBookDto(
     @SerializedName("filePath") val filePath: String? = null,
     @SerializedName("coverImagePath") val coverImagePath: String? = null,
     @SerializedName("pages") val pages: Int? = null,
+    @SerializedName("level") val level: String? = "Beginner",
+    @SerializedName("language") val language: String? = "English",
     @SerializedName("published") val published: Boolean = true
 )
 
