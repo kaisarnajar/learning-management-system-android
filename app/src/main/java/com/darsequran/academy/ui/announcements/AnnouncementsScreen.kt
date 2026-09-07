@@ -1,5 +1,6 @@
 package com.darsequran.academy.ui.announcements
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,6 +53,7 @@ import com.darsequran.academy.ui.home.HomeViewModel
 import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.EmeraldPrimary
 import com.darsequran.academy.ui.theme.GoldAccent
+import com.darsequran.academy.ui.theme.GoldDark
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,58 +96,13 @@ fun AnnouncementsScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     items(uiState.announcements) { notice ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { selectedAnnouncementForDetail = notice },
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                            shape = RoundedCornerShape(14.dp)
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = notice.title,
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            fontSize = 16.sp
-                                        ),
-                                        modifier = Modifier.weight(1f)
-                                    )
-
-                                    notice.createdAt?.let { date ->
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = date,
-                                            style = MaterialTheme.typography.labelSmall.copy(
-                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
-                                            )
-                                        )
-                                    }
-                                }
-
-                                notice.body?.let { body ->
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    Text(
-                                        text = body,
-                                        style = MaterialTheme.typography.bodySmall.copy(
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
-                                            lineHeight = 18.sp
-                                        ),
-                                        maxLines = 3,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                            }
-                        }
+                        AnnouncementCard(
+                            notice = notice,
+                            onClick = { selectedAnnouncementForDetail = notice }
+                        )
                     }
                 }
             }
@@ -289,6 +246,81 @@ fun AnnouncementsScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
             }
+        }
+    }
+}
+
+@Composable
+fun AnnouncementCard(
+    notice: AnnouncementDto,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            // 1. Large Bold Title
+            Text(
+                text = notice.title,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 19.sp,
+                    lineHeight = 25.sp
+                ),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            // 2. Body Text Paragraph
+            notice.body?.let { bodyText ->
+                if (bodyText.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = bodyText,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f),
+                            fontSize = 14.sp,
+                            lineHeight = 21.sp
+                        ),
+                        maxLines = 4,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            // 3. Posted Date
+            val dateText = notice.createdAt?.let { date ->
+                if (date.startsWith("Posted", ignoreCase = true)) date else "Posted $date"
+            } ?: "Posted recently"
+
+            Text(
+                text = dateText,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                    fontSize = 13.sp
+                )
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // 4. "Read more" Action Link
+            Text(
+                text = "Read more",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = GoldDark,
+                    fontSize = 14.5.sp
+                )
+            )
         }
     }
 }
