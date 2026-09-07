@@ -46,10 +46,12 @@ class DigitalLibraryViewModel(
             val topicParam = if (_uiState.value.selectedTopic == "All") null else _uiState.value.selectedTopic
             when (val result = authRepository.getLibraryBooks(page = page, pageSize = pageSize, search = searchParam, topic = topicParam)) {
                 is NetworkResult.Success -> {
-                    val books = result.data.data ?: emptyList()
-                    val totalCount = result.data.totalCount ?: books.size
+                    val apiBooks = result.data.data ?: emptyList()
+                    // TODO: Remove fake fallback data once server API endpoints return live data
+                    val books = if (apiBooks.isEmpty()) com.darsequran.academy.data.mock.FakeData.fakeLibraryBooks else apiBooks
+                    val totalCount = if (apiBooks.isEmpty()) books.size else (result.data.totalCount ?: books.size)
                     val totalPages = kotlin.math.max(1, kotlin.math.ceil(totalCount.toDouble() / pageSize.toDouble()).toInt())
-                    val apiTopics = books.flatMap { listOfNotNull(it.topic, it.category) }
+                    val apiTopics = books.mapNotNull { it.topic ?: it.category }
                         .map { it.trim() }
                         .filter { it.isNotBlank() }
                         .distinct()
@@ -59,7 +61,7 @@ class DigitalLibraryViewModel(
                         state.copy(
                             books = books,
                             topics = if (apiTopics.isEmpty()) listOf("All", "Quran", "Tajweed", "Hadith", "Seerah", "Arabic", "Fiqh") else dynamicTopics,
-                            filteredBooks = books,
+                            filteredBooks = filterBooksList(books, search, state.selectedTopic),
                             currentPage = page,
                             totalCount = totalCount,
                             totalPages = totalPages,
@@ -68,7 +70,19 @@ class DigitalLibraryViewModel(
                     }
                 }
                 is NetworkResult.Error -> {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
+                    // TODO: Remove fake fallback data once server API endpoints return live data
+                    val books = com.darsequran.academy.data.mock.FakeData.fakeLibraryBooks
+                    val apiTopics = books.mapNotNull { it.topic ?: it.category }.map { it.trim() }.filter { it.isNotBlank() }.distinct()
+                    _uiState.update { state ->
+                        state.copy(
+                            books = books,
+                            topics = listOf("All") + apiTopics,
+                            filteredBooks = filterBooksList(books, search, state.selectedTopic),
+                            totalCount = books.size,
+                            totalPages = 1,
+                            isLoading = false
+                        )
+                    }
                 }
                 else -> {
                     _uiState.update { it.copy(isLoading = false) }

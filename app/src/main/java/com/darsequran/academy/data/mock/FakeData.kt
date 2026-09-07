@@ -6,6 +6,7 @@ import com.darsequran.academy.data.model.AnnouncementImageDto
 import com.darsequran.academy.data.model.BlogAuthorDto
 import com.darsequran.academy.data.model.BlogPostDto
 import com.darsequran.academy.data.model.FatwaItemDto
+import com.darsequran.academy.data.model.LibraryBookDto
 
 // TODO: Remove fake fallback data once server API endpoints return live data
 object FakeData {
@@ -233,6 +234,88 @@ Register now: www.darsequranacademy.com
             scholarName = "Dr. Zakir Hussain",
             answeredAt = "2026-08-14",
             approvalStatus = "APPROVED"
+        )
+    )
+
+    // TODO: Remove fake library books data when server API has live library items
+    val fakeLibraryBooks: List<LibraryBookDto> = listOf(
+        LibraryBookDto(
+            id = "book-sahaba-3",
+            title = "The Lives of Sahaba RA Vol–3",
+            author = "Shaykhul Hadees Hz Maulana Yusuf Sahab RH",
+            topic = "Seerah",
+            category = "Seerah",
+            description = "Detailed biographical accounts of the blessed Companions (Sahaba RA) of Prophet Muhammad (PBUH) showcasing their faith, sacrifices, and exemplary character.",
+            fileUrl = "https://darsequranacademy.com/library",
+            coverImagePath = "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c",
+            level = "Beginner",
+            language = "English",
+            pages = 320
+        ),
+        LibraryBookDto(
+            id = "book-sahaba-2",
+            title = "The Lives of Sahaba RA Vol–2",
+            author = "Shaykhul Hadees Hz Maulana Yusuf Sahab RH",
+            topic = "Seerah",
+            category = "Seerah",
+            description = "Volume 2 covering inspiring stories and sacrifices of the noble Sahaba RA in preserving and spreading Islam.",
+            fileUrl = "https://darsequranacademy.com/library",
+            coverImagePath = "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c",
+            level = "Beginner",
+            language = "English",
+            pages = 295
+        ),
+        LibraryBookDto(
+            id = "book-sahaba-1",
+            title = "The Lives of Sahaba RA(Vol–1)",
+            author = "Shaykhul Hadees Hz Maulana Yusuf Sahab RH",
+            topic = "Seerah",
+            category = "Seerah",
+            description = "Volume 1 detailing the early struggles, devotion, and character of the Companions of the Holy Prophet (PBUH).",
+            fileUrl = "https://darsequranacademy.com/library",
+            coverImagePath = "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c",
+            level = "Beginner",
+            language = "English",
+            pages = 310
+        ),
+        LibraryBookDto(
+            id = "book-tajweed-2",
+            title = "اصول تجوید دوم",
+            author = "مولانا قاری جمشید علی صاحب",
+            topic = "Tajweed",
+            category = "Tajweed",
+            description = "Second volume of essential Tajweed rules for correct Quranic recitation.",
+            fileUrl = "https://darsequranacademy.com/library",
+            coverImagePath = "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f",
+            level = "Beginner",
+            language = "Urdu",
+            pages = 180
+        ),
+        LibraryBookDto(
+            id = "book-tajweed-1",
+            title = "اصول تجوید اول",
+            author = "مولانا قاری جمشید علی صاحب",
+            topic = "Tajweed",
+            category = "Tajweed",
+            description = "Fundamental Tajweed principles and Makharij guide for beginners in Urdu.",
+            fileUrl = "https://darsequranacademy.com/library",
+            coverImagePath = "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f",
+            level = "Beginner",
+            language = "Urdu",
+            pages = 160
+        ),
+        LibraryBookDto(
+            id = "book-murshid-tajweed",
+            title = "المرشد فی مسائل التجوید والوقف",
+            author = "قاری اظہار احمد تھانوی صاحب",
+            topic = "Tajweed",
+            category = "Tajweed",
+            description = "Comprehensive guide on Tajweed rulings and stopping points (Waqf) in Quranic recitation.",
+            fileUrl = "https://darsequranacademy.com/library",
+            coverImagePath = "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f",
+            level = "Beginner",
+            language = "Urdu",
+            pages = 240
         )
     )
 }
