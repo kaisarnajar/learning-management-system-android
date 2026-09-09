@@ -19,9 +19,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.darsequran.academy.ui.bookstore.BookstoreCartScreen
+import com.darsequran.academy.ui.bookstore.BookstoreCartViewModel
 import com.darsequran.academy.ui.courses.MyCoursesScreen
 import com.darsequran.academy.ui.courses.MyCoursesViewModel
 import com.darsequran.academy.ui.payments.FeeWaiverScreen
+import com.darsequran.academy.ui.payments.FeeWaiverViewModel
 import com.darsequran.academy.ui.payments.PaymentsScreen
 import com.darsequran.academy.ui.payments.PaymentsViewModel
 import com.darsequran.academy.ui.theme.EmeraldDark
@@ -31,6 +33,8 @@ import com.darsequran.academy.ui.theme.GoldAccent
 fun PortalMainScreen(
     myCoursesViewModel: MyCoursesViewModel,
     paymentsViewModel: PaymentsViewModel,
+    feeWaiverViewModel: FeeWaiverViewModel,
+    bookstoreCartViewModel: BookstoreCartViewModel,
     onNavigateToExplore: () -> Unit = {}
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
@@ -75,8 +79,8 @@ fun PortalMainScreen(
                     onPayFee = { selectedTabIndex = 1 }
                 )
                 1 -> PaymentsScreen(viewModel = paymentsViewModel)
-                2 -> FeeWaiverScreen()
-                3 -> BookstoreCartScreen()
+                2 -> FeeWaiverScreen(viewModel = feeWaiverViewModel)
+                3 -> BookstoreCartScreen(viewModel = bookstoreCartViewModel)
             }
         }
     }

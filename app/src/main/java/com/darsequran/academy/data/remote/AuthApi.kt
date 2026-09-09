@@ -171,4 +171,15 @@ interface AuthApi {
         @Query("pageSize") pageSize: Int = 20,
         @Query("search") search: String? = null
     ): Response<com.darsequran.academy.data.model.BookstoreResponse>
+
+    @GET("waiver-requests")
+    suspend fun getWaiverRequests(): Response<com.darsequran.academy.data.model.WaiverRequestsResponse>
+
+    @POST("waiver-requests")
+    suspend fun submitWaiverRequest(
+        @Body request: com.darsequran.academy.data.model.SubmitWaiverRequest
+    ): Response<AuthResponse>
+
+    @GET("bookstore/orders")
+    suspend fun getBookstoreOrders(): Response<com.darsequran.academy.data.model.BookOrdersResponse>
 }

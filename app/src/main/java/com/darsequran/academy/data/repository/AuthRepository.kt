@@ -475,6 +475,46 @@ class AuthRepository(
         }
     }
 
+    suspend fun getWaiverRequests(): NetworkResult<com.darsequran.academy.data.model.WaiverRequestsResponse> {
+        return try {
+            val response = authApi.getWaiverRequests()
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Error("Failed to fetch fee waiver requests.")
+            }
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
+        }
+    }
+
+    suspend fun submitWaiverRequest(courseId: String, reason: String): NetworkResult<AuthResponse> {
+        return try {
+            val response = authApi.submitWaiverRequest(com.darsequran.academy.data.model.SubmitWaiverRequest(courseId, reason))
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                val errorMsg = parseErrorMessage(response.errorBody()?.string())
+                NetworkResult.Error(errorMsg ?: "Failed to submit fee waiver request.")
+            }
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
+        }
+    }
+
+    suspend fun getBookstoreOrders(): NetworkResult<com.darsequran.academy.data.model.BookOrdersResponse> {
+        return try {
+            val response = authApi.getBookstoreOrders()
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                NetworkResult.Success(com.darsequran.academy.data.model.BookOrdersResponse(success = true, orders = emptyList()))
+            }
+        } catch (_: Exception) {
+            NetworkResult.Success(com.darsequran.academy.data.model.BookOrdersResponse(success = true, orders = emptyList()))
+        }
+    }
+
     private fun getFallbackLibrary(search: String?, topic: String?): com.darsequran.academy.data.model.LibraryResponse {
         val list = listOf(
             com.darsequran.academy.data.model.LibraryBookDto(id = "lib-1", title = "Qiraat al-Ashr — Introduction & Guide", author = "Moulana Yusuf Ahmed", topic = "Qiraat & Tajweed", category = "Quran", description = "Comprehensive introduction to the ten authentic styles of Quranic recitation with examples.", pages = 145),
