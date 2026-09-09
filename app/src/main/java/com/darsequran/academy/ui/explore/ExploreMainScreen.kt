@@ -103,8 +103,10 @@ fun ExploreMainScreen(
 
     // Global Course Detail Bottom Sheet Modal (renders on current active tab without changing tabs)
     coursesState.selectedCourseDetail?.let { course ->
+        val userEnrollment = coursesState.userEnrollments.firstOrNull { it.courseId == course.id }
         CourseDetailBottomSheet(
             course = course,
+            userEnrollment = userEnrollment,
             isEnrolling = coursesState.isEnrolling,
             onDismissRequest = { catalogViewModel.selectCourseDetail(null) },
             onRequestEnrollment = { courseId -> catalogViewModel.requestEnrollment(courseId) },

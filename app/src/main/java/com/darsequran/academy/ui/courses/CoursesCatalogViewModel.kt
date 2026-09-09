@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 data class CoursesCatalogUiState(
     val courses: List<CourseDto> = emptyList(),
     val filteredCourses: List<CourseDto> = emptyList(),
+    val userEnrollments: List<com.darsequran.academy.data.model.EnrollmentDto> = emptyList(),
     val categories: List<String> = listOf("All"),
     val searchQuery: String = "",
     val selectedCategory: String = "All",
@@ -39,6 +40,19 @@ class CoursesCatalogViewModel(
 
     init {
         loadCourses()
+        loadUserEnrollments()
+    }
+
+    fun loadUserEnrollments() {
+        viewModelScope.launch {
+            when (val result = authRepository.getEnrollments()) {
+                is NetworkResult.Success -> {
+                    val list = result.data.data ?: emptyList()
+                    _uiState.update { it.copy(userEnrollments = list) }
+                }
+                else -> {}
+            }
+        }
     }
 
     fun loadCourses(page: Int = _uiState.value.currentPage, search: String = _uiState.value.searchQuery) {
@@ -149,6 +163,7 @@ class CoursesCatalogViewModel(
                             selectedCourseDetail = null
                         )
                     }
+                    loadUserEnrollments()
                 }
                 is NetworkResult.Error -> {
                     _uiState.update {

@@ -144,8 +144,10 @@ fun CoursesCatalogScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(uiState.filteredCourses) { course ->
+                        val userEnrollment = uiState.userEnrollments.firstOrNull { it.courseId == course.id }
                         PublicCourseCard(
                             course = course,
+                            userEnrollment = userEnrollment,
                             onViewDetails = { viewModel.selectCourseDetail(course) },
                             onRequestEnrollment = { viewModel.requestEnrollment(course.id) },
                             isEnrolling = uiState.isEnrolling,
@@ -170,8 +172,10 @@ fun CoursesCatalogScreen(
     // Detail Bottom Sheet Modal
     if (renderCourseDetailSheet) {
         uiState.selectedCourseDetail?.let { course ->
+            val userEnrollment = uiState.userEnrollments.firstOrNull { it.courseId == course.id }
             CourseDetailBottomSheet(
                 course = course,
+                userEnrollment = userEnrollment,
                 isEnrolling = uiState.isEnrolling,
                 onDismissRequest = { viewModel.selectCourseDetail(null) },
                 onRequestEnrollment = { courseId -> viewModel.requestEnrollment(courseId) },
@@ -198,11 +202,14 @@ fun CoursesCatalogScreen(
 @Composable
 fun CourseDetailBottomSheet(
     course: CourseDto,
+    userEnrollment: com.darsequran.academy.data.model.EnrollmentDto? = null,
     isEnrolling: Boolean,
     onDismissRequest: () -> Unit,
     onRequestEnrollment: (String) -> Unit,
     onTeacherClick: (String, String?) -> Unit
 ) {
+    val actionState = course.getActionButtonState(userEnrollment)
+    val isButtonEnabled = actionState.isEnabled && !isEnrolling
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -416,10 +423,12 @@ fun CourseDetailBottomSheet(
             // Request / Pay Enrollment Button
             Button(
                 onClick = { onRequestEnrollment(course.id) },
-                enabled = !isEnrolling,
+                enabled = isButtonEnabled,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = GoldDark,
-                    contentColor = Color.White
+                    containerColor = if (actionState.isEnabled) GoldDark else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                    contentColor = if (actionState.isEnabled) Color.White else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                    disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                 ),
                 shape = RoundedCornerShape(24.dp),
                 modifier = Modifier
@@ -433,8 +442,7 @@ fun CourseDetailBottomSheet(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    val buttonText = if (course.displayEnrollmentFee > 0) "Pay enrollment fee" else "Request enrollment"
-                    Text(buttonText, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Text(actionState.text, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 }
             }
 
@@ -446,12 +454,15 @@ fun CourseDetailBottomSheet(
 @Composable
 fun PublicCourseCard(
     course: CourseDto,
+    userEnrollment: com.darsequran.academy.data.model.EnrollmentDto? = null,
     onViewDetails: () -> Unit,
     onRequestEnrollment: () -> Unit,
     isEnrolling: Boolean,
     onTeacherClick: ((String?) -> Unit)? = null
 ) {
     var isExpanded by remember { mutableStateOf(false) }
+    val actionState = course.getActionButtonState(userEnrollment)
+    val isButtonEnabled = actionState.isEnabled && !isEnrolling
 
     Card(
         modifier = Modifier
@@ -572,17 +583,19 @@ fun PublicCourseCard(
                     )
                 }
 
-                // Button 2: Request enrollment (Solid Gold)
+                // Button 2: Request / Pay / Dynamic enrollment button
                 Button(
                     onClick = onRequestEnrollment,
-                    enabled = !isEnrolling,
+                    enabled = isButtonEnabled,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(44.dp),
                     shape = RoundedCornerShape(22.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = GoldDark,
-                        contentColor = Color.White
+                        containerColor = if (actionState.isEnabled) GoldDark else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                        contentColor = if (actionState.isEnabled) Color.White else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                        disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                     )
                 ) {
                     if (isEnrolling) {
@@ -593,7 +606,7 @@ fun PublicCourseCard(
                         )
                     } else {
                         Text(
-                            text = "Request enrollment",
+                            text = actionState.text,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp
                         )
