@@ -1,6 +1,10 @@
 package com.darsequran.academy.data.repository
 
+import android.content.Context
+import android.content.SharedPreferences
 import com.darsequran.academy.data.model.BookstoreItemDto
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,13 +19,49 @@ data class CartItem(
 }
 
 object BookstoreCartManager {
+    private const val PREFS_NAME = "dqa_bookstore_cart_prefs"
+    private const val KEY_CART_ITEMS = "dqa-bookstore-cart"
+
+    private val gson = Gson()
+    private var sharedPreferences: SharedPreferences? = null
     private val _cartItems = MutableStateFlow<List<CartItem>>(emptyList())
     val cartItems: StateFlow<List<CartItem>> = _cartItems.asStateFlow()
+
+    fun init(context: Context) {
+        if (sharedPreferences == null) {
+            sharedPreferences = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            loadFromPreferences()
+        }
+    }
+
+    private fun loadFromPreferences() {
+        val prefs = sharedPreferences ?: return
+        val json = prefs.getString(KEY_CART_ITEMS, null) ?: return
+        try {
+            val type = object : TypeToken<List<CartItem>>() {}.type
+            val savedItems: List<CartItem>? = gson.fromJson(json, type)
+            if (!savedItems.isNullOrEmpty()) {
+                _cartItems.value = savedItems
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun saveToPreferences(items: List<CartItem>) {
+        val prefs = sharedPreferences ?: return
+        try {
+            val json = gson.toJson(items)
+            prefs.edit().putString(KEY_CART_ITEMS, json).apply()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 
     fun addToCart(book: BookstoreItemDto, qty: Int = 1) {
         _cartItems.update { currentList ->
             val existingIndex = currentList.indexOfFirst { it.book.id == book.id }
-            if (existingIndex >= 0) {
+            val newList = if (existingIndex >= 0) {
                 currentList.mapIndexed { index, item ->
                     if (index == existingIndex) {
                         item.copy(quantity = item.quantity + qty)
@@ -32,12 +72,16 @@ object BookstoreCartManager {
             } else {
                 currentList + CartItem(book = book, quantity = qty)
             }
+            saveToPreferences(newList)
+            newList
         }
     }
 
     fun removeFromCart(bookId: String) {
         _cartItems.update { currentList ->
-            currentList.filterNot { it.book.id == bookId }
+            val newList = currentList.filterNot { it.book.id == bookId }
+            saveToPreferences(newList)
+            newList
         }
     }
 
@@ -47,18 +91,21 @@ object BookstoreCartManager {
             return
         }
         _cartItems.update { currentList ->
-            currentList.map { item ->
+            val newList = currentList.map { item ->
                 if (item.book.id == bookId) {
                     item.copy(quantity = newQuantity)
                 } else {
                     item
                 }
             }
+            saveToPreferences(newList)
+            newList
         }
     }
 
     fun clearCart() {
         _cartItems.value = emptyList()
+        saveToPreferences(emptyList())
     }
 
     val totalItemsCount: Int
