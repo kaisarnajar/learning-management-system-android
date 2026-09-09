@@ -7,6 +7,7 @@ import android.util.Base64
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,6 +15,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,12 +33,15 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.BusinessCenter
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.FamilyRestroom
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Wc
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -47,7 +52,9 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
@@ -56,6 +63,8 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -557,259 +566,453 @@ fun EditProfileDialog(
         }
     }
 
-    AlertDialog(
+    Dialog(
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(20.dp),
-        title = {
-            Text(
-                text = "Edit Personal Details",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = EmeraldPrimary
-                )
-            )
-        },
-        text = {
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .padding(vertical = 16.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp,
+            shadowElevation = 12.dp,
+            border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.15f))
+        ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                modifier = Modifier.fillMaxWidth()
             ) {
-                // Profile Photo Section matching Web Logic
-                Text(
-                    text = "Profile Photo ${if (genderValue == "FEMALE") "(Disabled for Female students)" else "(Optional)"}",
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
+                // Header Bar
                 Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(EmeraldPrimary.copy(alpha = 0.04f))
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(CircleShape)
-                            .background(EmeraldDark)
-                            .border(1.dp, GoldAccent, CircleShape),
-                        contentAlignment = Alignment.Center
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
                     ) {
-                        if (selectedBitmap != null) {
-                            Image(
-                                bitmap = selectedBitmap!!.asImageBitmap(),
-                                contentDescription = "New Profile Photo",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            UserProfileAvatar(
-                                imageUrl = imageBase64 ?: user?.image,
-                                gender = genderValue,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    if (genderValue == "FEMALE") {
-                        Text(
-                            text = "Photo upload is disabled for Female students.",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = MaterialTheme.colorScheme.error,
-                                fontSize = 12.sp
-                            )
-                        )
-                    } else {
-                        OutlinedButton(
-                            onClick = { photoPickerLauncher.launch("image/*") },
-                            shape = RoundedCornerShape(8.dp)
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(EmeraldPrimary.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.CameraAlt,
-                                contentDescription = "Upload Photo",
-                                modifier = Modifier.size(16.dp),
-                                tint = EmeraldPrimary
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = null,
+                                tint = EmeraldPrimary,
+                                modifier = Modifier.size(20.dp)
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Upload Photo", fontSize = 12.sp, color = EmeraldPrimary)
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column {
+                            Text(
+                                text = "Edit Personal Details",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = EmeraldPrimary,
+                                    fontSize = 18.sp
+                                )
+                            )
+                            Text(
+                                text = "Update your profile details & contact info",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                    fontSize = 11.sp
+                                )
+                            )
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Full Name") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = EmeraldPrimary),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                OutlinedTextField(
-                    value = fatherName,
-                    onValueChange = { fatherName = it },
-                    label = { Text("Father's Name") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = EmeraldPrimary),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                OutlinedTextField(
-                    value = dateOfBirth,
-                    onValueChange = { dateOfBirth = it },
-                    label = { Text("Date of Birth (YYYY-MM-DD)") },
-                    placeholder = { Text("1999-01-03") },
-                    leadingIcon = {
-                        Icon(imageVector = Icons.Default.CalendarToday, contentDescription = "DOB", tint = EmeraldPrimary)
-                    },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = EmeraldPrimary),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                OutlinedTextField(
-                    value = phone,
-                    onValueChange = { phone = it },
-                    label = { Text("Phone Number / WhatsApp") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = EmeraldPrimary),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Gender Selection Dropdown
-                ExposedDropdownMenuBox(
-                    expanded = genderExpanded,
-                    onExpandedChange = { genderExpanded = !genderExpanded }
-                ) {
-                    OutlinedTextField(
-                        value = if (genderValue == "FEMALE") "Female" else "Male",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Gender") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = genderExpanded) },
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = EmeraldPrimary),
+                    Box(
                         modifier = Modifier
-                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                            .fillMaxWidth()
-                    )
-
-                    ExposedDropdownMenu(
-                        expanded = genderExpanded,
-                        onDismissRequest = { genderExpanded = false }
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+                            .clickable { onDismiss() },
+                        contentAlignment = Alignment.Center
                     ) {
-                        DropdownMenuItem(
-                            text = { Text("Male") },
-                            onClick = {
-                                genderValue = "MALE"
-                                genderExpanded = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Female") },
-                            onClick = {
-                                genderValue = "FEMALE"
-                                genderExpanded = false
-                                selectedBitmap = null
-                                imageBase64 = null
-                            }
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
 
-                // Occupation Selection Dropdown
-                val currentOccupationLabel = formatOccupationDisplay(selectedOccupationValue)
-
-                ExposedDropdownMenuBox(
-                    expanded = occupationExpanded,
-                    onExpandedChange = { occupationExpanded = !occupationExpanded }
+                // Scrollable Content
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 16.dp)
                 ) {
+                    // Photo Upload Card
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+                        ),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(70.dp)
+                                    .clip(CircleShape)
+                                    .background(EmeraldDark)
+                                    .border(2.dp, GoldAccent, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (selectedBitmap != null) {
+                                    Image(
+                                        bitmap = selectedBitmap!!.asImageBitmap(),
+                                        contentDescription = "New Profile Photo",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    UserProfileAvatar(
+                                        imageUrl = imageBase64 ?: user?.image,
+                                        gender = genderValue,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Profile Photo",
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                if (genderValue == "FEMALE") {
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
+                                        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f))
+                                    ) {
+                                        Text(
+                                            text = "Photo upload disabled for female students.",
+                                            style = MaterialTheme.typography.bodySmall.copy(
+                                                color = MaterialTheme.colorScheme.error,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Medium
+                                            ),
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                        )
+                                    }
+                                } else {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        OutlinedButton(
+                                            onClick = { photoPickerLauncher.launch("image/*") },
+                                            shape = RoundedCornerShape(10.dp),
+                                            border = BorderStroke(1.dp, EmeraldPrimary),
+                                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.CameraAlt,
+                                                contentDescription = "Upload Photo",
+                                                modifier = Modifier.size(15.dp),
+                                                tint = EmeraldPrimary
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = if (selectedBitmap != null || (imageBase64 != null && imageBase64 != user?.image)) "Change Photo" else "Upload Photo",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = EmeraldPrimary
+                                            )
+                                        }
+
+                                        if (selectedBitmap != null || (imageBase64 != null && imageBase64 != user?.image)) {
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            IconButton(
+                                                onClick = {
+                                                    selectedBitmap = null
+                                                    imageBase64 = user?.image
+                                                },
+                                                modifier = Modifier.size(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Delete,
+                                                    contentDescription = "Remove photo",
+                                                    tint = MaterialTheme.colorScheme.error,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    val fieldColors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = EmeraldPrimary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                        focusedLabelColor = EmeraldPrimary,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                        focusedContainerColor = MaterialTheme.colorScheme.surface
+                    )
+                    val fieldShape = RoundedCornerShape(12.dp)
+
+                    // Full Name
                     OutlinedTextField(
-                        value = currentOccupationLabel,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Occupation") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = occupationExpanded) },
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = EmeraldPrimary),
-                        modifier = Modifier
-                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                            .fillMaxWidth()
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Full Name") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Person, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(18.dp))
+                        },
+                        singleLine = true,
+                        shape = fieldShape,
+                        colors = fieldColors,
+                        modifier = Modifier.fillMaxWidth()
                     )
 
-                    ExposedDropdownMenu(
-                        expanded = occupationExpanded,
-                        onDismissRequest = { occupationExpanded = false }
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Father's Name
+                    OutlinedTextField(
+                        value = fatherName,
+                        onValueChange = { fatherName = it },
+                        label = { Text("Father's Name") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.FamilyRestroom, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(18.dp))
+                        },
+                        singleLine = true,
+                        shape = fieldShape,
+                        colors = fieldColors,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Date of Birth
+                    OutlinedTextField(
+                        value = dateOfBirth,
+                        onValueChange = { dateOfBirth = it },
+                        label = { Text("Date of Birth (YYYY-MM-DD)") },
+                        placeholder = { Text("1999-01-03") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.CalendarToday, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(18.dp))
+                        },
+                        singleLine = true,
+                        shape = fieldShape,
+                        colors = fieldColors,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Phone / WhatsApp
+                    OutlinedTextField(
+                        value = phone,
+                        onValueChange = { phone = it },
+                        label = { Text("Phone Number / WhatsApp") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Phone, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(18.dp))
+                        },
+                        singleLine = true,
+                        shape = fieldShape,
+                        colors = fieldColors,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Gender Selection Dropdown
+                    ExposedDropdownMenuBox(
+                        expanded = genderExpanded,
+                        onExpandedChange = { genderExpanded = !genderExpanded }
                     ) {
-                        OCCUPATION_OPTIONS.forEach { choice ->
+                        OutlinedTextField(
+                            value = if (genderValue == "FEMALE") "Female" else "Male",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Gender") },
+                            leadingIcon = {
+                                Icon(imageVector = Icons.Default.Wc, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(18.dp))
+                            },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = genderExpanded) },
+                            shape = fieldShape,
+                            colors = fieldColors,
+                            modifier = Modifier
+                                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                .fillMaxWidth()
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = genderExpanded,
+                            onDismissRequest = { genderExpanded = false }
+                        ) {
                             DropdownMenuItem(
-                                text = { Text(choice.label) },
+                                text = { Text("Male", fontWeight = FontWeight.Medium) },
                                 onClick = {
-                                    selectedOccupationValue = choice.value
-                                    occupationExpanded = false
+                                    genderValue = "MALE"
+                                    genderExpanded = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Female", fontWeight = FontWeight.Medium) },
+                                onClick = {
+                                    genderValue = "FEMALE"
+                                    genderExpanded = false
+                                    selectedBitmap = null
+                                    imageBase64 = null
                                 }
                             )
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                OutlinedTextField(
-                    value = address,
-                    onValueChange = { address = it },
-                    label = { Text("Address") },
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = EmeraldPrimary),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    onSave(
-                        name,
-                        fatherName,
-                        dateOfBirth,
-                        selectedOccupationValue,
-                        address,
-                        phone,
-                        genderValue,
-                        if (genderValue == "FEMALE") null else imageBase64
+                    // Occupation Selection Dropdown
+                    val currentOccupationLabel = formatOccupationDisplay(selectedOccupationValue)
+
+                    ExposedDropdownMenuBox(
+                        expanded = occupationExpanded,
+                        onExpandedChange = { occupationExpanded = !occupationExpanded }
+                    ) {
+                        OutlinedTextField(
+                            value = currentOccupationLabel,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Occupation") },
+                            leadingIcon = {
+                                Icon(imageVector = Icons.Default.BusinessCenter, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(18.dp))
+                            },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = occupationExpanded) },
+                            shape = fieldShape,
+                            colors = fieldColors,
+                            modifier = Modifier
+                                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                .fillMaxWidth()
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = occupationExpanded,
+                            onDismissRequest = { occupationExpanded = false }
+                        ) {
+                            OCCUPATION_OPTIONS.forEach { choice ->
+                                DropdownMenuItem(
+                                    text = { Text(choice.label) },
+                                    onClick = {
+                                        selectedOccupationValue = choice.value
+                                        occupationExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Address Field
+                    OutlinedTextField(
+                        value = address,
+                        onValueChange = { address = it },
+                        label = { Text("Address") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.LocationOn, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(18.dp))
+                        },
+                        minLines = 2,
+                        maxLines = 3,
+                        singleLine = false,
+                        shape = fieldShape,
+                        colors = fieldColors,
+                        modifier = Modifier.fillMaxWidth()
                     )
-                },
-                enabled = !isUpdating,
-                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                if (isUpdating) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp))
-                } else {
-                    Text("SAVE CHANGES", fontWeight = FontWeight.Bold)
                 }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel", color = EmeraldPrimary, fontWeight = FontWeight.Medium)
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+                // Action Buttons Footer
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    ) {
+                        Text(
+                            text = "Cancel",
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            onSave(
+                                name,
+                                fatherName,
+                                dateOfBirth,
+                                selectedOccupationValue,
+                                address,
+                                phone,
+                                genderValue,
+                                if (genderValue == "FEMALE") null else imageBase64
+                            )
+                        },
+                        enabled = !isUpdating,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        if (isUpdating) {
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
+                        } else {
+                            Text(
+                                text = "Save Changes",
+                                color = GoldAccent,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                }
             }
         }
-    )
+    }
 }
 
 @Composable
