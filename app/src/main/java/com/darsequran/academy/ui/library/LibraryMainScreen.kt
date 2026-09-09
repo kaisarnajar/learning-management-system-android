@@ -25,7 +25,8 @@ import com.darsequran.academy.ui.theme.GoldAccent
 @Composable
 fun LibraryMainScreen(
     libraryViewModel: DigitalLibraryViewModel,
-    bookstoreViewModel: BookstoreViewModel
+    bookstoreViewModel: BookstoreViewModel,
+    onNavigateToCart: () -> Unit = {}
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabs = listOf("Digital Library", "Bookstore")
@@ -63,7 +64,7 @@ fun LibraryMainScreen(
 
             when (selectedTabIndex) {
                 0 -> DigitalLibraryScreen(viewModel = libraryViewModel, onBackPress = {})
-                1 -> BookstoreScreen(viewModel = bookstoreViewModel, onBackPress = {})
+                1 -> BookstoreScreen(viewModel = bookstoreViewModel, onBackPress = {}, onNavigateToCart = onNavigateToCart)
             }
         }
     }

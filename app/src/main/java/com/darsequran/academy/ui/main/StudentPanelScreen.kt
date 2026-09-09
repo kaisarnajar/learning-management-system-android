@@ -265,7 +265,8 @@ fun StudentPanelScreen(
                 )
                 2 -> LibraryMainScreen(
                     libraryViewModel = libraryViewModel,
-                    bookstoreViewModel = bookstoreViewModel
+                    bookstoreViewModel = bookstoreViewModel,
+                    onNavigateToCart = { selectedTab = 3 }
                 )
                 3 -> PortalMainScreen(
                     myCoursesViewModel = myCoursesViewModel,

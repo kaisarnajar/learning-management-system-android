@@ -62,9 +62,12 @@ import com.darsequran.academy.ui.theme.GoldDark
 @Composable
 fun BookstoreScreen(
     viewModel: BookstoreViewModel,
-    onBackPress: () -> Unit = {}
+    onBackPress: () -> Unit = {},
+    onNavigateToCart: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val cartItems by com.darsequran.academy.data.repository.BookstoreCartManager.cartItems.collectAsState()
+    val totalCartCount = cartItems.sumOf { it.quantity }
     val context = LocalContext.current
 
     Surface(
@@ -91,9 +94,7 @@ fun BookstoreScreen(
                 )
 
                 Button(
-                    onClick = {
-                        Toast.makeText(context, "Shopping Cart feature coming soon!", Toast.LENGTH_SHORT).show()
-                    },
+                    onClick = onNavigateToCart,
                     shape = RoundedCornerShape(20.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = GoldDark,
@@ -109,7 +110,7 @@ fun BookstoreScreen(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "VIEW CART",
+                        text = if (totalCartCount > 0) "VIEW CART ($totalCartCount)" else "VIEW CART",
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp
@@ -166,7 +167,11 @@ fun BookstoreScreen(
                     items(uiState.filteredBooks) { book ->
                         BookstoreItemCard(
                             book = book,
-                            onClick = { viewModel.selectBookDetail(book) }
+                            onClick = { viewModel.selectBookDetail(book) },
+                            onAddToCart = {
+                                com.darsequran.academy.data.repository.BookstoreCartManager.addToCart(book)
+                                Toast.makeText(context, "Added '${book.title}' to Cart", Toast.LENGTH_SHORT).show()
+                            }
                         )
                     }
                     item {
@@ -296,13 +301,8 @@ fun BookstoreScreen(
 
                 Button(
                     onClick = {
-                        val message = "Assalamu Alaikum, I would like to order the book: ${book.title} (Price: ₹${book.priceInRupees.toInt()})."
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/919622966911?text=${Uri.encode(message)}"))
-                        try {
-                            context.startActivity(intent)
-                        } catch (e: Exception) {
-                            Toast.makeText(context, "Order via WhatsApp: +91 96229 66911", Toast.LENGTH_SHORT).show()
-                        }
+                        com.darsequran.academy.data.repository.BookstoreCartManager.addToCart(book)
+                        Toast.makeText(context, "Added '${book.title}' to Cart", Toast.LENGTH_SHORT).show()
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = GoldDark,
@@ -311,20 +311,48 @@ fun BookstoreScreen(
                     shape = RoundedCornerShape(25.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp)
+                        .height(48.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.ShoppingCart,
-                        contentDescription = "Order on WhatsApp",
+                        contentDescription = "Add to Cart",
                         tint = Color.White,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Order on WhatsApp",
+                        text = "Add to Cart",
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontWeight = FontWeight.Bold,
-                            fontSize = 15.5.sp
+                            fontSize = 15.sp
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedButton(
+                    onClick = {
+                        val message = "Assalamu Alaikum, I would like to order the book: ${book.title} (Price: ₹${book.priceInRupees.toInt()})."
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/919622966911?text=${Uri.encode(message)}"))
+                        try {
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Order via WhatsApp: +91 96229 66911", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    border = BorderStroke(1.dp, GoldDark),
+                    shape = RoundedCornerShape(25.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                ) {
+                    Text(
+                        text = "Order Directly on WhatsApp",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = GoldDark,
+                            fontSize = 14.5.sp
                         )
                     )
                 }
@@ -338,7 +366,8 @@ fun BookstoreScreen(
 @Composable
 fun BookstoreItemCard(
     book: BookstoreItemDto,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onAddToCart: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier
@@ -497,7 +526,7 @@ fun BookstoreItemCard(
                     }
 
                     Button(
-                        onClick = { onClick() },
+                        onClick = onAddToCart,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(44.dp),
