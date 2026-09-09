@@ -33,7 +33,7 @@ fun PortalMainScreen(
     paymentsViewModel: PaymentsViewModel
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Enrolled", "Fee Receipts", "Fee Waivers", "Cart")
+    val tabs = listOf("My Courses", "Payments", "Fee Waivers", "Cart")
 
     Surface(
         modifier = Modifier.fillMaxSize(),

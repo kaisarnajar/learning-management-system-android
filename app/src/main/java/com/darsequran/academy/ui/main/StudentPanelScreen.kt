@@ -187,20 +187,20 @@ fun StudentPanelScreen(
                     )
                 )
 
-                // Tab 3: Portal (Student Workspace: Enrolled, Receipts, Fee Waivers, Cart)
+                // Tab 3: Dashboard (Student Workspace: My Courses, Payments, Fee Waivers, Cart)
                 NavigationBarItem(
                     selected = selectedTab == 3,
                     onClick = { selectedTab = 3 },
                     icon = {
                         Icon(
                             imageVector = Icons.Default.School,
-                            contentDescription = "Portal",
+                            contentDescription = "Dashboard",
                             tint = if (selectedTab == 3) GoldAccent else Color.White.copy(alpha = 0.7f)
                         )
                     },
                     label = {
                         Text(
-                            text = "Portal",
+                            text = "Dashboard",
                             fontWeight = if (selectedTab == 3) FontWeight.Bold else FontWeight.Normal,
                             color = if (selectedTab == 3) GoldAccent else Color.White.copy(alpha = 0.7f),
                             fontSize = 10.5.sp,
