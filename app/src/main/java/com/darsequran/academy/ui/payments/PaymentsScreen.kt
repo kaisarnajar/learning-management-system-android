@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,9 +24,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.QrCodeScanner
@@ -36,6 +38,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -79,6 +83,12 @@ fun PaymentsScreen(
         }
     }
 
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+        }
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -88,12 +98,29 @@ fun PaymentsScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Action Row
+            // Web Title Header & Action
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Payments",
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Approved monthly fees and your submitted payments awaiting verification.",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                        )
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
                 Button(
                     onClick = { viewModel.openSubmitDialog() },
                     colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
@@ -120,11 +147,15 @@ fun PaymentsScreen(
                     CircularProgressIndicator(color = EmeraldPrimary)
                 }
             } else {
+                val pendingSubmissions = remember(uiState.submissions) {
+                    uiState.submissions.filter { it.status.uppercase() != "APPROVED" }
+                }
+
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // UPI & Bank Transfer Details Card
+                    // UPI & Bank Details Card
                     item {
                         UpiBankDetailsCard(
                             settings = uiState.settings,
@@ -144,53 +175,42 @@ fun PaymentsScreen(
                         }
                     }
 
-                    // Section Title: Confirmed Receipts
+                    // Web Pill Tabs Selector
                     item {
-                        Text(
-                            text = "Payment Records & Receipts",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = EmeraldPrimary
-                            )
+                        PaymentPillTabs(
+                            selectedTab = uiState.selectedTab,
+                            pendingCount = pendingSubmissions.size,
+                            historyCount = uiState.records.size,
+                            onTabSelected = { viewModel.selectTab(it) }
                         )
                     }
 
-                    if (uiState.records.isEmpty() && uiState.submissions.isEmpty()) {
-                        item {
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(24.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
-                                        contentDescription = "No receipts",
-                                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                                        modifier = Modifier.size(48.dp)
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = "No payment records found",
-                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                                        )
-                                    )
-                                }
+                    // Tab Content rendering
+                    if (uiState.selectedTab == PaymentTab.PENDING) {
+                        if (pendingSubmissions.isEmpty()) {
+                            item {
+                                EmptyPaymentCard(message = "No pending payment submissions.")
+                            }
+                        } else {
+                            items(pendingSubmissions) { submission ->
+                                PendingSubmissionCard(
+                                    submission = submission,
+                                    courseTitle = uiState.courseTitlesMap[submission.courseId] ?: submission.courseId
+                                )
                             }
                         }
                     } else {
-                        // Render Submissions (Pending Proofs)
-                        items(uiState.submissions) { submission ->
-                            PendingSubmissionCard(submission = submission)
-                        }
-
-                        // Render Confirmed Records
-                        items(uiState.records) { record ->
-                            ConfirmedRecordCard(record = record)
+                        if (uiState.records.isEmpty()) {
+                            item {
+                                EmptyPaymentCard(message = "No approved payments recorded yet.")
+                            }
+                        } else {
+                            items(uiState.records) { record ->
+                                ConfirmedRecordCard(
+                                    record = record,
+                                    courseTitle = record.courseId?.let { uiState.courseTitlesMap[it] ?: it }
+                                )
+                            }
                         }
                     }
                 }
@@ -201,12 +221,102 @@ fun PaymentsScreen(
     // Submit Payment Proof Dialog
     if (uiState.showSubmitDialog) {
         SubmitPaymentProofDialog(
+            availableCourses = uiState.availableCourses,
             isSubmitting = uiState.isSubmitting,
             onDismiss = { viewModel.closeSubmitDialog() },
             onSubmit = { courseId, utrNumber ->
                 viewModel.submitPaymentProof(courseId, utrNumber)
             }
         )
+    }
+}
+
+@Composable
+fun PaymentPillTabs(
+    selectedTab: PaymentTab,
+    pendingCount: Int,
+    historyCount: Int,
+    onTabSelected: (PaymentTab) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Pending Tab Pill
+        val pendingActive = selectedTab == PaymentTab.PENDING
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = if (pendingActive) EmeraldPrimary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            modifier = Modifier.clickable { onTabSelected(PaymentTab.PENDING) }
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Awaiting Approval",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (pendingActive) Color.White else MaterialTheme.colorScheme.onSurface
+                    )
+                )
+                if (pendingCount > 0) {
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Surface(
+                        shape = CircleShape,
+                        color = if (pendingActive) Color.White.copy(alpha = 0.25f) else GoldDark.copy(alpha = 0.2f)
+                    ) {
+                        Text(
+                            text = pendingCount.toString(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = if (pendingActive) Color.White else GoldDark
+                            ),
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // History Tab Pill
+        val historyActive = selectedTab == PaymentTab.HISTORY
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = if (historyActive) EmeraldPrimary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            modifier = Modifier.clickable { onTabSelected(PaymentTab.HISTORY) }
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Payment History",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (historyActive) Color.White else MaterialTheme.colorScheme.onSurface
+                    )
+                )
+                if (historyCount > 0) {
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Surface(
+                        shape = CircleShape,
+                        color = if (historyActive) Color.White.copy(alpha = 0.25f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            text = historyCount.toString(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = if (historyActive) Color.White else MaterialTheme.colorScheme.onSurface
+                            ),
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -337,120 +447,27 @@ fun FeeWaiverBanner() {
 }
 
 @Composable
-fun PendingSubmissionCard(submission: PaymentSubmissionDto) {
+fun EmptyPaymentCard(message: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = GoldAccent.copy(alpha = 0.08f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .background(GoldAccent.copy(alpha = 0.2f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.HourglassEmpty,
-                        contentDescription = "Pending Verification",
-                        tint = GoldDark,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "UTR: ${submission.upiTransactionId ?: "TXN-VERIFICATION"}",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Submitted for Verification",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
-                    )
-                }
-            }
-
-            Surface(
-                shape = RoundedCornerShape(6.dp),
-                color = GoldDark
-            ) {
-                Text(
-                    text = "PENDING",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    ),
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun ConfirmedRecordCard(record: PaymentRecordDto) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .background(EmeraldPrimary.copy(alpha = 0.1f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Receipt Confirmed",
-                        tint = EmeraldPrimary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "Receipt #${record.receiptNumber ?: record.id.take(8)}",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = EmeraldPrimary
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Paid on ${record.paidAt?.take(10) ?: "Date Confirmed"}",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
-                    )
-                }
-            }
-
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
+                contentDescription = "Empty",
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                modifier = Modifier.size(48.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "₹${record.amount?.toInt() ?: 0}",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = EmeraldPrimary
+                text = message,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             )
         }
@@ -458,13 +475,214 @@ fun ConfirmedRecordCard(record: PaymentRecordDto) {
 }
 
 @Composable
+fun PendingSubmissionCard(
+    submission: PaymentSubmissionDto,
+    courseTitle: String
+) {
+    val isDeclined = submission.status.uppercase() in listOf("DECLINED", "REJECTED")
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isDeclined) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f)
+            else GoldAccent.copy(alpha = 0.08f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .background(
+                                if (isDeclined) MaterialTheme.colorScheme.error.copy(alpha = 0.2f)
+                                else GoldAccent.copy(alpha = 0.2f),
+                                CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (isDeclined) Icons.Default.ErrorOutline else Icons.Default.HourglassEmpty,
+                            contentDescription = "Status",
+                            tint = if (isDeclined) MaterialTheme.colorScheme.error else GoldDark,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = courseTitle,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = submission.label ?: "Fee Payment",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = if (isDeclined) MaterialTheme.colorScheme.error else GoldDark
+                ) {
+                    Text(
+                        text = if (isDeclined) "DECLINED" else "AWAITING APPROVAL",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        ),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "UTR Ref: ${submission.upiTransactionId ?: "TXN-VERIFICATION"}",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        )
+                        submission.createdAt?.let { dateStr ->
+                            Text(
+                                text = "Submitted: ${dateStr.take(10)}",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = if (submission.displayAmount == 0.0) "Free" else "₹${submission.displayAmount.toInt()}",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = EmeraldPrimary
+                        )
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ConfirmedRecordCard(
+    record: PaymentRecordDto,
+    courseTitle: String?
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .background(EmeraldPrimary.copy(alpha = 0.1f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Receipt Confirmed",
+                            tint = EmeraldPrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = courseTitle ?: "Academy Fee Payment",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = EmeraldPrimary
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = record.description ?: "Receipt #${record.receiptNumber ?: record.id.take(8)}",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                        )
+                    }
+                }
+
+                Text(
+                    text = if (record.displayAmount == 0.0) "Free" else "₹${record.displayAmount.toInt()}",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = EmeraldPrimary
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            record.paidAt?.let { dateStr ->
+                Text(
+                    text = "Paid on ${dateStr.take(10)}",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    ),
+                    modifier = Modifier.align(Alignment.End)
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun SubmitPaymentProofDialog(
+    availableCourses: List<com.darsequran.academy.ui.payments.CourseOption>,
     isSubmitting: Boolean,
     onDismiss: () -> Unit,
     onSubmit: (courseId: String, utrNumber: String) -> Unit
 ) {
-    var courseId by remember { mutableStateOf("cm11111111111111111111111") }
+    var selectedCourseId by remember(availableCourses) {
+        mutableStateOf(availableCourses.firstOrNull()?.id ?: "")
+    }
+    var dropdownExpanded by remember { mutableStateOf(false) }
     var utrNumber by remember { mutableStateOf("") }
+
+    val selectedCourseTitle = remember(selectedCourseId, availableCourses) {
+        availableCourses.find { it.id == selectedCourseId }?.title ?: "Select Course"
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -480,17 +698,65 @@ fun SubmitPaymentProofDialog(
         text = {
             Column {
                 Text(
-                    text = "After paying via UPI / Bank, enter your 12-digit UTR / Transaction reference number below:",
-                    style = MaterialTheme.typography.bodyMedium.copy(
+                    text = "After paying via UPI or Bank Transfer, submit your course and transaction reference (UTR) for academy verification:",
+                    style = MaterialTheme.typography.bodySmall.copy(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     ),
-                    modifier = Modifier.padding(bottom = 12.dp)
+                    modifier = Modifier.padding(bottom = 14.dp)
                 )
 
+                // Course Picker
+                Text(
+                    text = "Course",
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = selectedCourseTitle,
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = "Dropdown",
+                                modifier = Modifier.clickable { dropdownExpanded = true }
+                            )
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = EmeraldPrimary),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { dropdownExpanded = true }
+                    )
+
+                    DropdownMenu(
+                        expanded = dropdownExpanded,
+                        onDismissRequest = { dropdownExpanded = false },
+                        modifier = Modifier.fillMaxWidth(0.8f)
+                    ) {
+                        availableCourses.forEach { course ->
+                            DropdownMenuItem(
+                                text = { Text(course.title) },
+                                onClick = {
+                                    selectedCourseId = course.id
+                                    dropdownExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // UTR Input
+                Text(
+                    text = "UPI UTR / Transaction Ref ID",
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
                 OutlinedTextField(
                     value = utrNumber,
                     onValueChange = { utrNumber = it },
-                    label = { Text("UPI UTR / Transaction Ref ID") },
                     placeholder = { Text("e.g. 421987654321") },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = EmeraldPrimary),
@@ -500,14 +766,14 @@ fun SubmitPaymentProofDialog(
         },
         confirmButton = {
             Button(
-                onClick = { onSubmit(courseId, utrNumber) },
-                enabled = !isSubmitting && utrNumber.isNotBlank(),
+                onClick = { onSubmit(selectedCourseId, utrNumber) },
+                enabled = !isSubmitting && selectedCourseId.isNotBlank() && utrNumber.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
             ) {
                 if (isSubmitting) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp))
                 } else {
-                    Text("SUBMIT PROOF")
+                    Text("SUBMIT PROOF", fontWeight = FontWeight.Bold)
                 }
             }
         },
