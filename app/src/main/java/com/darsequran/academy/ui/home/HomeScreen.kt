@@ -152,28 +152,23 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Card 2: Main Hero Course Card (Deep Forest Teal + Explore CTA)
+            // Card 2: Main Hero Course Card (Includes Merged "Connecting Hearts with the Quran" Hadith)
             HomeHeroCard(onExploreCoursesClick = onNavigateToExplore)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Card 3: Quranic Hadith Quote Card (Warm Cream + Emerald Arabic)
-            HomeHadithCard()
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Card 4: Daily Wisdom Section
+            // Card 3: Daily Wisdom Section
             uiState.inspiration?.let { insp ->
                 DailyWisdomCard(inspiration = insp)
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Card 5: About Us Section Card
+            // Card 4: About Us Section Card
             HomeAboutCard(onNavigateToAbout = onNavigateToAbout)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Card 6: Experience Ribbon
+            // Card 5: Experience Ribbon
             ExperienceBannerCard()
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -319,65 +314,64 @@ fun HomeHeroCard(
                         )
                     }
                 }
-            }
-        }
-    }
-}
 
-@Composable
-fun HomeHadithCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDF8)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        border = BorderStroke(1.dp, GoldDark.copy(alpha = 0.35f))
-    ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    color = EmeraldDark,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    textAlign = TextAlign.Center
-                )
-            )
+                Spacer(modifier = Modifier.height(20.dp))
 
-            Spacer(modifier = Modifier.height(6.dp))
+                // Merged "Connecting Hearts with the Quran" Hadith Quote Strip
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.White.copy(alpha = 0.08f),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 19.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        )
 
-            Text(
-                text = "(THE BEST AMONG YOU ARE THOSE WHO LEARN THE QURAN AND TEACH IT)",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
-                    fontSize = 9.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 1.sp,
-                    textAlign = TextAlign.Center
-                )
-            )
+                        Spacer(modifier = Modifier.height(4.dp))
 
-            Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "(THE BEST AMONG YOU ARE THOSE WHO LEARN THE QURAN AND TEACH IT)",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = Color.White.copy(alpha = 0.75f),
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 1.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        )
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Star,
-                    contentDescription = "Star",
-                    tint = GoldDark,
-                    modifier = Modifier.size(14.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Connecting Hearts with the Quran",
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        color = GoldDark,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = "Star",
+                                tint = GoldAccent,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Connecting Hearts with the Quran",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    color = GoldAccent,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp
+                                )
+                            )
+                        }
+                    }
+                }
             }
         }
     }
