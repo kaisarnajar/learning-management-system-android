@@ -388,9 +388,9 @@ fun DailyWisdomCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.35f))
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFBF2)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        border = BorderStroke(1.dp, GoldDark.copy(alpha = 0.4f))
     ) {
         Column(
             modifier = Modifier.padding(18.dp),
@@ -399,8 +399,8 @@ fun DailyWisdomCard(
             // Header Pill Tag
             Surface(
                 shape = RoundedCornerShape(20.dp),
-                color = GoldAccent.copy(alpha = 0.15f),
-                border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.5f))
+                color = GoldAccent.copy(alpha = 0.2f),
+                border = BorderStroke(1.dp, GoldDark.copy(alpha = 0.5f))
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -430,7 +430,7 @@ fun DailyWisdomCard(
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                color = EmeraldDark.copy(alpha = 0.07f)
+                color = EmeraldDark.copy(alpha = 0.08f)
             ) {
                 Text(
                     text = arabicText,
@@ -486,9 +486,9 @@ fun HomeAboutCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFEFF7F3)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        border = BorderStroke(1.dp, EmeraldDark.copy(alpha = 0.25f))
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -498,14 +498,14 @@ fun HomeAboutCard(
             Box(
                 modifier = Modifier
                     .size(52.dp)
-                    .background(GoldAccent.copy(alpha = 0.18f), CircleShape)
-                    .border(1.dp, GoldAccent.copy(alpha = 0.5f), CircleShape),
+                    .background(EmeraldDark.copy(alpha = 0.12f), CircleShape)
+                    .border(1.dp, EmeraldDark.copy(alpha = 0.3f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Book,
                     contentDescription = "About Book",
-                    tint = GoldDark,
+                    tint = EmeraldDark,
                     modifier = Modifier.size(26.dp)
                 )
             }
@@ -521,7 +521,7 @@ fun HomeAboutCard(
                     }
                 },
                 style = MaterialTheme.typography.titleLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = EmeraldDark,
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.sp
                 )
@@ -543,7 +543,7 @@ fun HomeAboutCard(
             Text(
                 text = "Darse Quran Academy is our online platform for structured Quran and Islamic studies—offering qualified teachers, interactive live sessions, and structured progress.",
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                    color = Color(0xFF2C3E35),
                     fontSize = 13.5.sp,
                     lineHeight = 20.sp,
                     textAlign = TextAlign.Center
@@ -556,7 +556,7 @@ fun HomeAboutCard(
             Button(
                 onClick = onNavigateToAbout,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = GoldDark,
+                    containerColor = EmeraldDark,
                     contentColor = Color.White
                 ),
                 shape = RoundedCornerShape(20.dp),
@@ -566,7 +566,8 @@ fun HomeAboutCard(
                     text = "READ MORE",
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp,
-                    letterSpacing = 0.5.sp
+                    letterSpacing = 0.5.sp,
+                    color = GoldAccent
                 )
             }
         }
