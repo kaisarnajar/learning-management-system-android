@@ -32,6 +32,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -80,57 +81,60 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 color = EmeraldDark
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo),
-                            contentDescription = "Logo",
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "Darse Quran Academy",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                fontSize = 19.sp
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Image(
+                                painter = painterResource(id = R.drawable.logo),
+                                contentDescription = "Logo",
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
                             )
-                        )
-                    }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = "Darse Quran Academy",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    fontSize = 19.sp
+                                )
+                            )
+                        }
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(
-                            onClick = onNavigateToAbout,
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.School,
-                                contentDescription = "About Us",
-                                tint = GoldAccent,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(4.dp))
-                        IconButton(
-                            onClick = onNavigateToContact,
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.SupportAgent,
-                                contentDescription = "Contact Us",
-                                tint = GoldAccent,
-                                modifier = Modifier.size(22.dp)
-                            )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = onNavigateToAbout,
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.School,
+                                    contentDescription = "About Us",
+                                    tint = GoldAccent,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            IconButton(
+                                onClick = onNavigateToContact,
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.SupportAgent,
+                                    contentDescription = "Contact Us",
+                                    tint = GoldAccent,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
                         }
                     }
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.12f), thickness = 1.dp)
                 }
             }
         }
@@ -196,49 +200,52 @@ fun UnifiedHomeHeroHeader(
             .padding(horizontal = 20.dp, vertical = 22.dp)
     ) {
         Column {
-            // Welcome & Islamic Greeting
-            Text(
-                text = "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ ٱللَّهِ وَبَرَكَاتُهُ",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    color = GoldAccent,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-            )
+            Spacer(modifier = Modifier.height(6.dp))
 
-            Spacer(modifier = Modifier.height(4.dp))
+            // Welcome & Islamic Greeting Card Container
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                color = Color.White.copy(alpha = 0.08f),
+                border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.25f))
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
+                ) {
+                    Text(
+                        text = "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ ٱللَّهِ وَبَرَكَاتُهُ",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            color = GoldAccent,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 17.sp
+                        )
+                    )
 
-            val displayName = if (userName.isNullOrBlank()) "Student" else userName
-            Text(
-                text = "Welcome back, $displayName",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
-                )
-            )
+                    Spacer(modifier = Modifier.height(4.dp))
 
-            Spacer(modifier = Modifier.height(2.dp))
+                    val displayName = if (userName.isNullOrBlank()) "Student" else userName
+                    Text(
+                        text = "Welcome back, $displayName",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        )
+                    )
 
-            Text(
-                text = "Continue your authentic Islamic learning journey today.",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = Color.White.copy(alpha = 0.85f),
-                    fontSize = 13.sp
-                )
-            )
+                    Spacer(modifier = Modifier.height(2.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Continue your authentic Islamic learning journey today.",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = Color.White.copy(alpha = 0.85f),
+                            fontSize = 13.sp
+                        )
+                    )
+                }
+            }
 
-            // Gold Separator Bar
-            Box(
-                modifier = Modifier
-                    .width(44.dp)
-                    .height(3.dp)
-                    .background(GoldAccent, shape = RoundedCornerShape(2.dp))
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Main Hero Headline
             Text(
