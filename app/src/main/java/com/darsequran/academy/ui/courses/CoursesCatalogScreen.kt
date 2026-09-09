@@ -476,52 +476,31 @@ fun PublicCourseCard(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // Action Buttons
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                // Button 1: COURSE DETAILS (Outlined)
-                OutlinedButton(
-                    onClick = onViewDetails,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(44.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    border = BorderStroke(1.5.dp, GoldDark)
-                ) {
+            // Action Button: Request enrollment (Solid Gold)
+            Button(
+                onClick = onRequestEnrollment,
+                enabled = !isEnrolling,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp),
+                shape = RoundedCornerShape(22.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = GoldDark,
+                    contentColor = Color.White
+                )
+            ) {
+                if (isEnrolling) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
                     Text(
-                        text = "COURSE DETAILS",
+                        text = "Request enrollment",
                         fontWeight = FontWeight.Bold,
-                        color = GoldDark,
-                        fontSize = 13.5.sp,
-                        letterSpacing = 0.5.sp
+                        fontSize = 14.sp
                     )
-                }
-
-                // Button 2: Request enrollment (Solid Gold)
-                Button(
-                    onClick = onRequestEnrollment,
-                    enabled = !isEnrolling,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(44.dp),
-                    shape = RoundedCornerShape(22.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = GoldDark,
-                        contentColor = Color.White
-                    )
-                ) {
-                    if (isEnrolling) {
-                        CircularProgressIndicator(
-                            color = Color.White,
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text(
-                            text = "Request enrollment",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
-                    }
                 }
             }
         }
