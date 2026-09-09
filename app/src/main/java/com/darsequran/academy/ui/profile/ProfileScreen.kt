@@ -1,12 +1,16 @@
 package com.darsequran.academy.ui.profile
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.net.Uri
 import android.util.Base64
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import java.io.ByteArrayOutputStream
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -97,7 +101,6 @@ import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.EmeraldPrimary
 import com.darsequran.academy.ui.theme.GoldAccent
 import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
 import java.io.InputStream
 
 data class OccupationChoice(val value: String, val label: String)
@@ -527,6 +530,66 @@ fun ProfileInfoCard(
     }
 }
 
+fun processUploadedProfileImage(context: Context, uri: Uri): Pair<Bitmap, String>? {
+    return try {
+        val exifOrientation = context.contentResolver.openInputStream(uri)?.use { stream ->
+            val exif = ExifInterface(stream)
+            exif.getAttributeInt(
+                ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_NORMAL
+            )
+        } ?: ExifInterface.ORIENTATION_NORMAL
+
+        val rawBitmap = context.contentResolver.openInputStream(uri)?.use { stream ->
+            BitmapFactory.decodeStream(stream)
+        } ?: return null
+
+        val matrix = Matrix()
+        when (exifOrientation) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+            ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
+            ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
+            ExifInterface.ORIENTATION_TRANSPOSE -> {
+                matrix.postRotate(90f)
+                matrix.postScale(-1f, 1f)
+            }
+            ExifInterface.ORIENTATION_TRANSVERSE -> {
+                matrix.postRotate(270f)
+                matrix.postScale(-1f, 1f)
+            }
+        }
+
+        var processedBitmap = if (!matrix.isIdentity) {
+            Bitmap.createBitmap(rawBitmap, 0, 0, rawBitmap.width, rawBitmap.height, matrix, true)
+        } else {
+            rawBitmap
+        }
+
+        val maxDimension = 800
+        val width = processedBitmap.width
+        val height = processedBitmap.height
+        if (width > maxDimension || height > maxDimension) {
+            val scale = maxDimension.toFloat() / maxOf(width, height)
+            val scaledWidth = (width * scale).toInt()
+            val scaledHeight = (height * scale).toInt()
+            processedBitmap = Bitmap.createScaledBitmap(processedBitmap, scaledWidth, scaledHeight, true)
+        }
+
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        processedBitmap.compress(Bitmap.CompressFormat.JPEG, 85, byteArrayOutputStream)
+        val byteArray = byteArrayOutputStream.toByteArray()
+        val encoded = Base64.encodeToString(byteArray, Base64.NO_WRAP)
+        val base64String = "data:image/jpeg;base64,$encoded"
+
+        Pair(processedBitmap, base64String)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileDialog(
@@ -553,17 +616,11 @@ fun EditProfileDialog(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            try {
-                val inputStream: InputStream? = context.contentResolver.openInputStream(it)
-                val bitmap = BitmapFactory.decodeStream(inputStream)
-                selectedBitmap = bitmap
-
-                val byteArrayOutputStream = ByteArrayOutputStream()
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 70, byteArrayOutputStream)
-                val byteArray = byteArrayOutputStream.toByteArray()
-                val encoded = Base64.encodeToString(byteArray, Base64.NO_WRAP)
-                imageBase64 = "data:image/jpeg;base64,$encoded"
-            } catch (e: Exception) {
+            val result = processUploadedProfileImage(context, it)
+            if (result != null) {
+                selectedBitmap = result.first
+                imageBase64 = result.second
+            } else {
                 Toast.makeText(context, "Failed to load image", Toast.LENGTH_SHORT).show()
             }
         }
