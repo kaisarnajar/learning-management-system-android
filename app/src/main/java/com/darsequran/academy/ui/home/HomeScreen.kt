@@ -4,7 +4,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,7 +32,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,10 +41,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -59,13 +57,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.darsequran.academy.R
 import com.darsequran.academy.data.local.TokenManager
-import com.darsequran.academy.ui.theme.BrandPrimary
-import com.darsequran.academy.ui.theme.BrandPrimaryDark
-import com.darsequran.academy.ui.theme.BrandPrimaryHover
-import com.darsequran.academy.ui.theme.BrandPrimaryLight
-import com.darsequran.academy.ui.theme.BrandPrimaryLightAlt
 import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.GoldAccent
+import com.darsequran.academy.ui.theme.GoldDark
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,12 +68,11 @@ fun HomeScreen(
     tokenManager: TokenManager,
     onNavigateToAbout: () -> Unit,
     onNavigateToContact: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onNavigateToExplore: () -> Unit = {}
 ) {
-    val scope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()
     val userName by tokenManager.userNameFlow.collectAsState(initial = "Student")
-    val userEmail by tokenManager.userEmailFlow.collectAsState(initial = "")
 
     Scaffold(
         topBar = {
@@ -148,359 +141,319 @@ fun HomeScreen(
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 12.dp, vertical = 10.dp)
         ) {
-            // Welcome Header Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.4f)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            // Unified Single Hero Header
+            UnifiedHomeHeroHeader(
+                userName = userName,
+                onExploreCoursesClick = onNavigateToExplore
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
-                                colors = listOf(BrandPrimary, BrandPrimaryLight)
-                            )
-                        )
-                        .padding(16.dp)
-                ) {
-                    Column {
-                        Text(
-                            text = "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ ٱللَّهِ وَبَرَكَاتُهُ",
-                            style = MaterialTheme.typography.headlineSmall.copy(
-                                color = GoldAccent,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 20.sp,
-                                textAlign = TextAlign.Start
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        val displayName = if (userName.isNullOrBlank()) "Student" else userName
-                        Text(
-                            text = "Welcome back, $displayName",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Continue your authentic Islamic learning journey today.",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = Color.White.copy(alpha = 0.85f)
-                            )
-                        )
-                    }
+                // Daily Wisdom Section
+                uiState.inspiration?.let { insp ->
+                    DailyWisdomCard(inspiration = insp)
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
+
+                // About Us Section Card
+                HomeAboutCard(onNavigateToAbout = onNavigateToAbout)
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Experience Ribbon
+                ExperienceBannerCard()
+
+                Spacer(modifier = Modifier.height(20.dp))
             }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Master Quran & Islamic Sciences Hero Card
-            MasterQuranHeroCard(
-                onExploreCoursesClick = {}
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Daily Wisdom Card
-            uiState.inspiration?.let { insp ->
-                val arabicText = insp.arabicText ?: "فَإِنَّ مَعَ الْعُسْرِ يُسْرًا"
-                val translation = insp.englishTranslation ?: "For indeed, with hardship will be ease."
-                val reference = insp.reference ?: "Surah Ash-Sharh 94:5"
-
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                    border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.5f)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                                    colors = listOf(BrandPrimaryLightAlt, BrandPrimaryHover)
-                                )
-                            )
-                            .padding(16.dp)
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            // Top Tag Pill
-                            Surface(
-                                shape = RoundedCornerShape(20.dp),
-                                color = GoldAccent.copy(alpha = 0.2f),
-                                border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.6f))
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.AutoAwesome,
-                                        contentDescription = "Inspiration",
-                                        tint = GoldAccent,
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = "✦ DAILY WISDOM ✦",
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            color = GoldAccent,
-                                            fontWeight = FontWeight.Bold,
-                                            letterSpacing = 1.5.sp
-                                        )
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(14.dp))
-
-                            // Arabic Container
-                            Surface(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(14.dp),
-                                color = Color(0xFF002418).copy(alpha = 0.45f),
-                                border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.3f))
-                            ) {
-                                Text(
-                                    text = arabicText,
-                                    style = MaterialTheme.typography.headlineSmall.copy(
-                                        color = Color(0xFFFFF8E7),
-                                        fontWeight = FontWeight.Bold,
-                                        textAlign = TextAlign.Center,
-                                        lineHeight = 34.sp,
-                                        fontSize = 22.sp
-                                    ),
-                                    modifier = Modifier.padding(16.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(14.dp))
-
-                            // Translation
-                            Text(
-                                text = translation,
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = Color.White.copy(alpha = 0.95f),
-                                    textAlign = TextAlign.Center,
-                                    fontStyle = FontStyle.Italic,
-                                    lineHeight = 20.sp
-                                )
-                            )
-
-                            Spacer(modifier = Modifier.height(14.dp))
-
-                            // Reference Pill
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = GoldAccent
-                            ) {
-                                Text(
-                                    text = "— $reference —",
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        color = BrandPrimaryDark,
-                                        fontWeight = FontWeight.Bold
-                                    ),
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Home About Us Section Card
-            HomeAboutCard(
-                onNavigateToAbout = onNavigateToAbout
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // 5+ Years of Experience Banner
-            ExperienceBannerCard()
         }
     }
 }
 
 @Composable
-fun MasterQuranHeroCard(
+fun UnifiedHomeHeroHeader(
+    userName: String?,
     onExploreCoursesClick: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.4f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF003527),
+                        Color(0xFF0C4A3E),
+                        Color(0xFF00251B)
+                    )
+                )
+            )
+            .padding(horizontal = 20.dp, vertical = 22.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFF003527),
-                            Color(0xFF0C4A3E),
-                            Color(0xFF002117)
+        Column {
+            // Welcome & Islamic Greeting
+            Text(
+                text = "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ ٱللَّهِ وَبَرَكَاتُهُ",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    color = GoldAccent,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            val displayName = if (userName.isNullOrBlank()) "Student" else userName
+            Text(
+                text = "Welcome back, $displayName",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
+            )
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            Text(
+                text = "Continue your authentic Islamic learning journey today.",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = Color.White.copy(alpha = 0.85f),
+                    fontSize = 13.sp
+                )
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Gold Separator Bar
+            Box(
+                modifier = Modifier
+                    .width(44.dp)
+                    .height(3.dp)
+                    .background(GoldAccent, shape = RoundedCornerShape(2.dp))
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Main Hero Headline
+            Text(
+                text = buildAnnotatedString {
+                    append("Master the Quran & ")
+                    withStyle(style = SpanStyle(color = Color(0xFF95D3BA))) {
+                        append("Islamic Sciences ")
+                    }
+                    append("with Excellence")
+                },
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 23.sp,
+                    lineHeight = 31.sp
+                )
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Subtitle Description
+            Text(
+                text = "Join Darse Quran Academy to study Quran, Tajweed, Fiqh, Hadith, and Arabic Language with qualified teachers from anywhere in the world.",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = Color.White.copy(alpha = 0.88f),
+                    fontSize = 13.5.sp,
+                    lineHeight = 20.sp
+                )
+            )
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            // CTA Button: Explore Courses
+            Button(
+                onClick = onExploreCoursesClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = GoldAccent,
+                    contentColor = Color(0xFF3E2723)
+                ),
+                shape = RoundedCornerShape(24.dp),
+                contentPadding = PaddingValues(horizontal = 22.dp, vertical = 10.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Explore Courses",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Explore",
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Embedded Hadith Quote Strip (No nested card clutter)
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = Color.White.copy(alpha = 0.08f),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f))
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 19.sp,
+                            textAlign = TextAlign.Center
                         )
                     )
-                )
-                .padding(20.dp)
-        ) {
-            Column {
-                // Main Headline
-                Text(
-                    text = buildAnnotatedString {
-                        append("Master the Quran and\n")
-                        withStyle(style = SpanStyle(color = Color(0xFF95D3BA))) {
-                            append("Islamic Sciences\n")
-                        }
-                        append("with Excellence")
-                    },
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 24.sp,
-                        lineHeight = 32.sp
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "(THE BEST AMONG YOU ARE THOSE WHO LEARN THE QURAN AND TEACH IT)",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = 1.sp,
+                            textAlign = TextAlign.Center
+                        )
                     )
-                )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                // Subtitle Description
-                Text(
-                    text = "Join Darse Quran Academy to study Quran, Tajweed, Islamic Jurisprudence, Hadith, Arabic Language, and more with qualified teachers from anywhere in the world. Embark on a journey of spiritual and intellectual growth.",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = Color.White.copy(alpha = 0.88f),
-                        fontSize = 13.5.sp,
-                        lineHeight = 20.sp
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(18.dp))
-
-                // CTA Button
-                Button(
-                    onClick = onExploreCoursesClick,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = GoldAccent,
-                        contentColor = Color(0xFF4E3D00)
-                    ),
-                    shape = RoundedCornerShape(8.dp),
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
-                ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "Explore Courses",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = "Star",
+                            tint = GoldAccent,
+                            modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = "Explore",
-                            modifier = Modifier.size(16.dp)
+                        Text(
+                            text = "Connecting Hearts with the Quran",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                color = GoldAccent,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
                         )
                     }
                 }
+            }
+        }
+    }
+}
 
-                Spacer(modifier = Modifier.height(20.dp))
+@Composable
+fun DailyWisdomCard(
+    inspiration: com.darsequran.academy.data.model.InspirationDto
+) {
+    val arabicText = inspiration.arabicText ?: "فَإِنَّ مَعَ الْعُسْرِ يُسْرًا"
+    val translation = inspiration.englishTranslation ?: "For indeed, with hardship will be ease."
+    val reference = inspiration.reference ?: "Surah Ash-Sharh 94:5"
 
-                // Glass Card Container
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    color = Color.White.copy(alpha = 0.08f),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f))
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.35f))
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Header Pill Tag
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = GoldAccent.copy(alpha = 0.15f),
+                border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.5f))
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(18.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 21.sp,
-                                textAlign = TextAlign.Center
-                            )
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = "Inspiration",
+                        tint = GoldDark,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "✦ DAILY WISDOM ✦",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = GoldDark,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.5.sp
                         )
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        Text(
-                            text = "(THE BEST AMONG YOU ARE THOSE WHO LEARN THE QURAN AND TEACH IT)",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = Color.White.copy(alpha = 0.7f),
-                                fontSize = 9.5.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                letterSpacing = 1.sp,
-                                textAlign = TextAlign.Center
-                            )
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Box(
-                            modifier = Modifier
-                                .width(48.dp)
-                                .height(2.dp)
-                                .background(GoldAccent)
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = "Start Your Journey Today",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 17.sp,
-                                textAlign = TextAlign.Center
-                            )
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        HorizontalDivider(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = Color.White.copy(alpha = 0.12f),
-                            thickness = 1.dp
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = "Star",
-                                tint = GoldAccent,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Connecting Hearts with the Quran",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    color = GoldAccent,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.5.sp
-                                )
-                            )
-                        }
-                    }
+                    )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Arabic Text Container
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = EmeraldDark.copy(alpha = 0.07f)
+            ) {
+                Text(
+                    text = arabicText,
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        color = EmeraldDark,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        lineHeight = 32.sp,
+                        fontSize = 21.sp
+                    ),
+                    modifier = Modifier.padding(14.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Translation
+            Text(
+                text = translation,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
+                    textAlign = TextAlign.Center,
+                    fontStyle = FontStyle.Italic,
+                    lineHeight = 20.sp,
+                    fontSize = 13.5.sp
+                )
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Reference Tag
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = GoldAccent
+            ) {
+                Text(
+                    text = "— $reference —",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = Color(0xFF3E2723),
+                        fontWeight = FontWeight.Bold
+                    ),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
+                )
             }
         }
     }
@@ -512,117 +465,89 @@ fun HomeAboutCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.45f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFF003527),
-                            Color(0xFF0C4A3E),
-                            Color(0xFF002117)
-                        )
-                    )
-                )
-                .padding(24.dp)
+        Column(
+            modifier = Modifier.padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
+            // Circular Icon
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .background(GoldAccent.copy(alpha = 0.18f), CircleShape)
+                    .border(1.dp, GoldAccent.copy(alpha = 0.5f), CircleShape),
+                contentAlignment = Alignment.Center
             ) {
-                // Circular Book Icon Header
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .background(GoldAccent.copy(alpha = 0.15f), CircleShape)
-                        .border(1.dp, GoldAccent.copy(alpha = 0.4f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Book,
-                        contentDescription = "About Book",
-                        tint = GoldAccent,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.Book,
+                    contentDescription = "About Book",
+                    tint = GoldDark,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
 
-                Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-                // Title
+            // Title
+            Text(
+                text = buildAnnotatedString {
+                    append("About ")
+                    withStyle(style = SpanStyle(color = GoldDark)) {
+                        append("Us")
+                    }
+                },
+                style = MaterialTheme.typography.titleLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp
+                )
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Gold Accent Divider Line
+            Box(
+                modifier = Modifier
+                    .width(50.dp)
+                    .height(3.dp)
+                    .background(GoldDark, shape = RoundedCornerShape(2.dp))
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Paragraph Description
+            Text(
+                text = "Darse Quran Academy is our online platform for structured Quran and Islamic studies—offering qualified teachers, interactive live sessions, and structured progress.",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                    fontSize = 13.5.sp,
+                    lineHeight = 20.sp,
+                    textAlign = TextAlign.Center
+                )
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // READ MORE Button -> Opens About Us Screen!
+            Button(
+                onClick = onNavigateToAbout,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = GoldDark,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(20.dp),
+                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp)
+            ) {
                 Text(
-                    text = buildAnnotatedString {
-                        append("About ")
-                        withStyle(style = SpanStyle(color = GoldAccent)) {
-                            append("Us")
-                        }
-                    },
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 26.sp
-                    )
+                    text = "READ MORE",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    letterSpacing = 0.5.sp
                 )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Gold Accent Line
-                Box(
-                    modifier = Modifier
-                        .width(60.dp)
-                        .height(3.dp)
-                        .background(GoldAccent, shape = RoundedCornerShape(2.dp))
-                )
-
-                Spacer(modifier = Modifier.height(18.dp))
-
-                // Paragraph 1
-                Text(
-                    text = "Darse-Quran is a non-profit Sunni Islamic media group based in South Asia, serving from Jammu and Kashmir to spread the teaching of Islam worldwide through sound scholarship and da'wah.",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = Color.White.copy(alpha = 0.9f),
-                        fontSize = 13.5.sp,
-                        lineHeight = 21.sp,
-                        textAlign = TextAlign.Center
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Paragraph 2
-                Text(
-                    text = "Darse Quran Academy is our online platform for structured Quran and Islamic studies—with qualified teachers, classes are generally after Isha salah, and structured progress through each course.",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = Color.White.copy(alpha = 0.82f),
-                        fontSize = 13.sp,
-                        lineHeight = 20.sp,
-                        textAlign = TextAlign.Center
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // READ MORE Button -> Opens About Us Screen!
-                Button(
-                    onClick = onNavigateToAbout,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = GoldAccent,
-                        contentColor = Color(0xFF4E3D00)
-                    ),
-                    shape = RoundedCornerShape(8.dp),
-                    contentPadding = PaddingValues(horizontal = 28.dp, vertical = 12.dp)
-                ) {
-                    Text(
-                        text = "READ MORE",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.5.sp,
-                        letterSpacing = 1.sp
-                    )
-                }
             }
         }
     }
@@ -632,15 +557,15 @@ fun HomeAboutCard(
 fun ExperienceBannerCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
+                    brush = Brush.horizontalGradient(
                         colors = listOf(
                             Color(0xFFB38B22),
                             Color(0xFFD4A017),
@@ -648,7 +573,7 @@ fun ExperienceBannerCard() {
                         )
                     )
                 )
-                .padding(vertical = 18.dp, horizontal = 16.dp),
+                .padding(vertical = 16.dp, horizontal = 16.dp),
             contentAlignment = Alignment.Center
         ) {
             Row(
@@ -658,8 +583,8 @@ fun ExperienceBannerCard() {
                 Icon(
                     imageVector = Icons.Default.AutoAwesome,
                     contentDescription = "Experience",
-                    tint = Color.White.copy(alpha = 0.95f),
-                    modifier = Modifier.size(24.dp)
+                    tint = Color.White,
+                    modifier = Modifier.size(22.dp)
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
@@ -668,17 +593,17 @@ fun ExperienceBannerCard() {
                         withStyle(
                             style = SpanStyle(
                                 fontWeight = FontWeight.Medium,
-                                fontSize = 16.sp,
+                                fontSize = 15.sp,
                                 color = Color.White.copy(alpha = 0.92f)
                             )
                         ) {
                             append("of Experience")
                         }
                     },
-                    style = MaterialTheme.typography.titleLarge.copy(
+                    style = MaterialTheme.typography.titleMedium.copy(
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 23.sp
+                        fontSize = 20.sp
                     )
                 )
             }

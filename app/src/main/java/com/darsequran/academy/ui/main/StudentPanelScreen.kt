@@ -254,7 +254,8 @@ fun StudentPanelScreen(
                     tokenManager = tokenManager,
                     onNavigateToAbout = onNavigateToAbout,
                     onNavigateToContact = onNavigateToContact,
-                    onLogout = onLogout
+                    onLogout = onLogout,
+                    onNavigateToExplore = { selectedTab = 1 }
                 )
                 1 -> ExploreMainScreen(
                     catalogViewModel = coursesCatalogViewModel,
