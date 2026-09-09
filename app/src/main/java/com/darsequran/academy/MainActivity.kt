@@ -24,6 +24,7 @@ class MainActivity : ComponentActivity() {
         val authApi = RetrofitClient.getAuthApi(tokenManager)
         val authRepository = AuthRepository(authApi, tokenManager)
         com.darsequran.academy.data.repository.BookstoreCartManager.init(applicationContext)
+        com.darsequran.academy.data.repository.BookstoreCartManager.attachRepository(authRepository)
 
         setContent {
             DarseQuranAcademyTheme {
