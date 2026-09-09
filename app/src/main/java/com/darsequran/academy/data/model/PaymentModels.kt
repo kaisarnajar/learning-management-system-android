@@ -25,19 +25,30 @@ data class PaymentSubmissionDto(
     @SerializedName("userId") val userId: String,
     @SerializedName("courseId") val courseId: String,
     @SerializedName("amount") val amount: Double? = 0.0,
-    @SerializedName("status") val status: String = "PENDING", // PENDING, VERIFIED, REJECTED
+    @SerializedName("amountInrPaise") val amountInrPaise: Long? = null,
+    @SerializedName("label") val label: String? = null,
+    @SerializedName("paymentMethod") val paymentMethod: String? = null,
+    @SerializedName("status") val status: String = "PENDING", // PENDING, APPROVED, DECLINED, REJECTED
     @SerializedName("upiTransactionId") val upiTransactionId: String? = null,
     @SerializedName("createdAt") val createdAt: String? = null
-)
+) {
+    val displayAmount: Double
+        get() = if (amountInrPaise != null) amountInrPaise / 100.0 else (amount ?: 0.0)
+}
 
 data class PaymentRecordDto(
     @SerializedName("id") val id: String,
     @SerializedName("userId") val userId: String,
-    @SerializedName("courseId") val courseId: String,
+    @SerializedName("courseId") val courseId: String? = null,
     @SerializedName("amount") val amount: Double? = 0.0,
+    @SerializedName("amountInrPaise") val amountInrPaise: Long? = null,
     @SerializedName("receiptNumber") val receiptNumber: String? = null,
+    @SerializedName("description") val description: String? = null,
     @SerializedName("paidAt") val paidAt: String? = null
-)
+) {
+    val displayAmount: Double
+        get() = if (amountInrPaise != null) amountInrPaise / 100.0 else (amount ?: 0.0)
+}
 
 data class PaymentHistoryResponse(
     @SerializedName("success") val success: Boolean = true,

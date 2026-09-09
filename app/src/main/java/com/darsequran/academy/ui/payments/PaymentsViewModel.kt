@@ -9,16 +9,30 @@ import com.darsequran.academy.data.model.PaymentSubmissionDto
 import com.darsequran.academy.data.model.SubmitPaymentRequest
 import com.darsequran.academy.data.repository.AuthRepository
 import com.darsequran.academy.data.repository.NetworkResult
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+enum class PaymentTab {
+    PENDING,
+    HISTORY
+}
+
+data class CourseOption(
+    val id: String,
+    val title: String
+)
+
 data class PaymentsUiState(
     val settings: PaymentSettingsDto = PaymentSettingsDto(),
     val submissions: List<PaymentSubmissionDto> = emptyList(),
     val records: List<PaymentRecordDto> = emptyList(),
+    val courseTitlesMap: Map<String, String> = emptyMap(),
+    val availableCourses: List<CourseOption> = emptyList(),
+    val selectedTab: PaymentTab = PaymentTab.PENDING,
     val isLoading: Boolean = false,
     val isSubmitting: Boolean = false,
     val errorMessage: String? = null,
@@ -37,37 +51,78 @@ class PaymentsViewModel(
         loadPaymentData()
     }
 
+    fun selectTab(tab: PaymentTab) {
+        _uiState.update { it.copy(selectedTab = tab) }
+    }
+
     fun loadPaymentData() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            // Fetch Settings
-            when (val setRes = authRepository.getPaymentSettings()) {
-                is NetworkResult.Success -> {
-                    setRes.data.settings?.let { settings ->
-                        _uiState.update { it.copy(settings = settings) }
-                    }
-                }
-                else -> {}
+            val settingsDeferred = async { authRepository.getPaymentSettings() }
+            val historyDeferred = async { authRepository.getPaymentHistory() }
+            val coursesDeferred = async { authRepository.getCourses() }
+            val enrollmentsDeferred = async { authRepository.getEnrollments() }
+
+            val settingsRes = settingsDeferred.await()
+            val historyRes = historyDeferred.await()
+            val coursesRes = coursesDeferred.await()
+            val enrollmentsRes = enrollmentsDeferred.await()
+
+            var newSettings = _uiState.value.settings
+            if (settingsRes is NetworkResult.Success) {
+                settingsRes.data.settings?.let { newSettings = it }
             }
 
-            // Fetch History
-            when (val histRes = authRepository.getPaymentHistory()) {
-                is NetworkResult.Success -> {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            submissions = histRes.data.submissions ?: emptyList(),
-                            records = histRes.data.records ?: emptyList()
-                        )
+            // Build course title lookup
+            val titlesMap = mutableMapOf<String, String>()
+            val courseOptionsList = mutableListOf<CourseOption>()
+
+            if (coursesRes is NetworkResult.Success) {
+                coursesRes.data.data?.forEach { course ->
+                    titlesMap[course.id] = course.title
+                }
+            }
+
+            if (enrollmentsRes is NetworkResult.Success) {
+                enrollmentsRes.data.data?.forEach { enrollment ->
+                    val cId = enrollment.courseId
+                    val cTitle = enrollment.course?.title ?: titlesMap[cId] ?: cId
+                    titlesMap[cId] = cTitle
+                    if (courseOptionsList.none { it.id == cId }) {
+                        courseOptionsList.add(CourseOption(cId, cTitle))
                     }
                 }
-                is NetworkResult.Error -> {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = histRes.message) }
+            }
+
+            // Fallback to general courses list for options if user has no enrollments yet
+            if (courseOptionsList.isEmpty() && coursesRes is NetworkResult.Success) {
+                coursesRes.data.data?.forEach { course ->
+                    courseOptionsList.add(CourseOption(course.id, course.title))
                 }
-                else -> {
-                    _uiState.update { it.copy(isLoading = false) }
-                }
+            }
+
+            var submissions = emptyList<PaymentSubmissionDto>()
+            var records = emptyList<PaymentRecordDto>()
+            var errorMsg: String? = null
+
+            if (historyRes is NetworkResult.Success) {
+                submissions = historyRes.data.submissions ?: emptyList()
+                records = historyRes.data.records ?: emptyList()
+            } else if (historyRes is NetworkResult.Error) {
+                errorMsg = historyRes.message
+            }
+
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    settings = newSettings,
+                    submissions = submissions,
+                    records = records,
+                    courseTitlesMap = titlesMap,
+                    availableCourses = courseOptionsList,
+                    errorMessage = errorMsg
+                )
             }
         }
     }
