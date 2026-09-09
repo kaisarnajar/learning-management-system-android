@@ -291,42 +291,6 @@ fun EnrolledCourseCard(
                 }
             }
 
-            // Attendance Summary Bar (if available)
-            attendanceSummary?.let { att ->
-                Spacer(modifier = Modifier.height(14.dp))
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Attendance",
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                            )
-                        )
-                        Text(
-                            text = "${att.percentage}% (${att.presentClasses}/${att.totalClasses} classes)",
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                color = EmeraldDark
-                            )
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    LinearProgressIndicator(
-                        progress = { (att.percentage / 100f).coerceIn(0f, 1f) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(6.dp),
-                        color = EmeraldDark,
-                        trackColor = EmeraldDark.copy(alpha = 0.15f)
-                    )
-                }
-            }
-
             Spacer(modifier = Modifier.height(18.dp))
 
             // Action Buttons / Status CTA Container
