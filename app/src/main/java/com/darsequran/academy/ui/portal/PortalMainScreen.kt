@@ -30,7 +30,8 @@ import com.darsequran.academy.ui.theme.GoldAccent
 @Composable
 fun PortalMainScreen(
     myCoursesViewModel: MyCoursesViewModel,
-    paymentsViewModel: PaymentsViewModel
+    paymentsViewModel: PaymentsViewModel,
+    onNavigateToExplore: () -> Unit = {}
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabs = listOf("My Courses", "Payments", "Fee Waivers", "Cart")
@@ -68,7 +69,11 @@ fun PortalMainScreen(
             }
 
             when (selectedTabIndex) {
-                0 -> MyCoursesScreen(viewModel = myCoursesViewModel)
+                0 -> MyCoursesScreen(
+                    viewModel = myCoursesViewModel,
+                    onViewAllCourses = onNavigateToExplore,
+                    onPayFee = { selectedTabIndex = 1 }
+                )
                 1 -> PaymentsScreen(viewModel = paymentsViewModel)
                 2 -> FeeWaiverScreen()
                 3 -> BookstoreCartScreen()

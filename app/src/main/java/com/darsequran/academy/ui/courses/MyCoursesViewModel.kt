@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 
 data class MyCoursesUiState(
     val enrollments: List<EnrollmentDto> = emptyList(),
+    val userName: String? = null,
     val attendanceSummaries: Map<String, AttendanceSummaryDto> = emptyMap(), // keyed by courseId
     val gradeSummaries: Map<String, GradeSummaryDto> = emptyMap(), // keyed by courseId
     val isLoading: Boolean = false,
@@ -31,11 +32,33 @@ class MyCoursesViewModel(
 
     init {
         loadCourseData()
+        observeUserName()
+    }
+
+    private fun observeUserName() {
+        viewModelScope.launch {
+            authRepository.userNameFlow.collect { name ->
+                if (!name.isNullOrBlank()) {
+                    _uiState.update { it.copy(userName = name) }
+                }
+            }
+        }
     }
 
     fun loadCourseData() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
+            // 0. Fetch Profile for User Name
+            when (val profResult = authRepository.getProfile()) {
+                is NetworkResult.Success -> {
+                    val name = profResult.data.user?.name
+                    if (!name.isNullOrBlank()) {
+                        _uiState.update { it.copy(userName = name) }
+                    }
+                }
+                else -> {}
+            }
 
             // 1. Fetch Enrollments
             when (val result = authRepository.getEnrollments()) {

@@ -269,7 +269,8 @@ fun StudentPanelScreen(
                 )
                 3 -> PortalMainScreen(
                     myCoursesViewModel = myCoursesViewModel,
-                    paymentsViewModel = paymentsViewModel
+                    paymentsViewModel = paymentsViewModel,
+                    onNavigateToExplore = { selectedTab = 1 }
                 )
                 4 -> ProfileMainScreen(
                     profileViewModel = profileViewModel,
