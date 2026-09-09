@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -730,13 +731,17 @@ fun CourseBadge(
 
 @Composable
 fun SpecRow(label: String, value: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top
+    ) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 fontSize = 13.5.sp
-            )
+            ),
+            modifier = Modifier.widthIn(min = 75.dp)
         )
         Spacer(modifier = Modifier.width(6.dp))
         Text(
@@ -744,8 +749,10 @@ fun SpecRow(label: String, value: String) {
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
-                fontSize = 13.5.sp
-            )
+                fontSize = 13.5.sp,
+                lineHeight = 18.sp
+            ),
+            modifier = Modifier.weight(1f)
         )
     }
 }
