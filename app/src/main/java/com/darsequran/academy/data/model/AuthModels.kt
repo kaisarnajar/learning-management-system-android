@@ -121,7 +121,62 @@ data class CourseDto(
 
     val displayFeeFrequency: String
         get() = billingCycle ?: feeFrequency?.lowercase()?.replace("_", " ")?.replaceFirstChar { it.uppercase() } ?: "Monthly"
+
+    fun getActionButtonState(userEnrollment: EnrollmentDto? = null): CourseActionButtonState {
+        if (userEnrollment != null) {
+            val st = userEnrollment.status.lowercase()
+            return when {
+                st.contains("active") || st.contains("approved") || st.contains("enrolled") -> {
+                    CourseActionButtonState("Enrolled", isEnabled = false, CourseActionType.ALREADY_ENROLLED)
+                }
+                st.contains("pending") || st.contains("approval") -> {
+                    CourseActionButtonState("Pending Approval", isEnabled = false, CourseActionType.PENDING_APPROVAL)
+                }
+                st.contains("fee") || st.contains("payment") || st.contains("awaiting_payment") -> {
+                    val feeText = if (displayEnrollmentFee > 0) "Pay enrollment fee (₹$displayEnrollmentFee)" else "Pay enrollment fee"
+                    CourseActionButtonState(feeText, isEnabled = true, CourseActionType.PAY_FEE)
+                }
+                else -> {
+                    CourseActionButtonState("Pending Approval", isEnabled = false, CourseActionType.PENDING_APPROVAL)
+                }
+            }
+        }
+
+        val courseStatusUpper = status?.uppercase()?.trim() ?: "PUBLISHED"
+        return when {
+            courseStatusUpper == "UPCOMING" || courseStatusUpper == "COMING_SOON" -> {
+                CourseActionButtonState("Pre-Register", isEnabled = true, CourseActionType.REQUEST_ENROLLMENT)
+            }
+            courseStatusUpper == "CLOSED" || courseStatusUpper == "FULL" || courseStatusUpper == "COMPLETED" -> {
+                CourseActionButtonState("Enrollment Closed", isEnabled = false, CourseActionType.CLOSED)
+            }
+            courseStatusUpper == "DRAFT" || courseStatusUpper == "ARCHIVED" -> {
+                CourseActionButtonState("Not Available", isEnabled = false, CourseActionType.CLOSED)
+            }
+            else -> {
+                if (displayEnrollmentFee > 0) {
+                    CourseActionButtonState("Pay enrollment fee", isEnabled = true, CourseActionType.PAY_FEE)
+                } else {
+                    CourseActionButtonState("Request enrollment", isEnabled = true, CourseActionType.REQUEST_ENROLLMENT)
+                }
+            }
+        }
+    }
 }
+
+enum class CourseActionType {
+    REQUEST_ENROLLMENT,
+    PAY_FEE,
+    ALREADY_ENROLLED,
+    PENDING_APPROVAL,
+    CLOSED
+}
+
+data class CourseActionButtonState(
+    val text: String,
+    val isEnabled: Boolean,
+    val actionType: CourseActionType
+)
 
 data class EnrollmentDto(
     @SerializedName("id") val id: String,
