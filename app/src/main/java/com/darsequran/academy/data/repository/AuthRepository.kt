@@ -563,6 +563,37 @@ class AuthRepository(
         }
     }
 
+    suspend fun getBookstoreCart(): NetworkResult<com.darsequran.academy.data.model.BookstoreCartResponseDto> {
+        return try {
+            val response = authApi.getBookstoreCart()
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                val errorMsg = parseErrorMessage(response.errorBody()?.string())
+                NetworkResult.Error(errorMsg ?: "Failed to fetch cart.")
+            }
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
+        }
+    }
+
+    suspend fun syncBookstoreCart(items: List<CartItem>): NetworkResult<com.darsequran.academy.data.model.BookstoreCartResponseDto> {
+        return try {
+            val payload = com.darsequran.academy.data.model.SyncCartRequestDto(
+                items = items.map { com.darsequran.academy.data.model.CartItemSyncDto(bookId = it.book.id, quantity = it.quantity) }
+            )
+            val response = authApi.syncBookstoreCart(payload)
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                val errorMsg = parseErrorMessage(response.errorBody()?.string())
+                NetworkResult.Error(errorMsg ?: "Failed to sync cart.")
+            }
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
+        }
+    }
+
     private fun getFallbackLibrary(search: String?, topic: String?): com.darsequran.academy.data.model.LibraryResponse {
         val list = listOf(
             com.darsequran.academy.data.model.LibraryBookDto(id = "lib-1", title = "Qiraat al-Ashr — Introduction & Guide", author = "Moulana Yusuf Ahmed", topic = "Qiraat & Tajweed", category = "Quran", description = "Comprehensive introduction to the ten authentic styles of Quranic recitation with examples.", pages = 145),

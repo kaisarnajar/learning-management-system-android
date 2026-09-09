@@ -5,10 +5,14 @@ import android.content.SharedPreferences
 import com.darsequran.academy.data.model.BookstoreItemDto
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 data class CartItem(
     val book: BookstoreItemDto,
@@ -27,10 +31,46 @@ object BookstoreCartManager {
     private val _cartItems = MutableStateFlow<List<CartItem>>(emptyList())
     val cartItems: StateFlow<List<CartItem>> = _cartItems.asStateFlow()
 
+    private var repository: AuthRepository? = null
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
     fun init(context: Context) {
         if (sharedPreferences == null) {
             sharedPreferences = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             loadFromPreferences()
+        }
+    }
+
+    fun attachRepository(authRepository: AuthRepository) {
+        this.repository = authRepository
+        syncFromBackend()
+    }
+
+    fun syncFromBackend() {
+        val repo = repository ?: return
+        scope.launch {
+            when (val res = repo.getBookstoreCart()) {
+                is NetworkResult.Success -> {
+                    val serverItems = res.data.items?.map {
+                        CartItem(book = it.book, quantity = it.quantity)
+                    } ?: emptyList()
+
+                    if (serverItems.isNotEmpty()) {
+                        _cartItems.value = serverItems
+                        saveToPreferences(serverItems)
+                    } else if (_cartItems.value.isNotEmpty()) {
+                        repo.syncBookstoreCart(_cartItems.value)
+                    }
+                }
+                else -> {}
+            }
+        }
+    }
+
+    private fun pushToBackend(items: List<CartItem>) {
+        val repo = repository ?: return
+        scope.launch {
+            repo.syncBookstoreCart(items)
         }
     }
 
@@ -58,6 +98,12 @@ object BookstoreCartManager {
         }
     }
 
+    fun setServerCartItems(items: List<CartItem>) {
+        _cartItems.value = items
+        saveToPreferences(items)
+        pushToBackend(items)
+    }
+
     fun addToCart(book: BookstoreItemDto, qty: Int = 1) {
         _cartItems.update { currentList ->
             val existingIndex = currentList.indexOfFirst { it.book.id == book.id }
@@ -73,6 +119,7 @@ object BookstoreCartManager {
                 currentList + CartItem(book = book, quantity = qty)
             }
             saveToPreferences(newList)
+            pushToBackend(newList)
             newList
         }
     }
@@ -81,6 +128,7 @@ object BookstoreCartManager {
         _cartItems.update { currentList ->
             val newList = currentList.filterNot { it.book.id == bookId }
             saveToPreferences(newList)
+            pushToBackend(newList)
             newList
         }
     }
@@ -99,6 +147,7 @@ object BookstoreCartManager {
                 }
             }
             saveToPreferences(newList)
+            pushToBackend(newList)
             newList
         }
     }
@@ -106,6 +155,7 @@ object BookstoreCartManager {
     fun clearCart() {
         _cartItems.value = emptyList()
         saveToPreferences(emptyList())
+        pushToBackend(emptyList())
     }
 
     val totalItemsCount: Int

@@ -135,3 +135,26 @@ data class BookCheckoutResponseDto(
     @SerializedName("orderId") val orderId: String? = null,
     @SerializedName("order") val order: BookOrderDto? = null
 )
+
+// --- Bookstore Cart Sync Models ---
+
+data class CartItemSyncDto(
+    @SerializedName("bookId") val bookId: String,
+    @SerializedName("quantity") val quantity: Int
+)
+
+data class SyncCartRequestDto(
+    @SerializedName("items") val items: List<CartItemSyncDto>
+)
+
+data class ServerCartItemDto(
+    @SerializedName("bookId") val bookId: String,
+    @SerializedName("quantity") val quantity: Int = 1,
+    @SerializedName("book") val book: BookstoreItemDto
+)
+
+data class BookstoreCartResponseDto(
+    @SerializedName("success") val success: Boolean = true,
+    @SerializedName("error") val error: String? = null,
+    @SerializedName("items") val items: List<ServerCartItemDto>? = emptyList()
+)

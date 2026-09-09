@@ -43,6 +43,7 @@ class BookstoreCartViewModel(
                 }
             }
         }
+        BookstoreCartManager.syncFromBackend()
         loadOrders()
     }
 

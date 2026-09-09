@@ -198,4 +198,12 @@ interface AuthApi {
         @Part("deliveryPhoneNumber") deliveryPhoneNumber: RequestBody,
         @Part screenshot: MultipartBody.Part? = null
     ): Response<com.darsequran.academy.data.model.BookCheckoutResponseDto>
+
+    @GET("bookstore/cart")
+    suspend fun getBookstoreCart(): Response<com.darsequran.academy.data.model.BookstoreCartResponseDto>
+
+    @POST("bookstore/cart")
+    suspend fun syncBookstoreCart(
+        @Body request: com.darsequran.academy.data.model.SyncCartRequestDto
+    ): Response<com.darsequran.academy.data.model.BookstoreCartResponseDto>
 }
