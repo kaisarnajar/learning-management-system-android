@@ -76,9 +76,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.darsequran.academy.R
 import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.data.model.UserDto
+import com.darsequran.academy.data.remote.RetrofitClient
 import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.EmeraldPrimary
 import com.darsequran.academy.ui.theme.GoldAccent
@@ -174,11 +176,6 @@ fun ProfileScreen(
             }
         } else {
             val user = uiState.user
-            val avatarDrawable = if (user?.gender?.uppercase() == "FEMALE") {
-                R.drawable.female_icon
-            } else {
-                R.drawable.male_icon
-            }
 
             Column(
                 modifier = Modifier
@@ -205,11 +202,10 @@ fun ProfileScreen(
                                 .border(1.dp, GoldAccent.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Image(
-                                painter = painterResource(id = avatarDrawable),
-                                contentDescription = "Profile Photo",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
+                            UserProfileAvatar(
+                                imageUrl = user?.image,
+                                gender = user?.gender,
+                                modifier = Modifier.fillMaxSize()
                             )
                         }
 
@@ -610,12 +606,10 @@ fun EditProfileDialog(
                                 contentScale = ContentScale.Crop
                             )
                         } else {
-                            val iconRes = if (genderValue == "FEMALE") R.drawable.female_icon else R.drawable.male_icon
-                            Image(
-                                painter = painterResource(id = iconRes),
-                                contentDescription = "Profile Avatar",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
+                            UserProfileAvatar(
+                                imageUrl = imageBase64 ?: user?.image,
+                                gender = genderValue,
+                                modifier = Modifier.fillMaxSize()
                             )
                         }
                     }
@@ -816,4 +810,87 @@ fun EditProfileDialog(
             }
         }
     )
+}
+
+@Composable
+fun UserProfileAvatar(
+    imageUrl: String?,
+    gender: String?,
+    modifier: Modifier = Modifier
+) {
+    val defaultIconRes = if (gender?.uppercase() == "FEMALE") R.drawable.female_icon else R.drawable.male_icon
+
+    val cleanedUrl = remember(imageUrl) {
+        when {
+            imageUrl.isNullOrBlank() -> null
+            imageUrl == "/assets/female_icon.png" -> "ASSET_FEMALE"
+            imageUrl == "/assets/male_icon.png" -> "ASSET_MALE"
+            imageUrl.startsWith("http://") || imageUrl.startsWith("https://") -> imageUrl
+            imageUrl.startsWith("data:image/") -> imageUrl
+            imageUrl.startsWith("/") -> {
+                val base = RetrofitClient.PRODUCTION_BASE_URL
+                    .removeSuffix("api/v1/")
+                    .removeSuffix("/")
+                "$base$imageUrl"
+            }
+            else -> imageUrl
+        }
+    }
+
+    val base64Bitmap = remember(cleanedUrl) {
+        if (cleanedUrl != null && cleanedUrl.startsWith("data:image/")) {
+            try {
+                val pureBase64 = cleanedUrl.substringAfter(",")
+                val decodedBytes = Base64.decode(pureBase64, Base64.DEFAULT)
+                BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+            } catch (_: Exception) {
+                null
+            }
+        } else null
+    }
+
+    when {
+        base64Bitmap != null -> {
+            Image(
+                bitmap = base64Bitmap.asImageBitmap(),
+                contentDescription = "Profile Avatar",
+                modifier = modifier,
+                contentScale = ContentScale.Crop
+            )
+        }
+        cleanedUrl == "ASSET_FEMALE" -> {
+            Image(
+                painter = painterResource(id = R.drawable.female_icon),
+                contentDescription = "Female Avatar",
+                modifier = modifier,
+                contentScale = ContentScale.Crop
+            )
+        }
+        cleanedUrl == "ASSET_MALE" -> {
+            Image(
+                painter = painterResource(id = R.drawable.male_icon),
+                contentDescription = "Male Avatar",
+                modifier = modifier,
+                contentScale = ContentScale.Crop
+            )
+        }
+        !cleanedUrl.isNullOrBlank() && (cleanedUrl.startsWith("http://") || cleanedUrl.startsWith("https://")) -> {
+            AsyncImage(
+                model = cleanedUrl,
+                contentDescription = "Profile Photo",
+                modifier = modifier,
+                contentScale = ContentScale.Crop,
+                error = painterResource(id = defaultIconRes),
+                placeholder = painterResource(id = defaultIconRes)
+            )
+        }
+        else -> {
+            Image(
+                painter = painterResource(id = defaultIconRes),
+                contentDescription = "Profile Avatar",
+                modifier = modifier,
+                contentScale = ContentScale.Crop
+            )
+        }
+    }
 }
