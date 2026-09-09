@@ -12,10 +12,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -23,8 +26,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,7 +40,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.darsequran.academy.data.model.AttendanceSummaryDto
 import com.darsequran.academy.data.model.EnrollmentDto
+import com.darsequran.academy.ui.theme.EmeraldDark
+import com.darsequran.academy.ui.theme.GoldAccent
+import com.darsequran.academy.ui.theme.GoldDark
 
 @Composable
 fun MyCoursesScreen(
@@ -57,14 +64,14 @@ fun MyCoursesScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Header Section matching Desktop UI
+            // Header Section matching Web UI Spec
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp)
             ) {
                 Text(
-                    text = "My Courses",
+                    text = "My Enrolled Courses",
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground,
@@ -72,8 +79,9 @@ fun MyCoursesScreen(
                     )
                 )
                 Spacer(modifier = Modifier.height(4.dp))
+                val studentName = uiState.userName ?: "Kaisar Ahmad Najar"
                 Text(
-                    text = "Welcome, ${uiState.userName ?: "Kaisar Ahmad Najar"}. Enrolled programs and monthly fee payments appear below.",
+                    text = "Welcome back, $studentName. Enrolled programs, attendance, and fee payments appear below.",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f),
                         fontSize = 13.5.sp,
@@ -84,17 +92,26 @@ fun MyCoursesScreen(
                 Button(
                     onClick = onViewAllCourses,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFD4A017)
+                        containerColor = GoldDark,
+                        contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(24.dp),
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
                 ) {
-                    Text(
-                        text = "View All Courses",
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        fontSize = 14.sp
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "EXPLORE CATALOG",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            letterSpacing = 0.5.sp
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = "Explore",
+                            modifier = Modifier.size(15.dp)
+                        )
+                    }
                 }
             }
 
@@ -132,8 +149,10 @@ fun MyCoursesScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(uiState.enrollments) { enrollment ->
+                        val attSummary = enrollment.course?.let { uiState.attendanceSummaries[it.id] }
                         EnrolledCourseCard(
                             enrollment = enrollment,
+                            attendanceSummary = attSummary,
                             onPayFee = { onPayFee(enrollment) },
                             onOpenCourse = { onOpenCourse(enrollment) }
                         )
@@ -147,6 +166,7 @@ fun MyCoursesScreen(
 @Composable
 fun EnrolledCourseCard(
     enrollment: EnrollmentDto,
+    attendanceSummary: AttendanceSummaryDto? = null,
     onPayFee: () -> Unit = {},
     onOpenCourse: () -> Unit = {}
 ) {
@@ -155,163 +175,236 @@ fun EnrolledCourseCard(
 
     val (statusLabel, statusBg, statusTextColor, isFeeAction, isApprovalAction) = when {
         statusLower.contains("fee") || statusLower.contains("payment") || statusLower.contains("awaiting_payment") -> {
-            Tuple5("Awaiting enrollment fee", Color(0xFFFEF9C3), Color(0xFFA16207), true, false)
+            Tuple5("Awaiting Fee Payment", Color(0xFFFEF9C3), Color(0xFFA16207), true, false)
         }
         statusLower.contains("pending") || statusLower.contains("approval") -> {
-            Tuple5("Awaiting approval", Color(0xFFFEF9C3), Color(0xFFA16207), false, true)
+            Tuple5("Pending Approval", Color(0xFFFEF9C3), Color(0xFFA16207), false, true)
         }
         else -> {
-            Tuple5(
-                enrollment.status.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() },
-                Color(0xFFDCFCE7),
-                Color(0xFF15803D),
-                false,
-                false
-            )
+            Tuple5("Enrolled", Color(0xFFDCFCE7), Color(0xFF15803D), false, false)
         }
     }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
-            // Status Badge Pill
-            Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = statusBg
+            // Badges Header Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = statusLabel,
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.Medium,
-                        color = statusTextColor,
-                        fontSize = 12.sp
-                    ),
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CourseBadge(
+                        text = (course?.category ?: "ISLAMIC STUDIES").uppercase(),
+                        bgColor = GoldAccent.copy(alpha = 0.18f),
+                        textColor = GoldDark
+                    )
+                    CourseBadge(
+                        text = (course?.level ?: "Beginner"),
+                        bgColor = Color(0xFFEFEBE9),
+                        textColor = Color(0xFF5D4037)
+                    )
+                    enrollment.rollNumber?.let { roll ->
+                        CourseBadge(
+                            text = "Roll: $roll",
+                            bgColor = Color(0xFFE0F2FE),
+                            textColor = Color(0xFF0369A1)
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = statusBg
+                ) {
+                    Text(
+                        text = statusLabel,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = statusTextColor,
+                            fontSize = 11.5.sp
+                        ),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Course Title
             Text(
                 text = course?.title ?: "Tajweed-ul-Quran & Recitation Course",
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 18.sp
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 19.sp
                 )
             )
 
             // Course Description
             course?.description?.let { desc ->
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = desc,
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
                         fontSize = 13.5.sp,
-                        lineHeight = 19.sp
+                        lineHeight = 20.sp
                     ),
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // Starts Spec
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "Starts: ",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFFC68A16),
-                        fontSize = 13.5.sp
-                    )
-                )
-                Text(
-                    text = course?.startDate ?: "Ongoing",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
-                        fontSize = 13.5.sp
-                    )
-                )
+            // Structured Specifications Box (Web Spec)
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    SpecRow(label = "Starts:", value = course?.startDate ?: "Ongoing")
+                    Spacer(modifier = Modifier.height(4.dp))
+                    SpecRow(label = "Duration:", value = course?.duration ?: "Self-paced")
+                    Spacer(modifier = Modifier.height(4.dp))
+                    course?.teacher?.name?.let { tName ->
+                        val spec = course.teacher.specialization
+                        val tText = if (!spec.isNullOrBlank()) "$tName ($spec)" else tName
+                        SpecRow(label = "Instructor:", value = tText)
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+                    val monthlyFee = course?.displayMonthlyFee ?: 0
+                    val cycle = course?.displayFeeFrequency ?: "Monthly"
+                    SpecRow(label = "Fee:", value = "₹$monthlyFee / month ($cycle)")
+                }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // Duration Spec
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "Duration: ",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFFC68A16),
-                        fontSize = 13.5.sp
+            // Attendance Summary Bar (if available)
+            attendanceSummary?.let { att ->
+                Spacer(modifier = Modifier.height(14.dp))
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Attendance",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                            )
+                        )
+                        Text(
+                            text = "${att.percentage}% (${att.presentClasses}/${att.totalClasses} classes)",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = EmeraldDark
+                            )
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    LinearProgressIndicator(
+                        progress = { (att.percentage / 100f).coerceIn(0f, 1f) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(6.dp),
+                        color = EmeraldDark,
+                        trackColor = EmeraldDark.copy(alpha = 0.15f)
                     )
-                )
-                Text(
-                    text = course?.duration ?: "Self-paced",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
-                        fontSize = 13.5.sp
-                    )
-                )
+                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
-            // Action Row / Button
+            // Action Buttons / Status CTA Container
             when {
                 isFeeAction -> {
-                    OutlinedButton(
+                    Button(
                         onClick = onPayFee,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(24.dp),
-                        border = BorderStroke(1.dp, Color(0xFFFDE68A)),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = Color(0xFFFEFCE8),
-                            contentColor = Color(0xFF9A3412)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp),
+                        shape = RoundedCornerShape(22.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFD97706),
+                            contentColor = Color.White
                         )
                     ) {
                         Text(
-                            text = "Pay enrollment fee",
+                            text = "PAY ENROLLMENT FEE",
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp
                         )
                     }
                 }
                 isApprovalAction -> {
-                    Text(
-                        text = "Awaiting enrollment approval by the academy.",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFF9A3412),
-                            fontSize = 13.5.sp
-                        )
-                    )
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0xFFFEF3C7),
+                        border = BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.4f))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AccessTime,
+                                contentDescription = "Pending",
+                                tint = Color(0xFFB45309),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Awaiting Academy Approval",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFB45309),
+                                    fontSize = 13.5.sp
+                                )
+                            )
+                        }
+                    }
                 }
                 else -> {
-                    OutlinedButton(
+                    Button(
                         onClick = onOpenCourse,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(24.dp),
-                        border = BorderStroke(1.dp, Color(0xFFC68A16)),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = Color(0xFFFEFCE8),
-                            contentColor = Color(0xFF9A3412)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp),
+                        shape = RoundedCornerShape(22.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = GoldDark,
+                            contentColor = Color.White
                         )
                     ) {
-                        Text(
-                            text = "Go to Classroom",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "ENTER CLASSROOM",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = "Enter",
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 }
             }

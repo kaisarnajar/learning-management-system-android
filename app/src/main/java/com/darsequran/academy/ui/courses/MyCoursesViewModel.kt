@@ -63,8 +63,21 @@ class MyCoursesViewModel(
             // 1. Fetch Enrollments
             when (val result = authRepository.getEnrollments()) {
                 is NetworkResult.Success -> {
-                    val enrollments = result.data.data ?: emptyList()
-                    _uiState.update { it.copy(enrollments = enrollments, isLoading = false) }
+                    val rawEnrollments = result.data.data ?: emptyList()
+                    val enrichedEnrollments = rawEnrollments.map { enrollment ->
+                        if (enrollment.course != null && enrollment.course.description != null && enrollment.course.duration != null) {
+                            enrollment
+                        } else {
+                            // Fetch full course details if metadata is incomplete
+                            val detailsResult = authRepository.getCourseDetails(enrollment.courseId)
+                            if (detailsResult is NetworkResult.Success && detailsResult.data.course != null) {
+                                enrollment.copy(course = detailsResult.data.course)
+                            } else {
+                                enrollment
+                            }
+                        }
+                    }
+                    _uiState.update { it.copy(enrollments = enrichedEnrollments, isLoading = false) }
                 }
                 is NetworkResult.Error -> {
                     _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
@@ -92,6 +105,10 @@ class MyCoursesViewModel(
                 else -> {}
             }
         }
+    }
+
+    fun refreshData() {
+        loadCourseData()
     }
 
     class Factory(private val authRepository: AuthRepository) : ViewModelProvider.Factory {
