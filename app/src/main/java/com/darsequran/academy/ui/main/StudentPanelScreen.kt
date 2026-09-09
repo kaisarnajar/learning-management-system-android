@@ -1,5 +1,12 @@
 package com.darsequran.academy.ui.main
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -248,39 +255,53 @@ fun StudentPanelScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            when (selectedTab) {
-                0 -> HomeScreen(
-                    viewModel = homeViewModel,
-                    tokenManager = tokenManager,
-                    onNavigateToAbout = onNavigateToAbout,
-                    onNavigateToContact = onNavigateToContact,
-                    onLogout = onLogout,
-                    onNavigateToExplore = { selectedTab = 1 }
-                )
-                1 -> ExploreMainScreen(
-                    catalogViewModel = coursesCatalogViewModel,
-                    teachersViewModel = teachersViewModel,
-                    blogViewModel = blogViewModel,
-                    fatwaViewModel = fatwaViewModel,
-                    homeViewModel = homeViewModel
-                )
-                2 -> LibraryMainScreen(
-                    libraryViewModel = libraryViewModel,
-                    bookstoreViewModel = bookstoreViewModel,
-                    onNavigateToCart = { selectedTab = 3 }
-                )
-                3 -> PortalMainScreen(
-                    myCoursesViewModel = myCoursesViewModel,
-                    paymentsViewModel = paymentsViewModel,
-                    onNavigateToExplore = { selectedTab = 1 }
-                )
-                4 -> ProfileMainScreen(
-                    profileViewModel = profileViewModel,
-                    paymentsViewModel = paymentsViewModel,
-                    reviewsViewModel = reviewsViewModel,
-                    tokenManager = tokenManager,
-                    onLogout = onLogout
-                )
+            AnimatedContent(
+                targetState = selectedTab,
+                transitionSpec = {
+                    if (targetState > initialState) {
+                        (slideInHorizontally(animationSpec = tween(300)) { width -> width } + fadeIn(animationSpec = tween(300)))
+                            .togetherWith(slideOutHorizontally(animationSpec = tween(300)) { width -> -width } + fadeOut(animationSpec = tween(300)))
+                    } else {
+                        (slideInHorizontally(animationSpec = tween(300)) { width -> -width } + fadeIn(animationSpec = tween(300)))
+                            .togetherWith(slideOutHorizontally(animationSpec = tween(300)) { width -> width } + fadeOut(animationSpec = tween(300)))
+                    }
+                },
+                label = "StudentPanelTabTransition"
+            ) { targetTab ->
+                when (targetTab) {
+                    0 -> HomeScreen(
+                        viewModel = homeViewModel,
+                        tokenManager = tokenManager,
+                        onNavigateToAbout = onNavigateToAbout,
+                        onNavigateToContact = onNavigateToContact,
+                        onLogout = onLogout,
+                        onNavigateToExplore = { selectedTab = 1 }
+                    )
+                    1 -> ExploreMainScreen(
+                        catalogViewModel = coursesCatalogViewModel,
+                        teachersViewModel = teachersViewModel,
+                        blogViewModel = blogViewModel,
+                        fatwaViewModel = fatwaViewModel,
+                        homeViewModel = homeViewModel
+                    )
+                    2 -> LibraryMainScreen(
+                        libraryViewModel = libraryViewModel,
+                        bookstoreViewModel = bookstoreViewModel,
+                        onNavigateToCart = { selectedTab = 3 }
+                    )
+                    3 -> PortalMainScreen(
+                        myCoursesViewModel = myCoursesViewModel,
+                        paymentsViewModel = paymentsViewModel,
+                        onNavigateToExplore = { selectedTab = 1 }
+                    )
+                    4 -> ProfileMainScreen(
+                        profileViewModel = profileViewModel,
+                        paymentsViewModel = paymentsViewModel,
+                        reviewsViewModel = reviewsViewModel,
+                        tokenManager = tokenManager,
+                        onLogout = onLogout
+                    )
+                }
             }
         }
     }
