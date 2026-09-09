@@ -44,10 +44,16 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -416,34 +422,49 @@ fun PublicCourseCard(
     isEnrolling: Boolean,
     onTeacherClick: ((String?) -> Unit)? = null
 ) {
+    var isExpanded by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onViewDetails() },
+            .clickable { isExpanded = !isExpanded },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
-            // Badges Row
+            // Badges Row + Expand Indicator Icon
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                CourseBadge(
-                    text = (course.category ?: "ISLAMIC STUDIES").uppercase(),
-                    bgColor = GoldAccent.copy(alpha = 0.18f),
-                    textColor = GoldDark
-                )
-                CourseBadge(
-                    text = (course.level ?: "Beginner"),
-                    bgColor = Color(0xFFEFEBE9),
-                    textColor = Color(0xFF5D4037)
-                )
-                CourseBadge(
-                    text = (course.status ?: "Published"),
-                    bgColor = Color(0xFFEDE7F6),
-                    textColor = Color(0xFF512DA8)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CourseBadge(
+                        text = (course.category ?: "ISLAMIC STUDIES").uppercase(),
+                        bgColor = GoldAccent.copy(alpha = 0.18f),
+                        textColor = GoldDark
+                    )
+                    CourseBadge(
+                        text = (course.level ?: "Beginner"),
+                        bgColor = Color(0xFFEFEBE9),
+                        textColor = Color(0xFF5D4037)
+                    )
+                    CourseBadge(
+                        text = (course.status ?: "Published"),
+                        bgColor = Color(0xFFEDE7F6),
+                        textColor = Color(0xFF512DA8)
+                    )
+                }
+
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = if (isExpanded) "Collapse specs" else "Expand specs",
+                    tint = GoldDark,
+                    modifier = Modifier.size(24.dp)
                 )
             }
 
@@ -469,38 +490,85 @@ fun PublicCourseCard(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
                         lineHeight = 20.sp
                     ),
-                    maxLines = 2,
+                    maxLines = if (isExpanded) Int.MAX_VALUE else 2,
                     overflow = TextOverflow.Ellipsis
                 )
             }
 
+            // Expandable Details (Starts, Duration, Enrollment, Fee)
+            AnimatedVisibility(visible = isExpanded) {
+                Column(modifier = Modifier.padding(top = 14.dp)) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            SpecRow(label = "Starts:", value = course.startDate ?: "Ongoing")
+                            Spacer(modifier = Modifier.height(4.dp))
+                            SpecRow(label = "Duration:", value = course.duration ?: "Self-paced")
+                            Spacer(modifier = Modifier.height(4.dp))
+                            val regFee = course.displayEnrollmentFee
+                            val regFeeText = if (regFee > 0) "₹$regFee" else "Free"
+                            SpecRow(label = "Enrollment:", value = regFeeText)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            val monthlyFee = course.displayMonthlyFee
+                            val cycle = course.displayFeeFrequency
+                            SpecRow(label = "Fee:", value = "₹$monthlyFee / month ($cycle)")
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(18.dp))
 
-            // Action Button: Request enrollment (Solid Gold)
-            Button(
-                onClick = onRequestEnrollment,
-                enabled = !isEnrolling,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(44.dp),
-                shape = RoundedCornerShape(22.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = GoldDark,
-                    contentColor = Color.White
-                )
-            ) {
-                if (isEnrolling) {
-                    CircularProgressIndicator(
-                        color = Color.White,
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp
-                    )
-                } else {
+            // Action Buttons Container
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                // Button 1: COURSE DETAILS (Outlined) -> Opens Bottom Sheet!
+                OutlinedButton(
+                    onClick = onViewDetails,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.5.dp, GoldDark)
+                ) {
                     Text(
-                        text = "Request enrollment",
+                        text = "COURSE DETAILS",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
+                        color = GoldDark,
+                        fontSize = 13.5.sp,
+                        letterSpacing = 0.5.sp
                     )
+                }
+
+                // Button 2: Request enrollment (Solid Gold)
+                Button(
+                    onClick = onRequestEnrollment,
+                    enabled = !isEnrolling,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp),
+                    shape = RoundedCornerShape(22.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = GoldDark,
+                        contentColor = Color.White
+                    )
+                ) {
+                    if (isEnrolling) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = "Request enrollment",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             }
         }
