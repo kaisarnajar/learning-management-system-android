@@ -266,22 +266,6 @@ fun CourseDetailBottomSheet(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Meta Info
-            Text(
-                text = "Starts: ${course.startDate ?: "Ongoing"}",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-            )
-            Text(
-                text = "Duration: ${course.duration ?: "Self-paced"}",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
             // Course Description (Dynamic API Driven)
             if (!course.description.isNullOrBlank()) {
                 Text(
@@ -307,7 +291,7 @@ fun CourseDetailBottomSheet(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // Fees Card
+            // Course Information & Fees Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -316,7 +300,7 @@ fun CourseDetailBottomSheet(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "FEES",
+                        text = "COURSE INFORMATION & FEES",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
                             color = GoldDark,
@@ -324,7 +308,13 @@ fun CourseDetailBottomSheet(
                             fontSize = 10.sp
                         )
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    SpecRow(label = "Starts:", value = course.startDate ?: "Ongoing")
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    SpecRow(label = "Duration:", value = course.duration ?: "Self-paced")
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     val regFee = course.displayEnrollmentFee
                     val regFeeText = if (regFee > 0) "₹$regFee" else "Free"
@@ -427,7 +417,9 @@ fun PublicCourseCard(
     onTeacherClick: ((String?) -> Unit)? = null
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onViewDetails() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -480,21 +472,6 @@ fun PublicCourseCard(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(14.dp))
-            }
-
-            // Course Specs Summary
-            Column(modifier = Modifier.fillMaxWidth()) {
-                SpecRow(label = "Starts:", value = course.startDate ?: "Ongoing")
-                Spacer(modifier = Modifier.height(4.dp))
-                SpecRow(label = "Duration:", value = course.duration ?: "8 weeks")
-                Spacer(modifier = Modifier.height(4.dp))
-                val regFee = course.registrationFee?.toInt() ?: 0
-                SpecRow(label = "Enrollment:", value = "₹$regFee")
-                Spacer(modifier = Modifier.height(4.dp))
-                val monthlyFee = course.fee?.toInt() ?: 349
-                val cycle = course.billingCycle ?: "Monthly"
-                SpecRow(label = "Fee:", value = "₹$monthlyFee / month ($cycle)")
             }
 
             Spacer(modifier = Modifier.height(18.dp))
