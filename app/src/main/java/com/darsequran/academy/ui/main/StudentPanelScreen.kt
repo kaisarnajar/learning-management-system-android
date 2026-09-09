@@ -37,6 +37,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.darsequran.academy.data.local.TokenManager
 import com.darsequran.academy.data.repository.AuthRepository
 import com.darsequran.academy.ui.blog.BlogViewModel
+import com.darsequran.academy.ui.bookstore.BookstoreCartViewModel
 import com.darsequran.academy.ui.bookstore.BookstoreViewModel
 import com.darsequran.academy.ui.courses.CoursesCatalogViewModel
 import com.darsequran.academy.ui.courses.MyCoursesViewModel
@@ -46,6 +47,7 @@ import com.darsequran.academy.ui.home.HomeScreen
 import com.darsequran.academy.ui.home.HomeViewModel
 import com.darsequran.academy.ui.library.DigitalLibraryViewModel
 import com.darsequran.academy.ui.library.LibraryMainScreen
+import com.darsequran.academy.ui.payments.FeeWaiverViewModel
 import com.darsequran.academy.ui.payments.PaymentsViewModel
 import com.darsequran.academy.ui.portal.PortalMainScreen
 import com.darsequran.academy.ui.profile.ProfileMainScreen
@@ -99,6 +101,12 @@ fun StudentPanelScreen(
     )
     val paymentsViewModel: PaymentsViewModel = viewModel(
         factory = PaymentsViewModel.Factory(authRepository)
+    )
+    val feeWaiverViewModel: FeeWaiverViewModel = viewModel(
+        factory = FeeWaiverViewModel.Factory(authRepository)
+    )
+    val bookstoreCartViewModel: BookstoreCartViewModel = viewModel(
+        factory = BookstoreCartViewModel.Factory(authRepository)
     )
     val reviewsViewModel: ReviewsViewModel = viewModel(
         factory = ReviewsViewModel.Factory(authRepository)
@@ -292,6 +300,8 @@ fun StudentPanelScreen(
                     3 -> PortalMainScreen(
                         myCoursesViewModel = myCoursesViewModel,
                         paymentsViewModel = paymentsViewModel,
+                        feeWaiverViewModel = feeWaiverViewModel,
+                        bookstoreCartViewModel = bookstoreCartViewModel,
                         onNavigateToExplore = { selectedTab = 1 }
                     )
                     4 -> ProfileMainScreen(

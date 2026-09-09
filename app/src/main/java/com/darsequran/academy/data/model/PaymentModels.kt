@@ -62,3 +62,68 @@ data class SubmitPaymentRequest(
     @SerializedName("paymentType") val paymentType: String = "monthly",
     @SerializedName("upiTransactionId") val upiTransactionId: String
 )
+
+// --- Fee Waiver / Coupon Request Models ---
+
+data class CouponDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("code") val code: String,
+    @SerializedName("percentage") val percentage: Int = 100
+)
+
+data class CouponRequestDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("userId") val userId: String? = null,
+    @SerializedName("courseId") val courseId: String,
+    @SerializedName("reason") val reason: String,
+    @SerializedName("status") val status: String = "PENDING", // PENDING, APPROVED, REJECTED
+    @SerializedName("createdAt") val createdAt: String? = null,
+    @SerializedName("course") val course: CourseDto? = null,
+    @SerializedName("coupon") val coupon: CouponDto? = null
+)
+
+data class WaiverRequestsResponse(
+    @SerializedName("success") val success: Boolean = true,
+    @SerializedName("error") val error: String? = null,
+    @SerializedName("data") val data: List<CouponRequestDto>? = emptyList()
+)
+
+data class SubmitWaiverRequest(
+    @SerializedName("courseId") val courseId: String,
+    @SerializedName("reason") val reason: String
+)
+
+// --- Bookstore Orders Models ---
+
+data class BookOrderItemBookDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("author") val author: String? = null,
+    @SerializedName("imagePath") val imagePath: String? = null
+)
+
+data class BookOrderItemDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("quantity") val quantity: Int = 1,
+    @SerializedName("priceAtPurchaseInrPaise") val priceAtPurchaseInrPaise: Long = 0,
+    @SerializedName("book") val book: BookOrderItemBookDto
+)
+
+data class BookOrderDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("totalAmountInrPaise") val totalAmountInrPaise: Long = 0,
+    @SerializedName("status") val status: String = "PENDING", // PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED
+    @SerializedName("createdAt") val createdAt: String? = null,
+    @SerializedName("courierServiceName") val courierServiceName: String? = null,
+    @SerializedName("trackingId") val trackingId: String? = null,
+    @SerializedName("items") val items: List<BookOrderItemDto> = emptyList()
+) {
+    val totalAmountInRupees: Double
+        get() = totalAmountInrPaise / 100.0
+}
+
+data class BookOrdersResponse(
+    @SerializedName("success") val success: Boolean = true,
+    @SerializedName("error") val error: String? = null,
+    @SerializedName("orders") val orders: List<BookOrderDto>? = emptyList()
+)
