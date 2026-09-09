@@ -1,31 +1,46 @@
 package com.darsequran.academy.ui.bookstore
 
-import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.LocalShipping
@@ -34,34 +49,49 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.darsequran.academy.data.model.BookOrderDto
 import com.darsequran.academy.data.repository.BookstoreCartManager
 import com.darsequran.academy.data.repository.CartItem
+import com.darsequran.academy.ui.profile.processUploadedProfileImage
 import com.darsequran.academy.ui.theme.EmeraldDark
 import com.darsequran.academy.ui.theme.EmeraldPrimary
 import com.darsequran.academy.ui.theme.GoldAccent
@@ -73,6 +103,7 @@ fun BookstoreCartScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+    var showCheckoutModal by remember { mutableStateOf(false) }
 
     val selectedItems = remember(uiState.cartItems, uiState.selectedBookIds) {
         uiState.cartItems.filter { uiState.selectedBookIds.contains(it.book.id) }
@@ -311,40 +342,28 @@ fun BookstoreCartScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Checkout via WhatsApp Button
+            // Checkout Button
             if (uiState.cartItems.isNotEmpty()) {
                 Button(
                     onClick = {
                         if (selectedItems.isEmpty()) {
                             Toast.makeText(context, "Please select at least one item from your cart.", Toast.LENGTH_SHORT).show()
-                            return@Button
-                        }
-                        val itemsText = selectedItems.mapIndexed { index, item ->
-                            "${index + 1}. ${item.book.title} x${item.quantity} (₹${item.totalPriceInRupees.toInt()})"
-                        }.joinToString("\n")
-
-                        val message = "Assalamu Alaikum Darse Quran Academy,\nI would like to order the following books from my cart:\n\n$itemsText\n\nTotal Amount: ₹${selectedTotalAmount.toInt()}.00"
-
-                        val uri = Uri.parse("https://api.whatsapp.com/send?phone=917006880000&text=${Uri.encode(message)}")
-                        val intent = Intent(Intent.ACTION_VIEW, uri)
-                        try {
-                            context.startActivity(intent)
-                        } catch (e: Exception) {
-                            Toast.makeText(context, "WhatsApp not installed.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            showCheckoutModal = true
                         }
                     },
                     enabled = selectedItems.isNotEmpty(),
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)),
-                    shape = RoundedCornerShape(10.dp)
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(vertical = 4.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Send,
-                            contentDescription = "Order via WhatsApp",
+                            imageVector = Icons.Default.ShoppingCart,
+                            contentDescription = "Proceed to Checkout",
                             tint = Color.White,
                             modifier = Modifier.size(20.dp)
                         )
@@ -352,13 +371,36 @@ fun BookstoreCartScreen(
                         Text(
                             text = "PROCEED TO CHECKOUT (${selectedItems.size} ITEMS - ₹${selectedTotalAmount.toInt()})",
                             fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            fontSize = 13.sp
+                            color = GoldAccent,
+                            fontSize = 13.5.sp
                         )
                     }
                 }
             }
         }
+    }
+
+    if (showCheckoutModal) {
+        BookCheckoutModalDialog(
+            selectedItems = selectedItems,
+            totalAmount = selectedTotalAmount,
+            isSubmitting = uiState.isSubmittingOrder,
+            onDismiss = { showCheckoutModal = false },
+            onSubmit = { paymentMethod, utr, address, pincode, phone, screenshotBytes ->
+                viewModel.submitBookstoreOrder(
+                    paymentMethod = paymentMethod,
+                    upiTransactionId = utr,
+                    deliveryAddress = address,
+                    deliveryPinCode = pincode,
+                    deliveryPhoneNumber = phone,
+                    screenshotBytes = screenshotBytes,
+                    onSuccess = {
+                        showCheckoutModal = false
+                        Toast.makeText(context, "Order submitted successfully for Admin approval!", Toast.LENGTH_LONG).show()
+                    }
+                )
+            }
+        )
     }
 }
 
@@ -653,6 +695,536 @@ fun PastOrderCard(order: BookOrderDto) {
                         fontWeight = FontWeight.Medium
                     )
                 )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BookCheckoutModalDialog(
+    selectedItems: List<CartItem>,
+    totalAmount: Double,
+    isSubmitting: Boolean,
+    onDismiss: () -> Unit,
+    onSubmit: (paymentMethod: String, utr: String, address: String, pincode: String, phone: String, screenshotBytes: ByteArray?) -> Unit
+) {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
+
+    var paymentMethod by remember { mutableStateOf("upi") }
+    var transactionId by remember { mutableStateOf("") }
+    var deliveryAddress by remember { mutableStateOf("") }
+    var deliveryPinCode by remember { mutableStateOf("") }
+    var deliveryPhoneNumber by remember { mutableStateOf("") }
+    var screenshotBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var screenshotBytes by remember { mutableStateOf<ByteArray?>(null) }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            val result = processUploadedProfileImage(context, it)
+            if (result != null) {
+                screenshotBitmap = result.first
+                val bos = java.io.ByteArrayOutputStream()
+                result.first.compress(Bitmap.CompressFormat.JPEG, 85, bos)
+                screenshotBytes = bos.toByteArray()
+            } else {
+                Toast.makeText(context, "Failed to load receipt image", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    val shippingFee = 50.0
+    val grandTotal = totalAmount + shippingFee
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false
+        )
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .fillMaxHeight(0.85f)
+                .navigationBarsPadding()
+                .imePadding()
+                .padding(vertical = 12.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp,
+            shadowElevation = 12.dp,
+            border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.15f))
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Header Bar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(EmeraldPrimary.copy(alpha = 0.04f))
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(EmeraldPrimary.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ShoppingCart,
+                                contentDescription = null,
+                                tint = EmeraldPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column {
+                            Text(
+                                text = "Checkout",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = EmeraldPrimary,
+                                    fontSize = 18.sp
+                                )
+                            )
+                            Text(
+                                text = "Transfer payment via Bank/UPI and submit details for approval",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                    fontSize = 11.sp
+                                )
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+                            .clickable { onDismiss() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+                // Scrollable Body
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 16.dp)
+                ) {
+                    // Payment Details Panel
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+                        ),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "ACADEMY PAYMENT DETAILS",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = GoldDark,
+                                    letterSpacing = 0.8.sp,
+                                    fontSize = 11.5.sp
+                                )
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            // UPI Row
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(10.dp))
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text("UPI ID / VPA", style = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontSize = 11.sp))
+                                    Text("darsequran@upi", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = EmeraldPrimary, fontSize = 14.sp))
+                                }
+                                OutlinedButton(
+                                    onClick = {
+                                        clipboardManager.setText(AnnotatedString("darsequran@upi"))
+                                        Toast.makeText(context, "UPI ID copied!", Toast.LENGTH_SHORT).show()
+                                    },
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                    modifier = Modifier.height(32.dp)
+                                ) {
+                                    Icon(imageVector = Icons.Default.ContentCopy, contentDescription = "Copy", modifier = Modifier.size(14.dp), tint = EmeraldPrimary)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Copy", fontSize = 11.sp, color = EmeraldPrimary, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Bank Transfer Row
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(10.dp))
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text("Bank Account Details", style = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontSize = 11.sp))
+                                    Text("Jammu & Kashmir Bank", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface))
+                                    Text("A/C: 0345040100012345 | IFSC: JAKA0TANGMR", style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)))
+                                }
+                                OutlinedButton(
+                                    onClick = {
+                                        clipboardManager.setText(AnnotatedString("0345040100012345"))
+                                        Toast.makeText(context, "Bank A/C number copied!", Toast.LENGTH_SHORT).show()
+                                    },
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                    modifier = Modifier.height(32.dp)
+                                ) {
+                                    Icon(imageVector = Icons.Default.ContentCopy, contentDescription = "Copy A/C", modifier = Modifier.size(14.dp), tint = EmeraldPrimary)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Copy", fontSize = 11.sp, color = EmeraldPrimary, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Order Summary Breakdown
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "ORDER SUMMARY",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = EmeraldPrimary,
+                                    letterSpacing = 0.8.sp,
+                                    fontSize = 11.5.sp
+                                )
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            selectedItems.forEach { item ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(item.book.title, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold, fontSize = 13.sp), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text("Qty: ${item.quantity} x ₹${item.book.priceInRupees.toInt()}", style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontSize = 11.5.sp))
+                                    }
+                                    Text("₹${item.totalPriceInRupees.toInt()}.00", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontSize = 13.sp))
+                                }
+                            }
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Subtotal", style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)))
+                                Text("₹${totalAmount.toInt()}.00", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold))
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Estimated Shipping", style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)))
+                                Text("₹${shippingFee.toInt()}.00", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold))
+                            }
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Text("Total Payable", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface))
+                                Text("₹${grandTotal.toInt()}.00", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = EmeraldPrimary, fontSize = 17.sp))
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Payment Confirmation Form
+                    Text(
+                        text = "Submit Payment & Delivery Details",
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = EmeraldPrimary
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Radio Selection
+                    Text("How did you pay?", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold))
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { paymentMethod = "upi" }) {
+                            RadioButton(
+                                selected = paymentMethod == "upi",
+                                onClick = { paymentMethod = "upi" },
+                                colors = RadioButtonDefaults.colors(selectedColor = EmeraldPrimary)
+                            )
+                            Text("UPI Transfer", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { paymentMethod = "bank" }) {
+                            RadioButton(
+                                selected = paymentMethod == "bank",
+                                onClick = { paymentMethod = "bank" },
+                                colors = RadioButtonDefaults.colors(selectedColor = EmeraldPrimary)
+                            )
+                            Text("Bank Transfer", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    val fieldColors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = EmeraldPrimary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                        focusedLabelColor = EmeraldPrimary,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                        focusedContainerColor = MaterialTheme.colorScheme.surface
+                    )
+                    val fieldShape = RoundedCornerShape(12.dp)
+
+                    // Transaction ID / UTR
+                    OutlinedTextField(
+                        value = transactionId,
+                        onValueChange = { transactionId = it },
+                        label = { Text("Transaction / UTR Reference ID") },
+                        placeholder = { Text("e.g. 123456789012") },
+                        singleLine = true,
+                        shape = fieldShape,
+                        colors = fieldColors,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Payment Receipt Screenshot Box
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                if (screenshotBitmap != null) {
+                                    Image(
+                                        bitmap = screenshotBitmap!!.asImageBitmap(),
+                                        contentDescription = "Receipt Preview",
+                                        modifier = Modifier
+                                            .size(50.dp)
+                                            .clip(RoundedCornerShape(8.dp)),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(46.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(EmeraldPrimary.copy(alpha = 0.1f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(imageVector = Icons.Default.CameraAlt, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(22.dp))
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Column {
+                                    Text(
+                                        text = "Payment Receipt",
+                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
+                                    )
+                                    Text(
+                                        text = if (screenshotBitmap != null) "Receipt attached" else "Upload screenshot (Optional)",
+                                        style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontSize = 11.5.sp)
+                                    )
+                                }
+                            }
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                OutlinedButton(
+                                    onClick = { photoPickerLauncher.launch("image/*") },
+                                    shape = RoundedCornerShape(8.dp),
+                                    border = BorderStroke(1.dp, EmeraldPrimary),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                    modifier = Modifier.height(34.dp)
+                                ) {
+                                    Text(if (screenshotBitmap != null) "Change" else "Attach Photo", fontSize = 11.5.sp, color = EmeraldPrimary, fontWeight = FontWeight.SemiBold)
+                                }
+
+                                if (screenshotBitmap != null) {
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    IconButton(
+                                        onClick = {
+                                            screenshotBitmap = null
+                                            screenshotBytes = null
+                                        },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Remove", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Delivery Address
+                    OutlinedTextField(
+                        value = deliveryAddress,
+                        onValueChange = { deliveryAddress = it },
+                        label = { Text("Delivery Address") },
+                        placeholder = { Text("Enter street address, city, state...") },
+                        minLines = 2,
+                        maxLines = 3,
+                        singleLine = false,
+                        shape = fieldShape,
+                        colors = fieldColors,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Pin Code & Phone Number
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        OutlinedTextField(
+                            value = deliveryPinCode,
+                            onValueChange = { deliveryPinCode = it.filter { c -> c.isDigit() } },
+                            label = { Text("Pin Code") },
+                            placeholder = { Text("193402") },
+                            singleLine = true,
+                            shape = fieldShape,
+                            colors = fieldColors,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        OutlinedTextField(
+                            value = deliveryPhoneNumber,
+                            onValueChange = { deliveryPhoneNumber = it.filter { c -> c.isDigit() } },
+                            label = { Text("Phone Number") },
+                            placeholder = { Text("9876543210") },
+                            singleLine = true,
+                            shape = fieldShape,
+                            colors = fieldColors,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+                // Footer Actions
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    ) {
+                        Text(
+                            text = "Cancel",
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            if (transactionId.trim().isEmpty()) {
+                                Toast.makeText(context, "Please enter the UTR / Transaction reference ID.", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+                            if (deliveryAddress.trim().length < 10) {
+                                Toast.makeText(context, "Please enter a complete delivery address (min 10 chars).", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+                            if (deliveryPinCode.trim().length < 5) {
+                                Toast.makeText(context, "Please enter a valid pin code.", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+                            if (deliveryPhoneNumber.trim().length < 10) {
+                                Toast.makeText(context, "Please enter a valid phone number (10-15 digits).", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+
+                            onSubmit(
+                                paymentMethod,
+                                transactionId.trim(),
+                                deliveryAddress.trim(),
+                                deliveryPinCode.trim(),
+                                deliveryPhoneNumber.trim(),
+                                screenshotBytes
+                            )
+                        },
+                        enabled = !isSubmitting,
+                        modifier = Modifier
+                            .weight(1.4f)
+                            .height(48.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        if (isSubmitting) {
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
+                        } else {
+                            Text(
+                                text = "SUBMIT ORDER",
+                                color = GoldAccent,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.5.sp
+                            )
+                        }
+                    }
+                }
             }
         }
     }

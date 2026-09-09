@@ -24,6 +24,9 @@ import com.darsequran.academy.data.model.UserProfileResponse
 import com.darsequran.academy.data.remote.AuthApi
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 
 sealed class NetworkResult<out T> {
@@ -512,6 +515,51 @@ class AuthRepository(
             }
         } catch (_: Exception) {
             NetworkResult.Success(com.darsequran.academy.data.model.BookOrdersResponse(success = true, orders = emptyList()))
+        }
+    }
+
+    suspend fun submitBookstoreOrder(
+        itemsJson: String,
+        paymentMethod: String,
+        upiTransactionId: String,
+        deliveryAddress: String,
+        deliveryPinCode: String,
+        deliveryPhoneNumber: String,
+        screenshotBytes: ByteArray? = null
+    ): NetworkResult<com.darsequran.academy.data.model.BookCheckoutResponseDto> {
+        return try {
+            val textType = "text/plain".toMediaTypeOrNull()
+            val itemsBody = itemsJson.toRequestBody(textType)
+            val methodBody = paymentMethod.toRequestBody(textType)
+            val utrBody = upiTransactionId.toRequestBody(textType)
+            val addressBody = deliveryAddress.toRequestBody(textType)
+            val pincodeBody = deliveryPinCode.toRequestBody(textType)
+            val phoneBody = deliveryPhoneNumber.toRequestBody(textType)
+
+            val screenshotPart = screenshotBytes?.let {
+                val imageType = "image/jpeg".toMediaTypeOrNull()
+                val requestFile = it.toRequestBody(imageType)
+                MultipartBody.Part.createFormData("screenshot", "payment_receipt.jpg", requestFile)
+            }
+
+            val response = authApi.submitBookOrder(
+                items = itemsBody,
+                paymentMethod = methodBody,
+                upiTransactionId = utrBody,
+                deliveryAddress = addressBody,
+                deliveryPinCode = pincodeBody,
+                deliveryPhoneNumber = phoneBody,
+                screenshot = screenshotPart
+            )
+
+            if (response.isSuccessful && response.body() != null) {
+                NetworkResult.Success(response.body()!!)
+            } else {
+                val errorMsg = parseErrorMessage(response.errorBody()?.string())
+                NetworkResult.Error(errorMsg ?: "Failed to submit bookstore order.")
+            }
+        } catch (ex: Exception) {
+            NetworkResult.Error(ex.localizedMessage ?: "Network error.")
         }
     }
 

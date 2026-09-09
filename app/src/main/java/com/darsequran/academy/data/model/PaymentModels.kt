@@ -127,3 +127,11 @@ data class BookOrdersResponse(
     @SerializedName("error") val error: String? = null,
     @SerializedName("orders") val orders: List<BookOrderDto>? = emptyList()
 )
+
+data class BookCheckoutResponseDto(
+    @SerializedName("success") val success: Boolean = false,
+    @SerializedName("error") val error: String? = null,
+    @SerializedName("message") val message: String? = null,
+    @SerializedName("orderId") val orderId: String? = null,
+    @SerializedName("order") val order: BookOrderDto? = null
+)

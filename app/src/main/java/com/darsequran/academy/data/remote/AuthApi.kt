@@ -20,12 +20,16 @@ import com.darsequran.academy.data.model.UpdateProfileRequest
 import com.darsequran.academy.data.model.UserProfileResponse
 import com.darsequran.academy.data.model.SingleCourseResponse
 import com.darsequran.academy.data.model.SubmitPaymentRequest
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.Path
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.PUT
 import retrofit2.http.Query
 
@@ -182,4 +186,16 @@ interface AuthApi {
 
     @GET("bookstore/orders")
     suspend fun getBookstoreOrders(): Response<com.darsequran.academy.data.model.BookOrdersResponse>
+
+    @Multipart
+    @POST("bookstore/orders")
+    suspend fun submitBookOrder(
+        @Part("items") items: RequestBody,
+        @Part("paymentMethod") paymentMethod: RequestBody,
+        @Part("upiTransactionId") upiTransactionId: RequestBody,
+        @Part("deliveryAddress") deliveryAddress: RequestBody,
+        @Part("deliveryPinCode") deliveryPinCode: RequestBody,
+        @Part("deliveryPhoneNumber") deliveryPhoneNumber: RequestBody,
+        @Part screenshot: MultipartBody.Part? = null
+    ): Response<com.darsequran.academy.data.model.BookCheckoutResponseDto>
 }

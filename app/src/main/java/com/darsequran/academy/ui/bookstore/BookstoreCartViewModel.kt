@@ -19,6 +19,10 @@ data class CartUiState(
     val selectedBookIds: Set<String> = emptySet(),
     val pastOrders: List<BookOrderDto> = emptyList(),
     val isLoadingOrders: Boolean = false,
+    val isSubmittingOrder: Boolean = false,
+    val submissionSuccessMessage: String? = null,
+    val submissionErrorMessage: String? = null,
+    val submittedOrderId: String? = null,
     val errorMessage: String? = null
 )
 
@@ -53,6 +57,88 @@ class BookstoreCartViewModel(
                     _uiState.update { it.copy(isLoadingOrders = false) }
                 }
             }
+        }
+    }
+
+    fun submitBookstoreOrder(
+        paymentMethod: String,
+        upiTransactionId: String,
+        deliveryAddress: String,
+        deliveryPinCode: String,
+        deliveryPhoneNumber: String,
+        screenshotBytes: ByteArray? = null,
+        onSuccess: () -> Unit = {}
+    ) {
+        val selectedItems = uiState.value.cartItems.filter { uiState.value.selectedBookIds.contains(it.book.id) }
+        if (selectedItems.isEmpty()) {
+            _uiState.update { it.copy(submissionErrorMessage = "Please select at least one book to checkout.") }
+            return
+        }
+
+        val itemsPayload = selectedItems.map { mapOf("bookId" to it.book.id, "quantity" to it.quantity) }
+        val gson = com.google.gson.Gson()
+        val itemsJson = gson.toJson(itemsPayload)
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSubmittingOrder = true, submissionErrorMessage = null, submissionSuccessMessage = null) }
+
+            val res = authRepository.submitBookstoreOrder(
+                itemsJson = itemsJson,
+                paymentMethod = paymentMethod,
+                upiTransactionId = upiTransactionId,
+                deliveryAddress = deliveryAddress,
+                deliveryPinCode = deliveryPinCode,
+                deliveryPhoneNumber = deliveryPhoneNumber,
+                screenshotBytes = screenshotBytes
+            )
+
+            when (res) {
+                is NetworkResult.Success -> {
+                    if (res.data.success) {
+                        selectedItems.forEach { item ->
+                            BookstoreCartManager.removeFromCart(item.book.id)
+                        }
+                        _uiState.update { state ->
+                            state.copy(
+                                isSubmittingOrder = false,
+                                submissionSuccessMessage = res.data.message ?: "Order submitted successfully for Admin approval!",
+                                submittedOrderId = res.data.orderId,
+                                selectedBookIds = emptySet()
+                            )
+                        }
+                        loadOrders()
+                        onSuccess()
+                    } else {
+                        _uiState.update { state ->
+                            state.copy(
+                                isSubmittingOrder = false,
+                                submissionErrorMessage = res.data.error ?: "Order submission failed."
+                            )
+                        }
+                    }
+                }
+                is NetworkResult.Error -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            isSubmittingOrder = false,
+                            submissionErrorMessage = res.message
+                        )
+                    }
+                }
+                is NetworkResult.Loading -> {
+                    // Handled via isSubmittingOrder
+                }
+            }
+        }
+    }
+
+    fun clearSubmissionState() {
+        _uiState.update {
+            it.copy(
+                isSubmittingOrder = false,
+                submissionSuccessMessage = null,
+                submissionErrorMessage = null
+            )
         }
     }
 
