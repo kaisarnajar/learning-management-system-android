@@ -92,6 +92,8 @@ import com.darsequran.academy.ui.common.statusLabel
 import com.darsequran.academy.ui.common.vmFactory
 import com.darsequran.academy.ui.theme.Brand
 import com.darsequran.academy.ui.common.academyToday
+import com.darsequran.academy.ui.common.feePeriod
+import com.darsequran.academy.ui.common.monthlyFeeDue
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -102,8 +104,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.format.TextStyle
-import java.util.Locale
 
 /** Something the student should do now, shown at the top of Home. */
 data class ActionCard(val kind: Kind, val title: String, val message: String, val courseId: String? = null, val courseTitle: String? = null) {
@@ -166,11 +166,8 @@ class HomeViewModel(private val repo: AcademyRepository, private val auth: AuthR
                 if (e.status == "awaiting_enrollment_fee" && pendingHere.none { it.paymentType == "enrollment" }) {
                     add(ActionCard(ActionCard.Kind.PayEnrollment, "Pay the enrollment fee", "${course.title} · ${rupees(course.priceInrPaise)}", course.id, course.title))
                 }
-                if (e.status == "active" && course.monthlyFeeInrPaise > 0 && (course.feeFrequency ?: "MONTHLY") == "MONTHLY") {
-                    val month = academyToday()
-                    val label = "${month.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH)} ${month.year}"
-                    val paid = submissions.any { it.courseId == e.courseId && it.paymentType != "enrollment" && it.label.contains(label) && it.status != "rejected" && it.status != "declined" }
-                    if (!paid) add(ActionCard(ActionCard.Kind.PayCourseFee, "$label fee is due", "${course.title} · ${rupees(course.monthlyFeeInrPaise)}", course.id, course.title))
+                if (monthlyFeeDue(e, submissions)) {
+                    add(ActionCard(ActionCard.Kind.PayCourseFee, "${feePeriod(academyToday())} fee is due", "${course.title} · ${rupees(course.monthlyFeeInrPaise)}", course.id, course.title))
                 }
             }
             if (pending.isNotEmpty()) add(ActionCard(ActionCard.Kind.UnderReview, "Payment under review", if (pending.size == 1) "The academy will confirm it shortly." else "${pending.size} payments are being verified."))
