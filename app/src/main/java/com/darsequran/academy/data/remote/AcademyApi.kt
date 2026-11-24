@@ -76,7 +76,6 @@ interface AcademyApi {
 
     // ---- bookstore
     @GET("bookstore/cart") suspend fun cart(): CartResponse
-    @POST("bookstore/cart") suspend fun replaceCart(@Body body: CartReplace): CartResponse
     @PATCH("bookstore/cart") suspend fun setCartLine(@Body body: CartLine): CartResponse
     @POST("bookstore/checkout-quote") suspend fun checkoutQuote(@Body body: CartReplace): CheckoutQuote
     @Multipart @POST("bookstore/orders") suspend fun placeOrder(@PartMap fields: Map<String, @JvmSuppressWildcards RequestBody>, @Part screenshot: MultipartBody.Part?): OkResponse

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Badge
@@ -43,6 +44,7 @@ import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.formatDate
+import com.darsequran.academy.ui.common.rememberContainer
 import com.darsequran.academy.ui.common.rupees
 import com.darsequran.academy.ui.common.statusLabel
 import com.darsequran.academy.ui.manage.common.ConfirmDialog
@@ -61,7 +63,6 @@ import com.darsequran.academy.ui.manage.common.ManageScaffold
 import com.darsequran.academy.ui.manage.common.RecordCard
 import com.darsequran.academy.ui.manage.common.dateOnly
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
-import com.darsequran.academy.ui.common.rememberContainer
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
 import kotlinx.serialization.Serializable
@@ -174,7 +175,7 @@ fun StudentDetailScreen(id: String, onBack: () -> Unit, onEdit: () -> Unit) {
                             Column(Modifier.weight(1f)) {
                                 Text(e.courseTitle, style = MaterialTheme.typography.titleSmall)
                                 Text("Roll no ${e.rollNumber ?: "—"} · since ${formatDate(e.createdAt)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Spacer(Modifier.width(4.dp))
+                                Spacer(Modifier.height(4.dp))
                                 com.darsequran.academy.ui.common.StatusChip(e.statusLabel.ifBlank { statusLabel(e.status).first }, statusLabel(e.status).second)
                             }
                             TextButton(onClick = { removing = e }) { Text("Remove", color = MaterialTheme.colorScheme.error) }

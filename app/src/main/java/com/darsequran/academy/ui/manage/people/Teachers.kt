@@ -3,6 +3,7 @@ package com.darsequran.academy.ui.manage.people
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
@@ -33,6 +34,7 @@ import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.StatusChip
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.countOf
+import com.darsequran.academy.ui.common.courseStatusTone
 import com.darsequran.academy.ui.common.formatDate
 import com.darsequran.academy.ui.manage.common.AccountAnswer
 import com.darsequran.academy.ui.manage.common.AddFab
@@ -51,7 +53,6 @@ import com.darsequran.academy.ui.manage.common.rememberAccountCheck
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
-import com.darsequran.academy.ui.common.courseStatusTone
 
 private fun publishedChip(published: Boolean) = if (published) "Published" to Tone.Success else "Draft" to Tone.Neutral
 
@@ -110,7 +111,7 @@ fun TeacherDetailScreen(id: String, onBack: () -> Unit, onEdit: () -> Unit) {
                         Column(Modifier.weight(1f)) {
                             Text(t.name, style = MaterialTheme.typography.titleLarge)
                             Text(t.email ?: "No login email linked", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Spacer(Modifier.width(4.dp))
+                            Spacer(Modifier.height(4.dp))
                             publishedChip(t.published).let { StatusChip(it.first, it.second) }
                         }
                     }

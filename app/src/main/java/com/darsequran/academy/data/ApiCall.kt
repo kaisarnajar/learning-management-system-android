@@ -17,8 +17,6 @@ inline fun <T, R> ApiResult<T>.map(transform: (T) -> R): ApiResult<R> = when (th
     is ApiResult.Err -> this
 }
 
-fun <T> ApiResult<T>.valueOrNull(): T? = (this as? ApiResult.Ok)?.value
-
 private val errorJson = Json { ignoreUnknownKeys = true }
 
 /** Runs [block], turning HTTP and network failures into [ApiResult.Err] with the server's message. */

@@ -96,7 +96,6 @@ class AcademyRepository(private val api: AcademyApi) {
 
     // ---- bookstore
     suspend fun cart() = apiCall { api.cart().items }
-    suspend fun replaceCart(lines: List<CartLine>) = apiCall { api.replaceCart(CartReplace(lines)).items }
     suspend fun setCartLine(bookId: String, quantity: Int) = apiCall { api.setCartLine(CartLine(bookId, quantity)).items }
     suspend fun checkoutQuote(lines: List<CartLine>) = apiCall { api.checkoutQuote(CartReplace(lines)) }
     suspend fun placeOrder(fields: Map<String, String>, screenshot: Pair<ByteArray, String>?) = apiCall {

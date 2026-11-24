@@ -45,7 +45,6 @@ data class AdminCourseRow(
     val status: String = "",
     val statusLabel: String = "",
     val featured: Boolean = false,
-    val deleteWarning: String? = null,
 )
 
 @Serializable
@@ -78,7 +77,7 @@ data class CourseFormValues(
 )
 
 @Serializable data class TeacherOption(val id: String, val name: String = "", val specialization: String = "")
-@Serializable data class LevelOption(val value: String, val label: String = value, val defaultFeeInr: Int = 0)
+@Serializable data class LevelOption(val value: String, val label: String = value)
 @Serializable data class StatusOption(val value: String, val label: String = value, val description: String = "")
 @Serializable data class ValueLabel(val value: String, val label: String = value)
 

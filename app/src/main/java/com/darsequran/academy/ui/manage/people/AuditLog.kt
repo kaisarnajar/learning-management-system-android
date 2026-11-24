@@ -3,6 +3,7 @@ package com.darsequran.academy.ui.manage.people
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -99,7 +100,7 @@ private fun AuditEntryCard(e: AuditEntry) {
             Text(formatDateTime(e.createdAt), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Text(e.actor, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.width(4.dp))
+        Spacer(Modifier.height(4.dp))
         Text(e.entity, style = MaterialTheme.typography.bodyMedium)
         e.entityId?.let { Text(it, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         Text("Reason: " + (e.reason?.ifBlank { null } ?: "—"), style = MaterialTheme.typography.bodySmall)

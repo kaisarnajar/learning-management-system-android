@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -61,9 +60,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -103,8 +100,6 @@ import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
@@ -208,9 +203,6 @@ fun FormMoneyField(label: String, value: String, onChange: (String) -> Unit, mod
         modifier, supporting, keyboardType = KeyboardType.Decimal,
     )
 
-/** "₹ 1,250.50" typed → paise, or null when blank/invalid. */
-fun rupeesToPaise(value: String): Int? = value.trim().toBigDecimalOrNull()?.movePointRight(2)?.toInt()
-
 /** Paise → the text a money field shows ("1250" or "1250.5"). */
 fun paiseToRupeesText(paise: Int?): String = paise?.let { java.math.BigDecimal(it).movePointLeft(2).stripTrailingZeros().toPlainString() } ?: ""
 
@@ -268,15 +260,6 @@ fun FormDropdown(
     }
 }
 
-/** Several of [options]; [values] are the chosen option values. */
-@Composable
-fun FormMultiSelect(label: String, options: List<Pair<String, String>>, values: Set<String>, onChange: (Set<String>) -> Unit) {
-    Column {
-        Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        options.forEach { (v, l) -> FormCheckbox(l, v in values) { on -> onChange(if (on) values + v else values - v) } }
-    }
-}
-
 private val isoDate = DateTimeFormatter.ISO_LOCAL_DATE
 private val showDate = DateTimeFormatter.ofPattern("d MMM yyyy")
 
@@ -319,32 +302,6 @@ fun FormDateField(label: String, value: String, onChange: (String) -> Unit, modi
         ) { DatePicker(state) }
     }
 }
-
-/** Pick a date and time; [value] and the result are local "YYYY-MM-DDTHH:mm" (an HTML datetime-local value). */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun FormDateTimeField(label: String, value: String, onChange: (String) -> Unit, modifier: Modifier = Modifier, supporting: String? = null) {
-    val parsed = runCatching { LocalDateTime.parse(value.take(16)) }.getOrNull()
-    var pickTime by remember { mutableStateOf(false) }
-    var day by remember { mutableStateOf(parsed?.toLocalDate()?.format(isoDate) ?: "") }
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        FormDateField(label, day, { day = it; pickTime = true }, supporting = supporting)
-        if (parsed != null) TextButton(onClick = { pickTime = true }) { Text("Time: " + parsed.toLocalTime().toString().take(5)) }
-    }
-    if (pickTime && day.isNotBlank()) {
-        val state = rememberTimePickerState(parsed?.hour ?: 9, parsed?.minute ?: 0)
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { pickTime = false },
-            confirmButton = { TextButton(onClick = { onChange("${day}T%02d:%02d".format(state.hour, state.minute)); pickTime = false }) { Text("OK") } },
-            dismissButton = { TextButton(onClick = { pickTime = false }) { Text("Cancel") } },
-            text = { TimePicker(state) },
-        )
-    }
-}
-
-/** ISO timestamp from the API → local "YYYY-MM-DDTHH:mm" for [FormDateTimeField]. */
-fun localDateTimeValue(iso: String?): String =
-    iso?.let { runCatching { Instant.parse(it).atZone(ZoneId.systemDefault()).toLocalDateTime().toString().take(16) }.getOrNull() } ?: ""
 
 /**
  * An image: shows the picked one, else the current one from the server ([currentUrl]); "Choose" opens the photo
@@ -482,9 +439,6 @@ private fun ToolButton(icon: androidx.compose.ui.graphics.vector.ImageVector, la
         Icon(icon, label, tint = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
-
-/** Padding for content placed directly in a form column. */
-val FormPadding = PaddingValues(20.dp)
 
 /**
  * A form's chosen files and removal marks, kept in a ViewModel: they hold the files' bytes, and in `remember` a

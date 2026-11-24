@@ -47,10 +47,6 @@ data class ActionResponse(
         "skipped" -> EmailOutcome.NotConfigured
         else -> EmailOutcome.Failed
     }
-
-    /** The id segment after [prefix] in [redirect], e.g. "/admin/courses/" → the new course's id. */
-    fun idAfter(prefix: String): String? =
-        redirect?.substringAfter(prefix, "")?.substringBefore('/')?.substringBefore('?')?.takeIf { it.isNotBlank() }
 }
 
 /** What happened to the notification e-mail of a write; see [ActionResponse.emailOutcome]. */

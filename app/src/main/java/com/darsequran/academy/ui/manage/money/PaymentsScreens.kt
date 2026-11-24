@@ -36,7 +36,6 @@ import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.PagedListBody
 import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.StatusChip
-import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.formatDate
 import com.darsequran.academy.data.staff.bookstore.BookstoreAdminApi
 import com.darsequran.academy.ui.manage.common.ActionRunner
@@ -300,9 +299,3 @@ fun ExpenseCard(row: MoneyRow, runner: ActionRunner, onChanged: () -> Unit) {
     )
 }
 
-/** "Pending" etc. as a chip with the right tone. */
-@Composable
-fun StatusLine(status: String?, label: String? = null) {
-    val (text, tone) = moneyStatus(status, label)
-    StatusChip(text, if (tone == Tone.Neutral && status == null) Tone.Neutral else tone)
-}

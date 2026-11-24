@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.automirrored.rounded.Undo
 import androidx.compose.material.icons.rounded.AddPhotoAlternate
 import androidx.compose.material.icons.rounded.Close
@@ -49,7 +48,6 @@ import com.darsequran.academy.data.staff.UploadLimit
 import com.darsequran.academy.data.staff.content.ContentImage
 import com.darsequran.academy.data.staff.readPicked
 import com.darsequran.academy.ui.common.RemoteImage
-import com.darsequran.academy.ui.common.openWeb
 import kotlinx.coroutines.launch
 
 /** One entry of a row's "more" menu. */
@@ -77,17 +75,6 @@ fun RowMenu(actions: List<RowAction>) {
 @Composable
 fun RowThumbnail(path: String?, width: Int = 48, height: Int = 48) {
     RemoteImage(path, null, Modifier.size(width.dp, height.dp).clip(RoundedCornerShape(8.dp)))
-}
-
-/** "View on website" for a public page path such as /blog/abc. */
-@Composable
-fun ViewOnWebsiteButton(path: String?, label: String = "View on website") {
-    if (path.isNullOrBlank()) return
-    val context = LocalContext.current
-    OutlinedButton(onClick = { openWeb(context, path) }) {
-        Icon(Icons.AutoMirrored.Rounded.OpenInNew, null, Modifier.size(18.dp))
-        Text("  $label")
-    }
 }
 
 /**

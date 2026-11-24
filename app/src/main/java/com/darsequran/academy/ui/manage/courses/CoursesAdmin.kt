@@ -2,7 +2,6 @@ package com.darsequran.academy.ui.manage.courses
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Grading
@@ -65,7 +64,6 @@ import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
 import com.darsequran.academy.ui.manage.common.withOther
 import com.darsequran.academy.ui.common.courseStatusTone
-
 
 // ------------------------------------------------------------------ list (/admin/courses)
 
@@ -314,10 +312,3 @@ fun CourseRosterScreen(courseId: String, onBack: () -> Unit, onAttendance: (Stri
     }
 }
 
-/** Small row of facts under a title (e.g. "Present 4 · Absent 1"). */
-@Composable
-internal fun FactRow(vararg facts: Pair<String, Tone>) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        facts.forEach { (label, tone) -> StatusChip(label, tone) }
-    }
-}

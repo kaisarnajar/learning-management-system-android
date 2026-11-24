@@ -69,6 +69,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -256,7 +257,7 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
             NavHost(
                 nav,
                 startDestination = shell.start,
-                modifier = Modifier.fillMaxSize().padding(bottom = if (showBar) padding.calculateBottomPadding() else androidx.compose.ui.unit.Dp(0f)),
+                modifier = Modifier.fillMaxSize().padding(bottom = if (showBar) padding.calculateBottomPadding() else 0.dp),
                 enterTransition = { slideInHorizontally { it / 3 } + fadeIn() },
                 exitTransition = { fadeOut() },
                 popEnterTransition = { fadeIn() },

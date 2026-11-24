@@ -58,7 +58,6 @@ import com.darsequran.academy.ui.common.countOf
 import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.announcementCategory
-import com.darsequran.academy.ui.common.announcementCategory
 import com.darsequran.academy.ui.common.BackTopBar
 import com.darsequran.academy.ui.common.EmptyState
 import com.darsequran.academy.ui.common.Load
@@ -73,7 +72,6 @@ import com.darsequran.academy.ui.common.formatDate
 import com.darsequran.academy.ui.common.relativeTime
 import com.darsequran.academy.ui.common.rupees
 import com.darsequran.academy.ui.common.statusLabel
-import com.darsequran.academy.ui.common.titleCase
 import com.darsequran.academy.ui.common.toLoad
 import com.darsequran.academy.ui.common.vmFactory
 import com.darsequran.academy.ui.theme.Brand
