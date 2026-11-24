@@ -138,9 +138,9 @@ import com.darsequran.academy.ui.common.titleCase
 import com.darsequran.academy.ui.common.toLoad
 import com.darsequran.academy.ui.common.vmFactory
 import com.darsequran.academy.ui.explore.SimpleLoadViewModel
-import com.darsequran.academy.ui.pay.ChoicePill
-import com.darsequran.academy.ui.pay.Dropdown
-import com.darsequran.academy.ui.pay.readImage
+import com.darsequran.academy.ui.common.ChoicePill
+import com.darsequran.academy.ui.common.Dropdown
+import com.darsequran.academy.ui.common.readImage
 import com.darsequran.academy.ui.theme.Brand
 import com.darsequran.academy.ui.theme.HeroUnderStatusBar
 import kotlinx.coroutines.async

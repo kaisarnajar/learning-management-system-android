@@ -33,7 +33,7 @@ import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.StatusChip
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.formatDate
-import com.darsequran.academy.ui.courses.SearchField
+import com.darsequran.academy.ui.common.SearchField
 import com.darsequran.academy.ui.manage.common.FilterChips
 import com.darsequran.academy.ui.manage.common.FilterOption
 import com.darsequran.academy.ui.manage.common.ManageScaffold

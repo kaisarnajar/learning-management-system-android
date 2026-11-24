@@ -1,5 +1,6 @@
 package com.darsequran.academy.ui.common
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -16,9 +17,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import com.darsequran.academy.ui.pay.readImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.darsequran.academy.data.readImageAsJpeg
 
 /** A picked payment screenshot, ready to upload ([bytes], [mime]) and to show ([preview]). */
 class ProofImage(val bytes: ByteArray, val mime: String, val preview: Bitmap) {
@@ -66,3 +67,6 @@ fun rememberProofImagePicker(): ProofImagePicker {
     }
     return picker
 }
+
+/** A picked image as a small, upright JPEG (see [readImageAsJpeg]), ready to upload; null when it can't be read. */
+suspend fun readImage(context: Context, uri: Uri): Pair<ByteArray, String>? = context.readImageAsJpeg(uri)?.let { it to "image/jpeg" }

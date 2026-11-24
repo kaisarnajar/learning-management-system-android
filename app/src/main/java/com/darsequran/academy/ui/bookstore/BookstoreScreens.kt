@@ -106,7 +106,7 @@ import com.darsequran.academy.ui.common.rupees
 import com.darsequran.academy.ui.common.statusLabel
 import com.darsequran.academy.ui.common.toLoad
 import com.darsequran.academy.ui.common.vmFactory
-import com.darsequran.academy.ui.courses.SearchField
+import com.darsequran.academy.ui.common.SearchField
 import com.darsequran.academy.ui.explore.SimpleLoadViewModel
 import com.darsequran.academy.ui.home.BookTile
 import com.darsequran.academy.ui.pay.PayWithUpiButton

@@ -41,7 +41,13 @@ import com.darsequran.academy.ui.common.SecondaryButton
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.rupees
 import com.darsequran.academy.ui.theme.Brand
+import com.darsequran.academy.ui.common.ChoicePill
+import com.darsequran.academy.ui.common.ScreenshotPicker
 import kotlinx.coroutines.launch
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import java.util.Locale
 
 /*
  * The "pay, then tell us how" part shared by fee payments and book checkout, so both show the same details and ask
@@ -140,4 +146,21 @@ private fun CopyRow(label: String, value: String?, copy: Boolean = true) {
             }) { Icon(Icons.Rounded.ContentCopy, "Copy $label", tint = MaterialTheme.colorScheme.primary) }
         }
     }
+}
+
+/** Opens the payer's UPI app with payee, amount and note filled in. */
+fun launchUpi(context: Context, settings: PaymentSettings, amountPaise: Int, note: String): Boolean {
+    val vpa = settings.upiId?.takeIf { it.isNotBlank() } ?: return false
+    val uri = Uri.Builder().scheme("upi").authority("pay")
+        .appendQueryParameter("pa", vpa)
+        .appendQueryParameter("pn", settings.upiPayeeName ?: "Darse Quran Academy")
+        .appendQueryParameter("am", "%.2f".format(Locale.ROOT, amountPaise / 100.0))
+        .appendQueryParameter("cu", "INR")
+        .appendQueryParameter("tn", note.take(60))
+        .build()
+    val intent = Intent(Intent.ACTION_VIEW, uri)
+    // The chooser opens (saying "no apps") even when nothing handles upi://, so ask first; the manifest declares the
+    // upi scheme in <queries>, which makes UPI apps visible here.
+    if (context.packageManager.queryIntentActivities(intent, 0).isEmpty()) return false
+    return runCatching { context.startActivity(Intent.createChooser(intent, "Pay with")) }.isSuccess
 }

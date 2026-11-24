@@ -112,7 +112,7 @@ fun <T> PagedListBody(
 
     PullToRefreshBox(state.refreshing, vm::refresh, modifier.fillMaxSize()) {
         LazyColumn(state = listState, contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxSize()) {
-            if (searchHint != null) item { com.darsequran.academy.ui.courses.SearchField(state.query, searchHint, vm::search) }
+            if (searchHint != null) item { SearchField(state.query, searchHint, vm::search) }
             header()
             if (state.error != null && state.items.isEmpty()) item { ErrorState(state.error!!, vm::refresh) }
             else if (!state.loading && state.items.isEmpty()) item { EmptyState(emptyTitle, if (state.query.isNotBlank()) "Try a different search." else null) }

@@ -42,7 +42,7 @@ import com.darsequran.academy.ui.common.StatusChip
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.formatCalendarDate
 import com.darsequran.academy.ui.common.formatDate
-import com.darsequran.academy.ui.courses.SearchField
+import com.darsequran.academy.ui.common.SearchField
 import com.darsequran.academy.ui.manage.common.ActionRunner
 import com.darsequran.academy.ui.manage.common.AddFab
 import com.darsequran.academy.ui.manage.common.ConfirmDialog

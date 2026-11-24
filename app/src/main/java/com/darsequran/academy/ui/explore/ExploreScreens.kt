@@ -107,6 +107,7 @@ import com.darsequran.academy.ui.home.BlogRow
 import com.darsequran.academy.ui.home.FatwaRow
 import com.darsequran.academy.ui.courses.CourseCard
 import com.darsequran.academy.ui.theme.Brand
+import com.darsequran.academy.ui.common.Dropdown
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -409,7 +410,7 @@ fun AskFatwaScreen(onBack: () -> Unit, defaultName: String?, defaultEmail: Strin
             Text("Your question is answered by the academy's scholars and may be published without your e-mail. Choose \"Anonymous\" as your name to hide it too.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             error?.let { Banner(it, Tone.Danger) }
             OutlinedTextField(title, { title = it.take(200) }, Modifier.fillMaxWidth(), label = { Text("Short title") }, singleLine = true)
-            com.darsequran.academy.ui.pay.Dropdown(category, options, Modifier.fillMaxWidth(), label = "Category") { category = options[it] }
+            Dropdown(category, options, Modifier.fillMaxWidth(), label = "Category") { category = options[it] }
             OutlinedTextField(question, { question = it.take(5000) }, Modifier.fillMaxWidth().height(180.dp), label = { Text("Your question") })
             OutlinedTextField(name, { name = it.take(100) }, Modifier.fillMaxWidth(), label = { Text("Your name") }, singleLine = true)
             OutlinedTextField(email, { email = it.trim() }, Modifier.fillMaxWidth(), label = { Text("Your e-mail (not published)") }, singleLine = true)

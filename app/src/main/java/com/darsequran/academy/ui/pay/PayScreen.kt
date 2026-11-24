@@ -1,12 +1,6 @@
 package com.darsequran.academy.ui.pay
 
-import android.content.Context
-import android.content.Intent
-import android.graphics.Bitmap
-import android.net.Uri
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,32 +17,21 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AddPhotoAlternate
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
@@ -57,7 +40,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.darsequran.academy.data.ApiResult
-import com.darsequran.academy.data.readImageAsJpeg
 import com.darsequran.academy.data.repo.orNull
 import com.darsequran.academy.data.remote.PaymentQuote
 import com.darsequran.academy.data.remote.PaymentSettings
@@ -70,13 +52,12 @@ import com.darsequran.academy.ui.common.LoadingBox
 import com.darsequran.academy.ui.common.MessageState
 import com.darsequran.academy.ui.common.Overline
 import com.darsequran.academy.ui.common.PrimaryButton
-import com.darsequran.academy.ui.common.SecondaryButton
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.rupees
 import com.darsequran.academy.ui.common.rememberProofImagePicker
 import com.darsequran.academy.ui.common.savedVmFactory
-import com.darsequran.academy.ui.theme.Brand
 import com.darsequran.academy.ui.common.academyToday
+import com.darsequran.academy.ui.common.Dropdown
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -190,26 +171,6 @@ class PayViewModel(
             is ApiResult.Err -> _state.update { it.copy(submitting = false, submitError = r.message) }
         }
     }
-}
-
-/** A picked image as a small, upright JPEG (see [readImageAsJpeg]), ready to upload; null when it can't be read. */
-suspend fun readImage(context: Context, uri: Uri): Pair<ByteArray, String>? = context.readImageAsJpeg(uri)?.let { it to "image/jpeg" }
-
-/** Opens the payer's UPI app with payee, amount and note filled in. */
-fun launchUpi(context: Context, settings: PaymentSettings, amountPaise: Int, note: String): Boolean {
-    val vpa = settings.upiId?.takeIf { it.isNotBlank() } ?: return false
-    val uri = Uri.Builder().scheme("upi").authority("pay")
-        .appendQueryParameter("pa", vpa)
-        .appendQueryParameter("pn", settings.upiPayeeName ?: "Darse Quran Academy")
-        .appendQueryParameter("am", "%.2f".format(Locale.ROOT, amountPaise / 100.0))
-        .appendQueryParameter("cu", "INR")
-        .appendQueryParameter("tn", note.take(60))
-        .build()
-    val intent = Intent(Intent.ACTION_VIEW, uri)
-    // The chooser opens (saying "no apps") even when nothing handles upi://, so ask first; the manifest declares the
-    // upi scheme in <queries>, which makes UPI apps visible here.
-    if (context.packageManager.queryIntentActivities(intent, 0).isEmpty()) return false
-    return runCatching { context.startActivity(Intent.createChooser(intent, "Pay with")) }.isSuccess
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -331,53 +292,3 @@ private fun ChoiceRow(label: String, selected: Boolean, onClick: () -> Unit) {
     }
 }
 
-@Composable
-fun ChoicePill(label: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    val shape = MaterialTheme.shapes.medium
-    Box(
-        modifier.clip(shape)
-            .background(if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLowest)
-            .border(1.dp, if (selected) MaterialTheme.colorScheme.primary else Brand.outlineSoft, shape)
-            .clickable(onClick = onClick).padding(vertical = 14.dp),
-        contentAlignment = Alignment.Center,
-    ) { Text(label, style = MaterialTheme.typography.labelLarge, color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface) }
-}
-
-@Composable
-fun ScreenshotPicker(preview: Bitmap?, onPick: () -> Unit, onClear: () -> Unit) {
-    if (preview == null) {
-        SecondaryButton("Attach payment screenshot (optional)", onPick)
-    } else {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(preview.asImageBitmap(), "Payment screenshot", Modifier.size(72.dp).clip(MaterialTheme.shapes.medium), contentScale = ContentScale.Crop)
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text("Screenshot attached", style = MaterialTheme.typography.titleSmall)
-                Row {
-                    TextButton(onPick) { Icon(Icons.Rounded.AddPhotoAlternate, null, Modifier.size(18.dp)); Spacer(Modifier.width(4.dp)); Text("Change") }
-                    TextButton(onClear) { Text("Remove") }
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun Dropdown(value: String, options: List<String>, modifier: Modifier = Modifier, label: String? = null, onSelect: (Int) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(expanded, { expanded = it }, modifier) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = {},
-            readOnly = true,
-            label = label?.let { { Text(it) } },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
-            singleLine = true,
-        )
-        ExposedDropdownMenu(expanded, { expanded = false }) {
-            options.forEachIndexed { i, option -> DropdownMenuItem({ Text(option) }, { onSelect(i); expanded = false }) }
-        }
-    }
-}
