@@ -128,7 +128,10 @@ fun EnvironmentStrip(env: AppEnvironment, onClick: () -> Unit) {
         horizontalArrangement = Arrangement.Center,
     ) {
         Icon(Icons.Rounded.Dns, null, tint = Color.White, modifier = Modifier.padding(end = 6.dp).width(14.dp))
-        Text("${env.label.uppercase()} · ${env.host}", style = MaterialTheme.typography.labelSmall, color = Color.White, maxLines = 1)
+        Text(
+            "${env.label.uppercase()} · ${env.host}", style = MaterialTheme.typography.labelSmall, color = Color.White,
+            maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+        )
     }
 }
 

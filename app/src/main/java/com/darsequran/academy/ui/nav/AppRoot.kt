@@ -137,7 +137,7 @@ private enum class Shell(val tabs: List<TabItem>, val start: Any) {
     Admin(
         listOf(
             TabItem(AdminDashboardTab, AdminDashboardTab::class, "Dashboard", Icons.Outlined.Dashboard, Icons.Rounded.Dashboard),
-            TabItem(AdminAcademicsTab, AdminAcademicsTab::class, "Academics", Icons.Outlined.School, Icons.Rounded.School),
+            TabItem(AdminAcademicsTab, AdminAcademicsTab::class, "Academy", Icons.Outlined.School, Icons.Rounded.School),
             TabItem(AdminFinanceTab, AdminFinanceTab::class, "Finance", Icons.Outlined.AccountBalanceWallet, Icons.Rounded.AccountBalanceWallet),
             TabItem(AdminContentTab, AdminContentTab::class, "Content", Icons.AutoMirrored.Outlined.Article, Icons.AutoMirrored.Rounded.Article),
             accountTab,
