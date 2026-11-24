@@ -299,6 +299,8 @@ class CheckoutViewModel(private val repo: AcademyRepository, private val cart: C
     private val _state = MutableStateFlow(CheckoutState())
     val state: StateFlow<CheckoutState> = _state.asStateFlow()
     private val lines get() = cart.items.value.map { CartLine(it.bookId, it.quantity) }
+    /** The lines the shown total was worked out for: the order is placed for exactly these. */
+    private var quotedLines: List<CartLine> = emptyList()
 
     init { load() }
 
@@ -306,7 +308,10 @@ class CheckoutViewModel(private val repo: AcademyRepository, private val cart: C
         _state.update { it.copy(quote = Load.Loading) }
         val settings = async { repo.paymentSettings() }
         val s = settings.await()
-        _state.update { it.copy(quote = repo.checkoutQuote(lines).toLoad(), settings = s.orNull(), settingsError = (s as? ApiResult.Err)?.message) }
+        val asked = lines
+        val quote = repo.checkoutQuote(asked)
+        if (quote is ApiResult.Ok) quotedLines = asked
+        _state.update { it.copy(quote = quote.toLoad(), settings = s.orNull(), settingsError = (s as? ApiResult.Err)?.message) }
     }
 
     /** Fetches the academy's UPI and bank details again (after they failed to load). */
@@ -319,13 +324,20 @@ class CheckoutViewModel(private val repo: AcademyRepository, private val cart: C
     /** One order per checkout: a second tap (even in the same frame) or a tap after success is ignored. */
     fun place(method: String, reference: String, address: String, pin: String, phone: String, notes: String, screenshot: Pair<ByteArray, String>?) {
         if (_state.value.submitting || _state.value.done) return
+        // The student paid the total shown for the quoted cart; if the cart has changed since (another screen, a
+        // refresh), placing it would order something other than what was paid for.
+        if (lines.toSet() != quotedLines.toSet()) {
+            _state.update { it.copy(error = "Your cart changed since this total was worked out. Check the new total below before paying.") }
+            load()
+            return
+        }
         _state.update { it.copy(submitting = true, error = null) }
         viewModelScope.launch { send(method, reference, address, pin, phone, notes, screenshot) }
     }
 
     private suspend fun send(method: String, reference: String, address: String, pin: String, phone: String, notes: String, screenshot: Pair<ByteArray, String>?) {
         val fields = mapOf(
-            "items" to kotlinx.serialization.json.Json.encodeToString(kotlinx.serialization.builtins.ListSerializer(CartLine.serializer()), lines),
+            "items" to kotlinx.serialization.json.Json.encodeToString(kotlinx.serialization.builtins.ListSerializer(CartLine.serializer()), quotedLines),
             "paymentMethod" to method,
             "upiTransactionId" to reference.trim(),
             "deliveryAddress" to address.trim(),
