@@ -1,6 +1,38 @@
 package com.darsequran.academy.ui.nav
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.material.icons.automirrored.outlined.Article
+import androidx.compose.material.icons.automirrored.rounded.Article
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.CastForEducation
+import androidx.compose.material.icons.outlined.Dashboard
+import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.rounded.AccountBalanceWallet
+import androidx.compose.material.icons.rounded.CastForEducation
+import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.School
+import androidx.compose.runtime.key
+import com.darsequran.academy.data.AppEnvironment
+import com.darsequran.academy.ui.manage.AdminAcademicsTab
+import com.darsequran.academy.ui.manage.AdminContentTab
+import com.darsequran.academy.ui.manage.AdminDashboardScreen
+import com.darsequran.academy.ui.manage.AdminDashboardTab
+import com.darsequran.academy.ui.manage.AdminFinanceTab
+import com.darsequran.academy.ui.manage.AdminHubScreen
+import com.darsequran.academy.ui.manage.AdminHubs
+import com.darsequran.academy.ui.manage.EnvironmentRoute
+import com.darsequran.academy.ui.manage.EnvironmentScreen
+import com.darsequran.academy.ui.manage.EnvironmentStrip
+import com.darsequran.academy.ui.manage.TeachTab
+import com.darsequran.academy.ui.manage.manageGraph
+import com.darsequran.academy.ui.manage.routeForAdminHref
+import com.darsequran.academy.ui.teach.TeachHomeScreen
+import com.darsequran.academy.ui.theme.HeroUnderStatusBar
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
@@ -90,12 +122,37 @@ import kotlin.reflect.KClass
 
 private data class TabItem(val route: Any, val type: KClass<*>, val label: String, val icon: ImageVector, val selectedIcon: ImageVector)
 
-private val tabs = listOf(
-    TabItem(HomeTab, HomeTab::class, "Home", Icons.Outlined.Home, Icons.Rounded.Home),
-    TabItem(CoursesTab, CoursesTab::class, "Courses", Icons.AutoMirrored.Outlined.MenuBook, Icons.AutoMirrored.Rounded.MenuBook),
-    TabItem(ExploreTab, ExploreTab::class, "Explore", Icons.Outlined.Explore, Icons.Rounded.Explore),
-    TabItem(AccountTab, AccountTab::class, "Account", Icons.Outlined.Person, Icons.Rounded.Person),
-)
+private val homeTab = TabItem(HomeTab, HomeTab::class, "Home", Icons.Outlined.Home, Icons.Rounded.Home)
+private val coursesTab = TabItem(CoursesTab, CoursesTab::class, "Courses", Icons.AutoMirrored.Outlined.MenuBook, Icons.AutoMirrored.Rounded.MenuBook)
+private val exploreTab = TabItem(ExploreTab, ExploreTab::class, "Explore", Icons.Outlined.Explore, Icons.Rounded.Explore)
+private val accountTab = TabItem(AccountTab, AccountTab::class, "Account", Icons.Outlined.Person, Icons.Rounded.Person)
+
+/** Which app a signed-in user sees: students the learning app, teachers that plus a Teach tab, admins the admin panel. */
+private enum class Shell(val tabs: List<TabItem>, val start: Any) {
+    Student(listOf(homeTab, coursesTab, exploreTab, accountTab), HomeTab),
+    Teacher(
+        listOf(homeTab, coursesTab, TabItem(TeachTab, TeachTab::class, "Teach", Icons.Outlined.CastForEducation, Icons.Rounded.CastForEducation), exploreTab, accountTab),
+        HomeTab,
+    ),
+    Admin(
+        listOf(
+            TabItem(AdminDashboardTab, AdminDashboardTab::class, "Dashboard", Icons.Outlined.Dashboard, Icons.Rounded.Dashboard),
+            TabItem(AdminAcademicsTab, AdminAcademicsTab::class, "Academics", Icons.Outlined.School, Icons.Rounded.School),
+            TabItem(AdminFinanceTab, AdminFinanceTab::class, "Finance", Icons.Outlined.AccountBalanceWallet, Icons.Rounded.AccountBalanceWallet),
+            TabItem(AdminContentTab, AdminContentTab::class, "Content", Icons.AutoMirrored.Outlined.Article, Icons.AutoMirrored.Rounded.Article),
+            accountTab,
+        ),
+        AdminDashboardTab,
+    );
+
+    companion object {
+        fun of(role: String?) = when (role) {
+            "ADMIN", "DEVELOPER" -> Admin
+            "TEACHER" -> Teacher
+            else -> Student
+        }
+    }
+}
 
 private fun NavHostController.switchTab(route: Any) = navigate(route) {
     popUpTo(graph.findStartDestination().id) { saveState = true }
@@ -105,10 +162,32 @@ private fun NavHostController.switchTab(route: Any) = navigate(route) {
 
 @Composable
 fun AppRoot() {
-    val nav = rememberNavController()
     val context = LocalContext.current
     val container = remember { (context.applicationContext as AcademyApp).container }
     val session by container.sessionStore.session.collectAsStateWithLifecycle()
+    val env by container.environments.environment.collectAsStateWithLifecycle()
+    val shell = Shell.of(session?.user?.role)
+    LaunchedEffect(session?.user?.role) { if (session?.user?.role == "DEVELOPER") container.environments.markDeveloperDevice() }
+
+    // A new environment or role starts a fresh navigation graph: nothing from the previous one carries over.
+    key(env, shell) {
+        val nav = rememberNavController()
+        Column(Modifier.fillMaxSize()) {
+            if (env != AppEnvironment.PRODUCTION) { HeroUnderStatusBar(); EnvironmentStrip(env) { nav.navigate(EnvironmentRoute) } }
+            Box(Modifier.weight(1f).then(if (env != AppEnvironment.PRODUCTION) Modifier.consumeWindowInsets(WindowInsets.statusBars) else Modifier)) {
+                AppContent(nav, shell)
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppContent(nav: NavHostController, shell: Shell) {
+    val context = LocalContext.current
+    val container = remember { (context.applicationContext as AcademyApp).container }
+    val session by container.sessionStore.session.collectAsStateWithLifecycle()
+    val canSwitch by container.environments.canSwitch.collectAsStateWithLifecycle()
+    val tabs = shell.tabs
     var config by remember { mutableStateOf<AppConfig?>(null) }
     LaunchedEffect(Unit) { config = container.repo.appConfig().orNull() }
     val openReceipt = rememberReceiptOpener()
@@ -124,6 +203,7 @@ fun AppRoot() {
     fun openHref(href: String) {
         val path = href.substringBefore('#').substringBefore('?')
         val parts = path.trim('/').split('/')
+        if (parts.getOrNull(0) == "admin") { routeForAdminHref(path)?.let { nav.navigate(it) }; return }
         when {
             parts.getOrNull(0) == "blog" && parts.size >= 2 -> nav.navigate(BlogPostRoute(parts[1]))
             parts.getOrNull(0) == "fatwa" && parts.size >= 2 -> nav.navigate(FatwaDetailRoute(parts[1]))
@@ -158,7 +238,7 @@ fun AppRoot() {
     ) { padding ->
         NavHost(
             nav,
-            startDestination = HomeTab,
+            startDestination = shell.start,
             modifier = Modifier.fillMaxSize().padding(bottom = if (showBar) padding.calculateBottomPadding() else androidx.compose.ui.unit.Dp(0f)),
             enterTransition = { slideInHorizontally { it / 3 } + fadeIn() },
             exitTransition = { fadeOut() },
@@ -204,8 +284,21 @@ fun AppRoot() {
                     onWaivers = { nav.navigate(WaiversRoute) }, onReviews = { nav.navigate(ReviewsRoute) }, onOrders = { nav.navigate(OrdersRoute) },
                     onNotifications = { nav.navigate(NotificationsRoute) }, onChangePassword = { nav.navigate(ChangePasswordRoute) },
                     onDeleteAccount = { nav.navigate(DeleteAccountRoute) }, onContact = { nav.navigate(ContactRoute) }, onAbout = { nav.navigate(AboutRoute) },
+                    onEnvironment = if (canSwitch) ({ nav.navigate(EnvironmentRoute) }) else null,
                 )
             }
+
+            // ---- admin (admins and developers) and teacher tabs
+            val openAdmin: (String) -> Unit = { href -> routeForAdminHref(href)?.let { nav.navigate(it) } ?: notAvailable(context) }
+            composable<AdminDashboardTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
+                AdminDashboardScreen(session?.user?.name, session?.user?.role ?: "ADMIN", openAdmin)
+            }
+            composable<AdminAcademicsTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Academics", AdminHubs.academics, openAdmin) }
+            composable<AdminFinanceTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Finance", AdminHubs.finance, openAdmin) }
+            composable<AdminContentTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Content", AdminHubs.content, openAdmin) }
+            composable<TeachTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { TeachHomeScreen(nav) }
+            composable<EnvironmentRoute> { EnvironmentScreen(nav::popBackStack) }
+            manageGraph(nav)
 
             // ---- courses
             composable<CourseRoute> { entry ->
@@ -252,7 +345,10 @@ fun AppRoot() {
 
             // ---- account
             composable<SignInRoute> {
-                SignInScreen(nav::popBackStack, onDone = { nav.popBackStack() }, onRegister = { nav.navigate(RegisterRoute) { popUpTo(SignInRoute) { inclusive = true } } }, onForgot = { nav.navigate(ForgotPasswordRoute) })
+                SignInScreen(
+                    nav::popBackStack, onDone = { nav.popBackStack() }, onRegister = { nav.navigate(RegisterRoute) { popUpTo(SignInRoute) { inclusive = true } } }, onForgot = { nav.navigate(ForgotPasswordRoute) },
+                    onEnvironment = if (canSwitch) ({ nav.navigate(EnvironmentRoute) }) else null,
+                )
             }
             composable<RegisterRoute> {
                 RegisterScreen(nav::popBackStack, onDone = { nav.popBackStack() }, privacyUrl = config?.policies?.privacyPolicyUrl ?: "/privacy-policy", termsUrl = config?.policies?.termsUrl ?: "/terms-and-conditions")
@@ -270,3 +366,6 @@ fun AppRoot() {
         }
     }
 }
+
+private fun notAvailable(context: android.content.Context) =
+    android.widget.Toast.makeText(context, "This section opens on the website for now.", android.widget.Toast.LENGTH_SHORT).show()
