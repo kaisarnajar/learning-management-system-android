@@ -178,7 +178,7 @@ fun launchUpi(context: Context, settings: PaymentSettings, amountPaise: Int, not
     val vpa = settings.upiId?.takeIf { it.isNotBlank() } ?: return false
     val uri = Uri.Builder().scheme("upi").authority("pay")
         .appendQueryParameter("pa", vpa)
-        .appendQueryParameter("pn", settings.upiPayeeName ?: "Darse Quran Academy")
+        .appendQueryParameter("pn", upiPayee(settings)) // the same name as the QR code
         .appendQueryParameter("am", "%.2f".format(Locale.ROOT, amountPaise / 100.0))
         .appendQueryParameter("cu", "INR")
         .appendQueryParameter("tn", note.take(60))

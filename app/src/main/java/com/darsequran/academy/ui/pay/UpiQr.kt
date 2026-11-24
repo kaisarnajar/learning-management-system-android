@@ -43,7 +43,7 @@ private const val SEAM = 0.5f
 /** `upi://pay` for the academy's UPI ID only, as the website's buildUpiVpaUrlFromSettings. */
 fun upiVpaUri(settings: PaymentSettings): String = upiUri(
     "pa" to settings.upiId.orEmpty(),
-    "pn" to payee(settings).take(PAYEE_MAX),
+    "pn" to upiPayee(settings),
     "cu" to "INR",
 )
 
@@ -58,7 +58,7 @@ fun upiPaymentUri(
     paymentRef: String? = null,
 ): String = upiUri(
     "pa" to settings.upiId.orEmpty(),
-    "pn" to payee(settings).take(PAYEE_MAX),
+    "pn" to upiPayee(settings),
     "am" to "%.2f".format(Locale.ROOT, amountPaise / PAISE_PER_RUPEE),
     "cu" to "INR",
     "tn" to note.take(NOTE_MAX),
@@ -70,8 +70,9 @@ fun upiQrUri(settings: PaymentSettings, amountPaise: Int?, note: String?, paymen
     if (amountPaise != null && amountPaise > 0) upiPaymentUri(settings, amountPaise, note.orEmpty(), paymentRef)
     else upiVpaUri(settings)
 
-private fun payee(settings: PaymentSettings) =
-    settings.upiPayeeName?.trim()?.takeIf { it.isNotEmpty() } ?: DEFAULT_PAYEE
+/** The payee name shown in the UPI app: the academy's, trimmed, else the website's default. */
+fun upiPayee(settings: PaymentSettings): String =
+    (settings.upiPayeeName?.trim()?.takeIf { it.isNotEmpty() } ?: DEFAULT_PAYEE).take(PAYEE_MAX)
 
 /** Form-encodes like the browser's URLSearchParams, so the QR holds the same text as the website's. */
 private fun upiUri(vararg params: Pair<String, String>): String =

@@ -31,15 +31,23 @@ class PayViewModelTest {
     private val server = MockWebServer()
     private val submissions = AtomicInteger()
     @Volatile private var settingsFail = false
+    @Volatile private var oneTimeFee = false
+    @Volatile private var lastSubmission = ""
 
     @Before fun setUp() {
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse = when (request.url.encodedPath) {
                 "/api/v1/payment-settings" ->
                     if (settingsFail) MockResponse(code = 503) else MockResponse(body = """{"settings":{"upiId":"academy@upi"}}""")
-                "/api/v1/payments/quote" -> MockResponse(body = """{"courseId":"c1","type":"course","canPay":true,"baseAmountPaise":50000,"yearOptions":["2026"]}""")
+                "/api/v1/payments/quote" -> MockResponse(
+                    body = """{"courseId":"c1","type":"course","canPay":true,"baseAmountPaise":50000,"yearOptions":["2026"],
+                        "oneTimeFee":$oneTimeFee,"coupons":[
+                        {"id":"waiver-50","code":"HALF","percentage":50,"amountPaise":25000},
+                        {"id":"waiver-100","code":"FULL","percentage":100,"amountPaise":0}]}""",
+                )
                 "/api/v1/payments/submit" -> {
                     submissions.incrementAndGet()
+                    lastSubmission = request.body?.utf8().orEmpty()
                     MockResponse.Builder().body("""{"success":true}""").headersDelay(200, TimeUnit.MILLISECONDS).build()
                 }
                 else -> MockResponse(code = 404)
@@ -96,5 +104,73 @@ class PayViewModelTest {
         withTimeout(5_000) { vm.state.first { it.settings != null } }
         assertEquals(null, vm.state.value.settingsError)
         assertEquals("academy@upi", vm.state.value.settings?.upiId)
+    }
+
+    /** The form fields of the last submission (multipart: name, then the value after a blank line). */
+    private fun fields(): Map<String, String> =
+        Regex("name=\"([^\"]+)\"\\r\n(?:[^\\r]+\\r\n)*\\r\n([^\\r]*)\\r\n").findAll(lastSubmission)
+            .associate { it.groupValues[1] to it.groupValues[2] }
+
+    private fun submitted(vm: PayViewModel): Map<String, String> = runBlocking {
+        withTimeout(5_000) { vm.state.first { it.quote != null } }
+        vm.submit("upi", " 123456789012 ", null)
+        withTimeout(5_000) { vm.state.first { it.done } }
+        fields()
+    }
+
+    @Test
+    fun aMonthlyFeeWithAWaiverSendsTheWaivedAmountAndThePaddedMonth() {
+        val vm = PayViewModel(app.container.repo, "c1", "course", SavedStateHandle())
+        runBlocking { withTimeout(5_000) { vm.state.first { it.quote != null } } }
+        vm.selectCoupon("waiver-50"); vm.selectMonth(7); vm.selectYear("2026")
+        assertEquals(
+            mapOf(
+                "courseId" to "c1", "paymentType" to "monthly", "paymentMonth" to "07", "paymentYear" to "2026",
+                "paymentMethod" to "upi", "upiTransactionId" to "123456789012",
+                "couponId" to "waiver-50", "expectedAmountPaise" to "25000",
+            ),
+            submitted(vm),
+        )
+    }
+
+    @Test
+    fun aOneTimeFeeIsSentForMonth01AndTheStandardFeeAsNone() {
+        oneTimeFee = true
+        val vm = PayViewModel(app.container.repo, "c1", "course", SavedStateHandle())
+        runBlocking { withTimeout(5_000) { vm.state.first { it.quote != null } } }
+        vm.selectMonth(9)
+        val sent = submitted(vm)
+        assertEquals("01", sent["paymentMonth"])
+        assertEquals("none", sent["couponId"])
+        assertEquals("50000", sent["expectedAmountPaise"])
+    }
+
+    @Test
+    fun aFullyWaivedFeeSendsNoPaymentMethodOrTransaction() {
+        val vm = PayViewModel(app.container.repo, "c1", "course", SavedStateHandle())
+        runBlocking { withTimeout(5_000) { vm.state.first { it.quote != null } } }
+        vm.selectCoupon("waiver-100")
+        val sent = submitted(vm)
+        assertEquals("0", sent["expectedAmountPaise"])
+        assertEquals(null, sent["paymentMethod"])
+        assertEquals(null, sent["upiTransactionId"])
+    }
+
+    @Test
+    fun theEnrollmentFeeSendsNoMonthOrYear() {
+        val sent = submitted(PayViewModel(app.container.repo, "c1", "enrollment", SavedStateHandle()))
+        assertEquals("enrollment", sent["paymentType"])
+        assertEquals(null, sent["paymentMonth"])
+        assertEquals(null, sent["paymentYear"])
+    }
+
+    @Test
+    fun aRestoredWaiverThatIsNoLongerOfferedIsDropped() = runBlocking {
+        val saved = SavedStateHandle(mapOf("couponId" to "withdrawn"))
+        val vm = PayViewModel(app.container.repo, "c1", "course", saved)
+        withTimeout(5_000) { vm.state.first { it.quote != null } }
+        assertEquals(null, vm.state.value.couponId)
+        assertEquals(null, saved.get<String>("couponId"))
+        assertEquals(50000, vm.state.value.amountPaise)
     }
 }

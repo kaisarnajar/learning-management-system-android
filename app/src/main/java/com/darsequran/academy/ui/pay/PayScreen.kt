@@ -112,9 +112,14 @@ class PayViewModel(
         val settings = async { repo.paymentSettings() }
         when (val q = quote.await()) {
             is ApiResult.Ok -> _state.update {
+                // A waiver chosen before the app was killed may be used up or withdrawn since: sending it anyway
+                // would have the payment refused, so the standard fee is selected instead.
+                val couponId = it.couponId?.takeIf { id -> q.value.coupons.any { c -> c.id == id } }
+                if (couponId == null) saved[COUPON] = null
                 it.copy(
                     loading = false,
                     quote = q.value,
+                    couponId = couponId,
                     settings = settings.await().orNull(),
                     settingsError = (settings.await() as? ApiResult.Err)?.message,
                     year = if (saved.contains(YEAR)) it.year
