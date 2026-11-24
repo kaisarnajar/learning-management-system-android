@@ -16,7 +16,7 @@ val googleWebClientId: String = localProperties.getProperty("GOOGLE_WEB_CLIENT_I
     ?: System.getenv("GOOGLE_WEB_CLIENT_ID")
     ?: ""
 
-/** Server for debug builds; the emulator reaches the Mac's localhost at 10.0.2.2. */
+/** The "Local" environment of debug builds; the emulator reaches the Mac's localhost at 10.0.2.2. */
 val debugBaseUrl: String = localProperties.getProperty("DEBUG_BASE_URL") ?: "http://10.0.2.2:3000"
 
 android {
@@ -34,12 +34,16 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "BASE_URL", "\"$debugBaseUrl\"")
+            // Debug builds start on the local server and can switch to staging or production.
+            buildConfigField("String", "LOCAL_BASE_URL", "\"$debugBaseUrl\"")
+            buildConfigField("String", "DEFAULT_ENVIRONMENT", "\"local\"")
             applicationIdSuffix = ".debug"
             resValue("string", "app_name", "DQA (debug)")
         }
         release {
-            buildConfigField("String", "BASE_URL", "\"https://darsequranacademy.com\"")
+            // Release builds start on production; developers can switch to staging.
+            buildConfigField("String", "LOCAL_BASE_URL", "\"\"")
+            buildConfigField("String", "DEFAULT_ENVIRONMENT", "\"production\"")
             resValue("string", "app_name", "Darse Quran Academy")
             isMinifyEnabled = true
             isShrinkResources = true
@@ -91,6 +95,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+    implementation(libs.richeditor.compose)
 
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services)
