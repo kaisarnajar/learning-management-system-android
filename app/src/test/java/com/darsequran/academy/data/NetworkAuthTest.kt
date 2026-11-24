@@ -106,6 +106,21 @@ class NetworkAuthTest {
     }
 
     @Test
+    fun anotherHostNeverSeesTheToken() = runBlocking {
+        val (_, api) = network(Session("access-1", "refresh-1", user))
+        runCatching { api.absolute(otherHostUrl()) }
+        assertEquals(listOf<String?>(null), seenAuth.toList())
+    }
+
+    @Test
+    fun theSameHostOnAnotherPortNeverSeesTheToken() = runBlocking {
+        val (_, api) = network(Session("access-1", "refresh-1", user))
+        val sameHostOtherPort = other.url("/file").newBuilder().host(server.url("/").host).build().toString()
+        runCatching { api.absolute(sameHostOtherPort) }
+        assertEquals(listOf<String?>(null), seenAuth.toList())
+    }
+
+    @Test
     fun signedOutRequestsHaveNoAuthorizationAndAreNotRefreshed() = runBlocking {
         val (_, api) = network(null)
         val failure = runCatching { api.ping() }.exceptionOrNull()

@@ -10,6 +10,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import okhttp3.Authenticator
 import okhttp3.Dispatcher
+import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -62,11 +63,14 @@ class Network(private val sessionStore: SessionSource, val json: Json) {
     private val refreshApi: RefreshApi =
         retrofit(baseClient.newBuilder().dispatcher(Dispatcher()).build()).create(RefreshApi::class.java)
 
-    /** Adds the Bearer token to every call when signed in (a retry already carries the fresh one). */
+    /**
+     * Adds the Bearer token when signed in (a retry already carries the fresh one), but only for the academy's own
+     * server: images and files can live elsewhere (the public upload bucket, Google avatars) and must not see it.
+     */
     private val authHeader = Interceptor { chain ->
         val original = chain.request()
         val token = sessionStore.session.value?.accessToken
-        val request = if (token != null && original.header("Authorization") == null) {
+        val request = if (token != null && original.header("Authorization") == null && isAcademyServer(original.url)) {
             original.newBuilder().header("Authorization", "Bearer $token").build()
         } else original
         chain.proceed(request)
@@ -105,6 +109,11 @@ class Network(private val sessionStore: SessionSource, val json: Json) {
                 }
             }
         }
+    }
+
+    private fun isAcademyServer(url: HttpUrl): Boolean {
+        val base = CurrentEnvironment.baseUrl.toHttpUrl()
+        return url.scheme == base.scheme && url.host == base.host && url.port == base.port
     }
 
     private fun responseCount(response: Response): Int {
