@@ -15,6 +15,9 @@ import com.darsequran.academy.data.remote.RefreshRequest
 import com.darsequran.academy.data.remote.RegisterRequest
 import com.darsequran.academy.data.remote.SessionUser
 import com.darsequran.academy.data.remote.TokenResponse
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -40,9 +43,13 @@ class AuthRepository(private val api: AcademyApi, private val sessionStore: Sess
 
     suspend fun resendVerification(email: String) = apiCall { api.resendVerification(EmailRequest(email.trim())) }
 
-    suspend fun logout() {
+    /**
+     * Signs out: tells the server to forget the refresh token (best effort, for at most [LOGOUT_REVOKE_TIMEOUT_MS]),
+     * then forgets the session here. Not cancellable: leaving the screen mid-way must not leave the user signed in.
+     */
+    suspend fun logout(): Unit = withContext(NonCancellable) {
         val refresh = sessionStore.session.value?.refreshToken
-        if (refresh != null) apiCall { api.logout(RefreshRequest(refresh)) }
+        if (refresh != null) withTimeoutOrNull(LOGOUT_REVOKE_TIMEOUT_MS) { apiCall { api.logout(RefreshRequest(refresh)) } }
         sessionStore.clear()
     }
 
@@ -80,5 +87,10 @@ class AuthRepository(private val api: AcademyApi, private val sessionStore: Sess
                 registrationNumber = profile.registrationNumber,
             ),
         )
+    }
+
+    private companion object {
+        /** Offline, the revoke would wait for the connect timeout; signing out shouldn't. */
+        const val LOGOUT_REVOKE_TIMEOUT_MS = 5_000L
     }
 }

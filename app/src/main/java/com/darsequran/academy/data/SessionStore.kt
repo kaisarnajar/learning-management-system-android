@@ -7,6 +7,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.darsequran.academy.data.remote.SessionUser
 import com.darsequran.academy.data.remote.TokenResponse
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
 private val Context.sessionDataStore by preferencesDataStore(name = "session")
@@ -87,7 +89,9 @@ class SessionStore(
 
     private suspend fun stored(env: AppEnvironment): Session? = if (env == this.env) _session.value else readOnce(env)
 
-    private suspend fun write(session: Session) {
+    // NonCancellable: the in-memory session changes first, and that change can tear down the screen (and the
+    // ViewModel scope) that called this, which must not stop the disk from following.
+    private suspend fun write(session: Session): Unit = withContext(NonCancellable) {
         if (session.env == env) _session.value = session
         val keys = Keys(session.env)
         context.sessionDataStore.edit {
@@ -97,8 +101,13 @@ class SessionStore(
         }
     }
 
+    /**
+     * Updates the signed-in user's details. Ignored when [user] is someone else: a profile answer that arrives after
+     * a sign-out and another sign-in belongs to the previous account.
+     */
     suspend fun updateUser(user: SessionUser) {
         val current = _session.value ?: return
+        if (current.user.id != user.id) return
         write(current.copy(user = user))
     }
 
@@ -110,8 +119,8 @@ class SessionStore(
         if (stored == null || stored.refreshToken == old.refreshToken) remove(old.env)
     }
 
-    private suspend fun remove(env: AppEnvironment) {
-        if (env == this.env) _session.value = null
+    private suspend fun remove(env: AppEnvironment): Unit = withContext(NonCancellable) {
+        if (env == this@SessionStore.env) _session.value = null
         val keys = Keys(env)
         context.sessionDataStore.edit { it.remove(keys.access); it.remove(keys.refresh); it.remove(keys.user) }
     }
