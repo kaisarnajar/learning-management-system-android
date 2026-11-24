@@ -57,7 +57,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -353,7 +352,6 @@ class CheckoutViewModel(private val repo: AcademyRepository, private val cart: C
 fun CheckoutScreen(onBack: () -> Unit, onDone: () -> Unit) {
     val vm: CheckoutViewModel = viewModel(factory = vmFactory { CheckoutViewModel(it.repo, it.cart) })
     val state by vm.state.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     var method by rememberSaveable { mutableStateOf("upi") }
     var reference by rememberSaveable { mutableStateOf("") }
     var address by rememberSaveable { mutableStateOf("") }

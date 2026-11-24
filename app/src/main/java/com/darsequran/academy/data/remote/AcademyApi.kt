@@ -2,7 +2,6 @@ package com.darsequran.academy.data.remote
 
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
-import okhttp3.ResponseBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -15,7 +14,6 @@ import retrofit2.http.Part
 import retrofit2.http.PartMap
 import retrofit2.http.Path
 import retrofit2.http.Query
-import retrofit2.http.Streaming
 
 /** /api/v1. Every call goes through [com.darsequran.academy.data.ApiCall] for error handling. */
 interface AcademyApi {

@@ -17,6 +17,9 @@ import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
 import org.junit.After
 import com.darsequran.academy.data.ApiResult
+import com.darsequran.academy.ui.account.VERIFICATION_SENT
+import com.darsequran.academy.ui.account.resendLabel
+import com.darsequran.academy.ui.account.resendOutcome
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -92,8 +95,8 @@ class HomeViewModelTest {
         val sent = withTimeout(5_000) { vm.state.first { it.resend.sent } }.resend
         vm.resendVerification() // and after it was sent
         delay(200)
-        assertEquals("Sent", sent.label)
-        assertEquals(RESEND_SENT, sent.message)
+        assertEquals("Sent", resendLabel(sent))
+        assertEquals(VERIFICATION_SENT, sent.message)
         assertEquals(1, resends.get())
     }
 
@@ -104,14 +107,13 @@ class HomeViewModelTest {
         vm.resendVerification()
         val failed = withTimeout(5_000) { vm.state.first { it.resend.message != null } }.resend
         assertFalse(failed.sent)
-        assertEquals("Resend Verification Email", failed.label)
+        assertEquals("Resend Verification Email", resendLabel(failed))
         assertTrue(failed.message!!.isNotBlank())
     }
 
     @Test
     fun resendWordingFollowsTheWebsite() {
-        assertEquals("Sending...", ResendState(sending = true).label)
-        assertEquals(RESEND_FAILED, resendOutcome(ApiResult.Err("")).message)
+        assertEquals("Failed to resend verification email.", resendOutcome(ApiResult.Err("")).message)
         assertEquals("Too many requests.", resendOutcome(ApiResult.Err("Too many requests.")).message)
     }
 }

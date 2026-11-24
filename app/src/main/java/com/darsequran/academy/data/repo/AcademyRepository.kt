@@ -1,7 +1,5 @@
 package com.darsequran.academy.data.repo
 
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
 import com.darsequran.academy.data.ApiResult
 import com.darsequran.academy.data.apiCall
 import com.darsequran.academy.data.remote.AcademyApi
@@ -41,8 +39,6 @@ class AcademyRepository(private val api: AcademyApi) {
     private var homeCache: HomeResponse? = null
     fun cachedHome() = homeCache
 
-    /** Forgets what was cached from the previous environment. */
-    fun clearCaches() { config = null; homeCache = null }
     suspend fun home() = apiCall { api.home() }.also { if (it is ApiResult.Ok) homeCache = it.value }
 
     // ---- catalogue & content
@@ -80,7 +76,6 @@ class AcademyRepository(private val api: AcademyApi) {
     suspend fun grades(courseId: String) = apiCall { api.grades(courseId).grades.firstOrNull() }
     suspend fun paymentQuote(courseId: String, type: String) = apiCall { api.paymentQuote(courseId, type) }
     suspend fun paymentHistory() = apiCall { api.paymentHistory() }
-    // The body streams, so read it off the main thread.
     suspend fun waiverRequests() = apiCall { api.waiverRequests().data }
     suspend fun requestWaiver(body: WaiverRequestBody) = apiCall { api.requestWaiver(body) }
 

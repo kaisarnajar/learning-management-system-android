@@ -32,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -213,7 +212,6 @@ fun PayScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PayFlow(state: PayState, vm: PayViewModel, courseTitle: String, heading: String) {
-    val context = LocalContext.current
     val quote = state.quote!!
     var method by rememberSaveable { mutableStateOf("upi") }
     var reference by rememberSaveable { mutableStateOf("") }

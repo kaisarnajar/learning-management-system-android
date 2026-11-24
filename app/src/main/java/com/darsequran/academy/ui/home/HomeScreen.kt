@@ -1,5 +1,8 @@
 package com.darsequran.academy.ui.home
 
+import com.darsequran.academy.ui.account.ResendState
+import com.darsequran.academy.ui.account.resendLabel
+import com.darsequran.academy.ui.account.resendOutcome
 import com.darsequran.academy.ui.common.ctaButtonColors
 import com.darsequran.academy.ui.theme.HeroUnderStatusBar
 import androidx.compose.foundation.Image
@@ -128,24 +131,6 @@ data class HomeState(
     val unread: Int = 0,
     val resend: ResendState = ResendState(),
 )
-
-/** The verify-email card's "Resend Verification Email" button, as the website's VerificationBanner. */
-data class ResendState(val sending: Boolean = false, val sent: Boolean = false, val message: String? = null) {
-    val label: String get() = when {
-        sending -> "Sending..."
-        sent -> "Sent"
-        else -> "Resend Verification Email"
-    }
-}
-
-internal const val RESEND_SENT = "Verification email sent! Please check your Inbox. If you don't see it, check your " +
-    "Spam/Junk folder as well."
-internal const val RESEND_FAILED = "Failed to resend verification email."
-
-internal fun resendOutcome(result: ApiResult<*>): ResendState = when (result) {
-    is ApiResult.Ok -> ResendState(sent = true, message = RESEND_SENT)
-    is ApiResult.Err -> ResendState(message = result.message.ifBlank { RESEND_FAILED })
-}
 
 class HomeViewModel(private val repo: AcademyRepository, private val auth: AuthRepository) : ViewModel() {
     private val _state = MutableStateFlow(HomeState(content = repo.cachedHome(), loading = repo.cachedHome() == null))
@@ -687,7 +672,7 @@ private fun TestimonialCard(review: Review) {
 @Composable
 private fun VerifyEmailResend(state: ResendState, onResend: () -> Unit) {
     Column(Modifier.padding(horizontal = 20.dp)) {
-        TextButton(onResend, enabled = !state.sending && !state.sent) { Text(state.label) }
+        TextButton(onResend, enabled = !state.sending && !state.sent) { Text(resendLabel(state)) }
         state.message?.let {
             Text(
                 it,

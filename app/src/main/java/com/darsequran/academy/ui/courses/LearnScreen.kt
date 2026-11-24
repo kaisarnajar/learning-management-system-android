@@ -1,9 +1,7 @@
 package com.darsequran.academy.ui.courses
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -38,10 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -64,7 +58,6 @@ import com.darsequran.academy.ui.common.BackTopBar
 import com.darsequran.academy.ui.common.EmptyState
 import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.LoadContent
-import com.darsequran.academy.ui.common.Overline
 import com.darsequran.academy.ui.common.PrimaryButton
 import com.darsequran.academy.ui.common.StatusChip
 import com.darsequran.academy.ui.common.Tone
@@ -360,23 +353,5 @@ private fun FeesTab(vm: LearnViewModel, onPayFee: () -> Unit) {
                 }
             }
         }
-    }
-}
-
-/** Circular progress with a label in the middle. */
-@Composable
-fun ProgressRing(fraction: Float, label: String, size: Int = 76) {
-    val track = MaterialTheme.colorScheme.surfaceContainerHigh
-    val color = MaterialTheme.colorScheme.primary
-    val gold = Brand.goldSoft
-    Box(Modifier.size(size.dp), contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize()) {
-            val stroke = 8.dp.toPx()
-            val arc = Size(this.size.width - stroke, this.size.height - stroke)
-            val topLeft = Offset(stroke / 2, stroke / 2)
-            drawArc(track, 0f, 360f, false, topLeft, arc, style = Stroke(stroke))
-            drawArc(if (fraction >= 0.75f) color else gold, -90f, 360f * fraction.coerceIn(0f, 1f), false, topLeft, arc, style = Stroke(stroke, cap = StrokeCap.Round))
-        }
-        Text(label, style = MaterialTheme.typography.titleMedium)
     }
 }
