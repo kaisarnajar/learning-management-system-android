@@ -275,7 +275,7 @@ fun ScreenshotThumb(path: String?, isPdf: Boolean) {
 }
 
 /**
- * What the website's receipt button does: "View receipt" when one exists, else "Generate receipt" (which generates
+ * What the website's receipt button does: "View Receipt" when one exists, else "Generate Receipt" (which generates
  * it and opens it).
  */
 @Composable
@@ -285,11 +285,13 @@ fun ReceiptButton(recordId: String?, generatedAt: String?, runner: ActionRunner,
         return
     }
     if (generatedAt != null) {
-        OutlinedButton(onClick = { onOpen(recordId) }) { Text("View receipt") }
+        OutlinedButton(onClick = { onOpen(recordId) }) { Text("View Receipt") }
     } else {
         OutlinedButton(onClick = {
-            runner.run({ service<MoneyApi>().generateReceipt(recordId) }, success = "Receipt generated.") { onGenerated(); onOpen(recordId) }
-        }, enabled = !runner.busy) { Text("Generate receipt") }
+            runner.run({ service<MoneyApi>().generateReceipt(recordId) }, success = "Receipt generated successfully.") {
+                onGenerated(); onOpen(recordId)
+            }
+        }, enabled = !runner.busy) { Text("Generate Receipt") }
     }
 }
 

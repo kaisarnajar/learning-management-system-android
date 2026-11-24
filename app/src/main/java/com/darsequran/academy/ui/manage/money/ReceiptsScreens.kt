@@ -74,7 +74,7 @@ fun ReceiptsScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
     }
     deleting?.let { r ->
         ConfirmDialog(
-            "Delete receipt ${r.invoiceNumber}?", "The payment stays recorded; a new receipt (with a new number) can be generated later.", "Delete",
+            "Delete receipt ${r.invoiceNumber}?", "The payment stays recorded; generating the receipt again later keeps the same receipt number.", "Delete",
             destructive = true,
             onConfirm = { runner.run({ service<MoneyApi>().deleteReceipt(r.id) }, success = "Receipt deleted successfully.") { vm.refresh() } },
             onDismiss = { deleting = null },
@@ -124,13 +124,13 @@ fun ReceiptDetailScreen(recordId: String, onBack: () -> Unit) {
                         }, enabled = !runner.busy) { Icon(Icons.Rounded.PictureAsPdf, null); Spacer(Modifier.width(6.dp)); Text("Open PDF") }
                         OutlinedButton(onClick = {
                             runner.run({ service<MoneyApi>().emailReceipt(recordId) }, success = "Receipt sent. Ask the student to check their Inbox or Spam/Junk folder.") { loader.reload() }
-                        }, enabled = !runner.busy) { Icon(Icons.Rounded.Email, null); Spacer(Modifier.width(6.dp)); Text("Send via e-mail") }
+                        }, enabled = !runner.busy) { Icon(Icons.Rounded.Email, null); Spacer(Modifier.width(6.dp)); Text("Send via Email") }
                         OutlinedButton(onClick = { confirm = "regenerate" }, enabled = !runner.busy && !r.voided) { Icon(Icons.Rounded.Autorenew, null); Spacer(Modifier.width(6.dp)); Text("Regenerate") }
                         OutlinedButton(onClick = { confirm = "delete" }, enabled = !runner.busy) { Icon(Icons.Rounded.Delete, null, tint = MaterialTheme.colorScheme.error); Spacer(Modifier.width(6.dp)); Text("Delete", color = MaterialTheme.colorScheme.error) }
                     }
                 } else DetailCard("Receipt") {
                     Text("No receipt has been generated for this payment.", style = MaterialTheme.typography.bodyMedium)
-                    PrimaryButton("Generate receipt", {
+                    PrimaryButton("Generate Receipt", {
                         runner.run({ service<MoneyApi>().generateReceipt(recordId) }, success = "Receipt generated successfully.") { loader.reload() }
                     }, enabled = !r.voided, loading = runner.busy)
                 }
@@ -140,19 +140,19 @@ fun ReceiptDetailScreen(recordId: String, onBack: () -> Unit) {
 
     when (confirm) {
         "delete" -> ConfirmDialog(
-            "Delete this receipt?", "The payment stays recorded; a new receipt (with a new number) can be generated later.", "Delete", destructive = true,
+            "Delete this receipt?", "The payment stays recorded; generating the receipt again later keeps the same receipt number.", "Delete", destructive = true,
             onConfirm = { runner.run({ service<MoneyApi>().deleteReceipt(recordId) }, success = "Receipt deleted successfully.") { loader.reload() } },
             onDismiss = { confirm = null },
         )
         "regenerate" -> ConfirmDialog(
-            "Regenerate this receipt?", "The current receipt is deleted and a new one is issued with the current settings and a new receipt number.", "Regenerate",
+            "Regenerate this receipt?", "The receipt is issued again with the current settings. It keeps its receipt number.", "Regenerate",
             onConfirm = {
                 // Two calls, so the second can fail after the first deleted the receipt: always show what is there now.
                 runner.run({ regenerateReceipt(recordId) }) { failure ->
                     loader.reload()
                     runner.message(
                         if (failure == null) "Receipt regenerated."
-                        else "The old receipt was deleted, but a new one couldn't be issued ($failure). Tap \"Generate receipt\" to try again.",
+                        else "The old receipt was deleted, but a new one couldn't be issued ($failure). Tap \"Generate Receipt\" to try again.",
                     )
                 }
             },
