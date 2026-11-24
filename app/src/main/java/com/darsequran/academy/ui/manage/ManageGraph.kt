@@ -2,6 +2,9 @@ package com.darsequran.academy.ui.manage
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import com.darsequran.academy.ui.manage.bookstore.BookOrdersAdminRoute
+import com.darsequran.academy.ui.manage.bookstore.BooksAdminRoute
+import com.darsequran.academy.ui.manage.bookstore.bookstoreAdminGraph
 import com.darsequran.academy.ui.manage.students.StudentsAdminRoute
 import com.darsequran.academy.ui.manage.students.studentsAdminGraph
 import com.darsequran.academy.ui.teach.teachGraph
@@ -20,11 +23,14 @@ import com.darsequran.academy.ui.teach.teachGraph
 fun NavGraphBuilder.manageGraph(nav: NavHostController) {
     studentsAdminGraph(nav)
     teachGraph(nav)
+    bookstoreAdminGraph(nav)
 }
 
 /** Website admin page → the app screen that does the same job. */
 val adminHrefRoutes: Map<String, Any> = mapOf(
     "/admin/students" to StudentsAdminRoute,
+    "/admin/bookstore" to BooksAdminRoute,
+    "/admin/bookstore/orders" to BookOrdersAdminRoute,
 )
 
 /** The app screen for a website admin path, or null when the app has none. */
