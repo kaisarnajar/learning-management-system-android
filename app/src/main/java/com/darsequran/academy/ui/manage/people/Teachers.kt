@@ -26,6 +26,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.darsequran.academy.data.staff.formOf
+import com.darsequran.academy.data.staff.people.TeachersAdminApi
 import com.darsequran.academy.ui.common.Avatar
 import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.ReloadOnReturn
@@ -33,6 +34,7 @@ import com.darsequran.academy.ui.common.StatusChip
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.countOf
 import com.darsequran.academy.ui.common.formatDate
+import com.darsequran.academy.ui.manage.common.AccountAnswer
 import com.darsequran.academy.ui.manage.common.AddFab
 import com.darsequran.academy.ui.manage.common.ConfirmDialog
 import com.darsequran.academy.ui.manage.common.DetailCard
@@ -45,11 +47,10 @@ import com.darsequran.academy.ui.manage.common.ManageListScreen
 import com.darsequran.academy.ui.manage.common.ManageScaffold
 import com.darsequran.academy.ui.manage.common.Notice
 import com.darsequran.academy.ui.manage.common.RecordCard
+import com.darsequran.academy.ui.manage.common.rememberAccountCheck
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
-import com.darsequran.academy.ui.manage.common.AccountAnswer
-import com.darsequran.academy.ui.manage.common.rememberAccountCheck
 
 private fun publishedChip(published: Boolean) = if (published) "Published" to Tone.Success else "Draft" to Tone.Neutral
 

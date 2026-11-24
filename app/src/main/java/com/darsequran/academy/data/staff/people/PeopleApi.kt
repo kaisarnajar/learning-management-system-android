@@ -1,4 +1,4 @@
-package com.darsequran.academy.ui.manage.people
+package com.darsequran.academy.data.staff.people
 
 import com.darsequran.academy.data.remote.Paged
 import com.darsequran.academy.data.staff.ActionResponse
@@ -15,13 +15,6 @@ import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Streaming
-
-/*
- * The "people" part of the admin panel: teachers, enrollment requests, certificates, student reviews,
- * contact inquiries and the audit log (/api/v1/admin/...). Writes take the website forms' fields.
- */
-
-// ------------------------------------------------------------------ teachers
 
 @Serializable
 data class TeacherRow(

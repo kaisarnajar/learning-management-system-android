@@ -1,8 +1,8 @@
 package com.darsequran.academy.ui.manage.people
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.automirrored.rounded.Reply
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -16,7 +16,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.darsequran.academy.data.staff.ActionResponse
+import com.darsequran.academy.data.staff.EmailOutcome
 import com.darsequran.academy.data.staff.formOf
+import com.darsequran.academy.data.staff.people.ContactInquiriesApi
+import com.darsequran.academy.data.staff.people.ContactInquiry
 import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.Tone
@@ -33,7 +36,6 @@ import com.darsequran.academy.ui.manage.common.ManageScaffold
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
-import com.darsequran.academy.data.staff.EmailOutcome
 
 private fun inquiryChip(i: ContactInquiry) = (i.statusLabel.ifBlank { if (i.reply != null) "Replied" else "Pending" }) to (if (i.reply != null) Tone.Success else Tone.Warning)
 
