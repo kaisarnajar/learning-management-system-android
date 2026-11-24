@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.annotation.VisibleForTesting
 import com.darsequran.academy.BuildConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,7 +36,10 @@ enum class AppEnvironment(val key: String, val label: String, val baseUrl: Strin
 object CurrentEnvironment {
     @Volatile var value: AppEnvironment = AppEnvironment.default
         internal set
-    val baseUrl: String get() = value.baseUrl.trimEnd('/')
+    val baseUrl: String get() = (testBaseUrl ?: value.baseUrl).trimEnd('/')
+
+    /** Tests point requests at a local fake server; always null in the app. */
+    @VisibleForTesting @Volatile internal var testBaseUrl: String? = null
 }
 
 private val Context.environmentDataStore by preferencesDataStore(name = "environment")

@@ -82,6 +82,11 @@ android {
         resValues = true
     }
 
+    testOptions {
+        // JVM tests: android.* calls such as Log.w return defaults instead of throwing.
+        unitTests.isReturnDefaultValues = true
+    }
+
     lint {
         // Today's warnings are frozen in the baseline; anything new fails the build.
         baseline = file("lint-baseline.xml")

@@ -33,7 +33,7 @@ fun resolveUrl(path: String?): String? = when {
 /** Retrofit needs a fixed base URL; requests are pointed at the current environment by [environmentHost]. */
 private const val PLACEHOLDER_BASE = "https://api.invalid/api/v1/"
 
-class Network(private val sessionStore: SessionStore, val json: Json) {
+class Network(private val sessionStore: SessionSource, val json: Json) {
     private val refreshMutex = Mutex()
 
     private val logging = HttpLoggingInterceptor().apply {

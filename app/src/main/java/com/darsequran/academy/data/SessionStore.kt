@@ -22,13 +22,20 @@ private val Context.sessionDataStore by preferencesDataStore(name = "session")
 /** A signed-in session: the token pair and the user it belongs to. */
 data class Session(val accessToken: String, val refreshToken: String, val user: SessionUser)
 
+/** What the network layer needs from the session: read it, store a refreshed token pair, or drop it. */
+interface SessionSource {
+    val session: StateFlow<Session?>
+    suspend fun save(tokens: TokenResponse, user: SessionUser? = tokens.user)
+    suspend fun clear()
+}
+
 /**
  * Persists the session. [session] is the single source of truth for "am I signed in?".
  *
  * Each environment (production, staging, local) keeps its own session, so a developer who switches keeps being
  * signed in on each. Production uses the original key names, so sessions from before environments existed survive.
  */
-class SessionStore(private val context: Context, scope: CoroutineScope, private val json: Json) {
+class SessionStore(private val context: Context, scope: CoroutineScope, private val json: Json) : SessionSource {
     private var env: AppEnvironment = CurrentEnvironment.value
     private fun key(name: String) = stringPreferencesKey(if (env == AppEnvironment.PRODUCTION) name else "${env.key}_$name")
     private val accessKey get() = key("access_token")
@@ -39,7 +46,7 @@ class SessionStore(private val context: Context, scope: CoroutineScope, private 
     // Held in memory first and persisted second, so a token saved by the
     // refresh authenticator is visible to the very next request.
     private val _session = MutableStateFlow(runBlocking { readOnce() })
-    val session: StateFlow<Session?> = _session.asStateFlow()
+    override val session: StateFlow<Session?> = _session.asStateFlow()
 
     /** Loads the session of [environment] (after the app switched to it). */
     suspend fun useEnvironment(environment: AppEnvironment) {
@@ -58,7 +65,7 @@ class SessionStore(private val context: Context, scope: CoroutineScope, private 
         return Session(prefs[accessKey] ?: return null, prefs[refreshKey] ?: return null, user)
     }
 
-    suspend fun save(tokens: TokenResponse, user: SessionUser? = tokens.user) {
+    override suspend fun save(tokens: TokenResponse, user: SessionUser?) {
         val current = _session.value?.user
         val finalUser = user ?: current ?: return
         _session.value = Session(tokens.accessToken, tokens.refreshToken, finalUser)
@@ -74,7 +81,7 @@ class SessionStore(private val context: Context, scope: CoroutineScope, private 
         context.sessionDataStore.edit { it[userKey] = json.encodeToString(SessionUser.serializer(), user) }
     }
 
-    suspend fun clear() {
+    override suspend fun clear() {
         _session.value = null
         context.sessionDataStore.edit {
             it.remove(accessKey); it.remove(refreshKey); it.remove(userKey)
