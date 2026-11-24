@@ -312,8 +312,10 @@ private fun PayFlow(state: PayState, vm: PayViewModel, courseTitle: String, head
 
             // ---- step 3: confirm
             StepHeader(3, "Confirm")
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                listOf("upi" to "UPI", "bank" to "Bank transfer").forEach { (value, label) ->
+            val methods = listOfNotNull("upi" to "UPI", ("bank" to "Bank transfer").takeIf { !settings?.bankAccountNumber.isNullOrBlank() })
+            // Only ask how they paid when there is more than one way to pay.
+            if (methods.size > 1) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                methods.forEach { (value, label) ->
                     ChoicePill(label, method == value, Modifier.weight(1f)) { method = value }
                 }
             }

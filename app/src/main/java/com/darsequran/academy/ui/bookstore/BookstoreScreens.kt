@@ -367,9 +367,10 @@ fun CheckoutScreen(onBack: () -> Unit, onDone: () -> Unit) {
                         if (!s.upiId.isNullOrBlank()) PrimaryButton("Pay ${rupees(quote.totalAmountInrPaise)} with a UPI app", {
                             if (!launchUpi(context, s, quote.totalAmountInrPaise, "Book order")) android.widget.Toast.makeText(context, "No UPI app found. Pay to ${s.upiId}.", android.widget.Toast.LENGTH_LONG).show()
                         })
-                        Text(listOfNotNull(s.upiId?.let { "UPI: $it" }, s.bankAccountNumber?.let { "Bank: $it (${s.bankIfsc ?: ""})" }).joinToString("\n"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(listOfNotNull(s.upiId?.takeIf { it.isNotBlank() }?.let { "UPI: $it" },
+                            s.bankAccountNumber?.takeIf { it.isNotBlank() }?.let { acc -> "Bank: $acc" + (s.bankIfsc?.takeIf { it.isNotBlank() }?.let { " (IFSC $it)" } ?: "") }).joinToString("\n"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (!state.settings?.bankAccountNumber.isNullOrBlank()) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         ChoicePill("UPI", method == "upi", Modifier.weight(1f)) { method = "upi" }
                         ChoicePill("Bank transfer", method == "bank", Modifier.weight(1f)) { method = "bank" }
                     }
