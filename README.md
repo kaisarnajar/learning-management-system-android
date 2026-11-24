@@ -50,11 +50,6 @@ app/src/main/java/com/darsequran/academy/
     └── home/ courses/ pay/ explore/ bookstore/ account/ auth/
 ```
 
-## Branches
-
-Work goes to `dev`. When CI passes for a push to `dev`, the "Sync master" workflow moves `master` to the same
-commit, so the two stay in sync and `master` only ever has tested commits. Don't push to `master` directly.
-
 ## Building
 
 You need Android Studio (or its bundled JDK) and the Android SDK.
