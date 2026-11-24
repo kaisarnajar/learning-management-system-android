@@ -37,11 +37,12 @@ class NetworkAuthTest {
     private class FakeSession(initial: Session?) : SessionSource {
         private val state = MutableStateFlow(initial)
         override val session: StateFlow<Session?> = state
-        override suspend fun save(tokens: TokenResponse, user: SessionUser?) {
-            val finalUser = user ?: state.value?.user ?: return
-            state.value = Session(tokens.accessToken, tokens.refreshToken, finalUser)
+        val savedFor = mutableListOf<AppEnvironment>()
+        override suspend fun saveRefreshed(old: Session, tokens: TokenResponse) {
+            savedFor += old.env
+            if (state.value?.env == old.env) state.value = Session(tokens.accessToken, tokens.refreshToken, old.user, old.env)
         }
-        override suspend fun clear() { state.value = null }
+        override suspend fun expire(old: Session) { if (state.value?.refreshToken == old.refreshToken) state.value = null }
     }
 
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; explicitNulls = false }
@@ -63,6 +64,7 @@ class NetworkAuthTest {
                 return when (request.url.encodedPath) {
                     "/api/v1/auth/refresh" -> {
                         refreshCalls.incrementAndGet()
+                        if (switchDuringRefresh) CurrentEnvironment.value = elsewhere
                         Thread.sleep(50) // long enough for concurrent 401s to queue behind the mutex
                         if (refreshStatus != 200) MockResponse(code = refreshStatus, body = """{"error":"Session expired."}""")
                         else { validAccess = "access-2"; MockResponse(body = """{"accessToken":"access-2","refreshToken":"refresh-2"}""") }
@@ -86,6 +88,7 @@ class NetworkAuthTest {
     @After
     fun tearDown() {
         CurrentEnvironment.testBaseUrl = null
+        CurrentEnvironment.value = here
         server.close()
         other.close()
     }
@@ -96,25 +99,50 @@ class NetworkAuthTest {
         return url.newBuilder().host(if (server.url("/").host == "127.0.0.1") "localhost" else "127.0.0.1").build().toString()
     }
 
+    private val here = CurrentEnvironment.value
+    private val elsewhere = AppEnvironment.entries.first { it != here }
+    private var switchDuringRefresh = false
+
+    private fun session(env: AppEnvironment = here) = Session("access-1", "refresh-1", user, env)
+
     private fun network(session: Session?) = FakeSession(session).let { it to Network(it, json).create(TestApi::class.java) }
 
     @Test
     fun signedInRequestsCarryTheBearerToken() = runBlocking {
-        val (_, api) = network(Session("access-1", "refresh-1", user))
+        val (_, api) = network(session())
         api.ping()
         assertEquals(listOf("Bearer access-1"), seenAuth.toList())
     }
 
     @Test
+    fun anotherEnvironmentsSessionIsNotSent() = runBlocking {
+        val (_, api) = network(session(env = elsewhere))
+        runCatching { api.ping() }
+        assertEquals(listOf<String?>(null), seenAuth.toList())
+        assertEquals(0, refreshCalls.get())
+    }
+
+    @Test
+    fun aRefreshThatFinishesAfterASwitchIsStoredForTheOldEnvironmentAndNotRetried() = runBlocking {
+        validAccess = "expired"
+        switchDuringRefresh = true
+        val (session, api) = network(session())
+        val failure = runCatching { api.ping() }.exceptionOrNull()
+        assertEquals(401, (failure as HttpException).code())
+        assertEquals(listOf(here), session.savedFor)
+        assertEquals(listOf<String?>("Bearer access-1"), seenAuth.toList()) // the new token never went anywhere
+    }
+
+    @Test
     fun anotherHostNeverSeesTheToken() = runBlocking {
-        val (_, api) = network(Session("access-1", "refresh-1", user))
+        val (_, api) = network(session())
         runCatching { api.absolute(otherHostUrl()) }
         assertEquals(listOf<String?>(null), seenAuth.toList())
     }
 
     @Test
     fun theSameHostOnAnotherPortNeverSeesTheToken() = runBlocking {
-        val (_, api) = network(Session("access-1", "refresh-1", user))
+        val (_, api) = network(session())
         val sameHostOtherPort = other.url("/file").newBuilder().host(server.url("/").host).build().toString()
         runCatching { api.absolute(sameHostOtherPort) }
         assertEquals(listOf<String?>(null), seenAuth.toList())
@@ -132,7 +160,7 @@ class NetworkAuthTest {
     @Test
     fun a401RefreshesOnceAndRetriesWithTheNewToken() = runBlocking {
         validAccess = "expired" // the stored access-1 is no longer accepted
-        val (session, api) = network(Session("access-1", "refresh-1", user))
+        val (session, api) = network(session())
         api.ping()
         assertEquals(1, refreshCalls.get())
         assertEquals(listOf("Bearer access-1", "Bearer access-2"), seenAuth.toList())
@@ -143,7 +171,7 @@ class NetworkAuthTest {
     @Test
     fun concurrent401sShareOneRefresh() = runBlocking {
         validAccess = "expired"
-        val (session, api) = network(Session("access-1", "refresh-1", user))
+        val (session, api) = network(session())
         (1..3).map { async(Dispatchers.IO) { api.ping() } }.awaitAll()
         assertEquals(1, refreshCalls.get())
         assertEquals("access-2", session.session.value?.accessToken)
@@ -153,7 +181,7 @@ class NetworkAuthTest {
     @Test(timeout = 15_000)
     fun manyConcurrent401sDoNotDeadlockTheRefresh() = runBlocking {
         validAccess = "expired"
-        val (session, api) = network(Session("access-1", "refresh-1", user))
+        val (session, api) = network(session())
         (1..10).map { async(Dispatchers.IO) { api.ping() } }.awaitAll()
         assertEquals(1, refreshCalls.get())
         assertEquals("access-2", session.session.value?.accessToken)
@@ -163,7 +191,7 @@ class NetworkAuthTest {
     fun aRejectedRefreshTokenSignsOut() = runBlocking {
         validAccess = "expired"
         refreshStatus = 401
-        val (session, api) = network(Session("access-1", "refresh-1", user))
+        val (session, api) = network(session())
         val failure = runCatching { api.ping() }.exceptionOrNull()
         assertEquals(401, (failure as HttpException).code())
         assertNull(session.session.value)
@@ -173,14 +201,14 @@ class NetworkAuthTest {
     fun aServerErrorDuringRefreshKeepsTheSession() = runBlocking {
         validAccess = "expired"
         refreshStatus = 500
-        val (session, api) = network(Session("access-1", "refresh-1", user))
+        val (session, api) = network(session())
         runCatching { api.ping() }
         assertEquals("access-1", session.session.value?.accessToken)
     }
 
     @Test
     fun a401FromAnotherHostIsNotRefreshed() = runBlocking {
-        val (_, api) = network(Session("access-1", "refresh-1", user))
+        val (_, api) = network(session())
         val failure = runCatching { api.absolute(otherHostUrl()) }.exceptionOrNull()
         assertTrue(failure is HttpException)
         assertEquals(0, refreshCalls.get())

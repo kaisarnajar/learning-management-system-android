@@ -31,8 +31,10 @@ class AppContainer(context: Context) {
 
     /** Points the app at another copy of the website; that environment's own session (if any) becomes current. */
     suspend fun switchEnvironment(env: AppEnvironment) {
-        environments.select(env)
+        // Session first: until requests point at the new server, its token isn't attached to the old one (and the
+        // old token never reaches the new one), because a session is only sent to the environment that issued it.
         sessionStore.useEnvironment(env)
+        environments.select(env)
         cart.clearLocal()
         repo.clearCaches()
         environments.publish(env)

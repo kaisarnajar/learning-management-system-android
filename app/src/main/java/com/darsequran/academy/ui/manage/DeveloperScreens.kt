@@ -26,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -64,7 +63,6 @@ private sealed interface Health {
 fun EnvironmentScreen(onBack: () -> Unit) {
     val container = rememberContainer()
     val current by container.environments.environment.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
     val health = androidx.compose.runtime.remember { mutableStateMapOf<AppEnvironment, Health>() }
 
     LaunchedEffect(Unit) {
@@ -89,7 +87,8 @@ fun EnvironmentScreen(onBack: () -> Unit) {
             AppEnvironment.available.forEach { env ->
                 AppCard(
                     Modifier.fillMaxWidth(),
-                    onClick = { if (env != current) scope.launch { container.switchEnvironment(env) } },
+                    // App scope: leaving this screen must not cancel a switch halfway.
+                    onClick = { if (env != current) container.appScope.launch { container.switchEnvironment(env) } },
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         RadioButton(env == current, null)

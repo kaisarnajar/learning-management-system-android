@@ -69,7 +69,8 @@ class Network(private val sessionStore: SessionSource, val json: Json) {
      */
     private val authHeader = Interceptor { chain ->
         val original = chain.request()
-        val token = sessionStore.session.value?.accessToken
+        // A session belongs to one environment: during a switch the old one must not reach the new server.
+        val token = sessionStore.session.value?.takeIf { it.env == CurrentEnvironment.value }?.accessToken
         val request = if (token != null && original.header("Authorization") == null && isAcademyServer(original.url)) {
             original.newBuilder().header("Authorization", "Bearer $token").build()
         } else original
@@ -92,16 +93,19 @@ class Network(private val sessionStore: SessionSource, val json: Json) {
             return runBlocking {
                 refreshMutex.withLock {
                     val current = sessionStore.session.value ?: return@withLock null
+                    if (current.env != CurrentEnvironment.value) return@withLock null
                     if (current.accessToken != usedToken) {
                         // Someone else already refreshed while this request waited.
                         return@withLock response.request.newBuilder().header("Authorization", "Bearer ${current.accessToken}").build()
                     }
                     try {
                         val tokens = refreshApi.refresh(RefreshRequest(current.refreshToken))
-                        sessionStore.save(tokens)
+                        sessionStore.saveRefreshed(current, tokens)
+                        // Switched environment while refreshing: don't resend to the old server.
+                        if (current.env != CurrentEnvironment.value) return@withLock null
                         response.request.newBuilder().header("Authorization", "Bearer ${tokens.accessToken}").build()
                     } catch (e: HttpException) {
-                        if (e.code() == 401) sessionStore.clear()
+                        if (e.code() == 401) sessionStore.expire(current)
                         null
                     } catch (e: Exception) {
                         null
