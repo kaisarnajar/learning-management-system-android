@@ -12,6 +12,8 @@ import com.darsequran.academy.ui.manage.people.InquiriesAdminRoute
 import com.darsequran.academy.ui.manage.people.ReviewsAdminRoute
 import com.darsequran.academy.ui.manage.people.TeachersAdminRoute
 import com.darsequran.academy.ui.manage.people.peopleGraph
+import com.darsequran.academy.ui.manage.courses.CoursesAdminRoute
+import com.darsequran.academy.ui.manage.courses.coursesGraph
 import com.darsequran.academy.ui.manage.students.StudentsAdminRoute
 import com.darsequran.academy.ui.manage.students.studentsAdminGraph
 import com.darsequran.academy.ui.teach.teachGraph
@@ -32,6 +34,7 @@ fun NavGraphBuilder.manageGraph(nav: NavHostController) {
     teachGraph(nav)
     bookstoreAdminGraph(nav)
     peopleGraph(nav)
+    coursesGraph(nav)
 }
 
 /** Website admin page → the app screen that does the same job. */
@@ -45,6 +48,7 @@ val adminHrefRoutes: Map<String, Any> = mapOf(
     "/admin/review-approvals" to ReviewsAdminRoute,
     "/admin/contact-inquiries" to InquiriesAdminRoute,
     "/admin/audit-log" to AuditLogRoute,
+    "/admin/courses" to CoursesAdminRoute,
 )
 
 /** The app screen for a website admin path, or null when the app has none. */
