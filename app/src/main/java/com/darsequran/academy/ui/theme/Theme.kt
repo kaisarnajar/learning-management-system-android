@@ -16,9 +16,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import android.app.Activity
+import androidx.core.graphics.drawable.toDrawable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
@@ -172,9 +174,13 @@ fun AcademyTheme(themeSetting: String = "system", content: @Composable () -> Uni
     val heroes = remember { HeroTracker() }
     val lightIcons = !dark && heroes.count == 0
     val view = LocalView.current
+    val scheme = if (dark) DarkScheme else LightScheme
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as? Activity)?.window ?: return@SideEffect
+            // The window behind the content follows the in-app choice too (its XML colour follows the phone's
+            // setting), so screen transitions don't flash the other theme.
+            window.setBackgroundDrawable(scheme.background.toArgb().toDrawable())
             WindowCompat.getInsetsController(window, view).apply {
                 isAppearanceLightStatusBars = lightIcons
                 isAppearanceLightNavigationBars = !dark
@@ -183,7 +189,7 @@ fun AcademyTheme(themeSetting: String = "system", content: @Composable () -> Uni
     }
     CompositionLocalProvider(LocalBrand provides if (dark) DarkBrand else LightBrand, LocalHeroes provides heroes) {
         MaterialTheme(
-            colorScheme = if (dark) DarkScheme else LightScheme,
+            colorScheme = scheme,
             typography = AcademyTypography,
             shapes = AcademyShapes,
             content = content,
