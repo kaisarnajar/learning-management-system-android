@@ -136,6 +136,13 @@ class CartViewModel(val cart: CartStore, private val auth: AuthRepository) : Vie
     // elsewhere (e.g. on the website).
     init { if (auth.session.value != null) viewModelScope.launch { cart.refresh() } }
     fun change(bookId: String, delta: Int) = viewModelScope.launch { message.value = cart.change(bookId, delta) }
+
+    /** Whether the account's e-mail is verified (null until known): the website's cart blocks checkout without. */
+    val emailVerified = MutableStateFlow<Boolean?>(null)
+
+    fun checkEmail() = viewModelScope.launch {
+        (auth.profile() as? ApiResult.Ok)?.let { emailVerified.value = it.value.emailVerified != null }
+    }
 }
 
 // ================================================================== list
@@ -191,7 +198,9 @@ fun BookScreen(id: String, onBack: () -> Unit, onCart: () -> Unit, onSignIn: () 
                     Column(Modifier.weight(1f)) { PriceLine(book.priceInrPaise, book.mrpInrPaise) }
                     val available = book.status == "AVAILABLE"
                     when {
-                        !available -> PrimaryButton(if (book.status == "COMING_SOON") "Coming soon" else "Out of stock", {}, Modifier.width(180.dp), enabled = false)
+                        !available -> PrimaryButton(
+                            bookStatusLabel(book.status), {}, Modifier.width(180.dp), enabled = false,
+                        )
                         session == null -> PrimaryButton("Sign in to buy", onSignIn, Modifier.width(180.dp))
                         inCart > 0 -> CartStepper(book.title, inCart, { cartVm.change(id, it) }, Modifier.width(180.dp))
                         else -> PrimaryButton("Add to cart", { cartVm.change(id, 1) }, Modifier.width(180.dp))
@@ -210,8 +219,12 @@ fun BookScreen(id: String, onBack: () -> Unit, onCart: () -> Unit, onSignIn: () 
                     Text(book.title, style = MaterialTheme.typography.headlineSmall)
                     Text(book.author, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(10.dp))
-                    val (label, tone) = when (book.status) { "AVAILABLE" -> "In stock" to Tone.Success; "COMING_SOON" -> "Coming soon" to Tone.Info; else -> "Out of stock" to Tone.Danger }
-                    StatusChip(label, tone)
+                    val tone = when (book.status) {
+                        "AVAILABLE" -> Tone.Success
+                        "COMING_SOON" -> Tone.Info
+                        else -> Tone.Danger
+                    }
+                    StatusChip(bookStatusLabel(book.status), tone)
                     message?.let { Spacer(Modifier.height(10.dp)); Banner(it, Tone.Danger) }
                     Spacer(Modifier.height(16.dp))
                     Text(book.description, style = MaterialTheme.typography.bodyLarge)
@@ -243,45 +256,6 @@ fun CartStepper(title: String, quantity: Int, onChange: (delta: Int) -> Unit, mo
 
 // ================================================================== cart
 
-@Composable
-fun CartScreen(onBack: () -> Unit, onCheckout: () -> Unit, onBrowse: () -> Unit) {
-    val vm: CartViewModel = viewModel(factory = vmFactory { CartViewModel(it.cart, it.auth) })
-    val items by vm.cart.items.collectAsStateWithLifecycle()
-    val message by vm.message.collectAsStateWithLifecycle()
-    Scaffold(
-        topBar = { BackTopBar("Your cart", onBack) },
-        bottomBar = {
-            if (items.isNotEmpty()) Surface(color = MaterialTheme.colorScheme.surfaceContainerLowest, shadowElevation = 8.dp) {
-                Column(Modifier.windowInsetsPadding(WindowInsets.navigationBars).padding(horizontal = 20.dp, vertical = 12.dp)) {
-                    Row { Text("Books", Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge); Text(rupees(items.sumOf { it.priceInrPaise * it.quantity }), style = MaterialTheme.typography.titleMedium) }
-                    Text("Shipping is added at checkout.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(10.dp))
-                    PrimaryButton("Checkout", onCheckout)
-                }
-            }
-        },
-    ) { padding ->
-        if (items.isEmpty()) Box(Modifier.padding(padding)) { EmptyState("Your cart is empty", "Books you add appear here.", "Browse books", onBrowse) }
-        else LazyColumn(Modifier.padding(padding), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            message?.let { item { Banner(it, Tone.Danger) } }
-            items(items, key = { it.bookId }) { item ->
-                AppCard(Modifier.fillMaxWidth(), contentPadding = PaddingValues(12.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        RemoteImage(item.imagePath, item.title, Modifier.size(width = 58.dp, height = 80.dp).clip(MaterialTheme.shapes.small))
-                        Spacer(Modifier.width(12.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text(item.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            Text(item.author, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            PriceLine(item.priceInrPaise, item.mrpInrPaise)
-                        }
-                        CartStepper(item.title, item.quantity, { vm.change(item.bookId, it) }, Modifier.width(130.dp))
-                    }
-                }
-            }
-        }
-    }
-}
-
 // ============================================================== checkout
 
 data class CheckoutState(
@@ -296,9 +270,11 @@ data class CheckoutState(
 class CheckoutViewModel(private val repo: AcademyRepository, private val cart: CartStore) : ViewModel() {
     private val _state = MutableStateFlow(CheckoutState())
     val state: StateFlow<CheckoutState> = _state.asStateFlow()
-    private val lines get() = cart.items.value.map { CartLine(it.bookId, it.quantity) }
+    /** The lines picked on the cart page. */
+    private val lines get() = cart.selectedItems().map { CartLine(it.bookId, it.quantity) }
     /** The lines the shown total was worked out for: the order is placed for exactly these. */
     private var quotedLines: List<CartLine> = emptyList()
+    private var quotedTotal: Int = 0
 
     init { load() }
 
@@ -308,7 +284,7 @@ class CheckoutViewModel(private val repo: AcademyRepository, private val cart: C
         val s = settings.await()
         val asked = lines
         val quote = repo.checkoutQuote(asked)
-        if (quote is ApiResult.Ok) quotedLines = asked
+        if (quote is ApiResult.Ok) { quotedLines = asked; quotedTotal = quote.value.totalAmountInrPaise }
         _state.update { it.copy(quote = quote.toLoad(), settings = s.orNull(), settingsError = (s as? ApiResult.Err)?.message) }
     }
 
@@ -320,7 +296,14 @@ class CheckoutViewModel(private val repo: AcademyRepository, private val cart: C
     }
 
     /** One order per checkout: a second tap (even in the same frame) or a tap after success is ignored. */
-    fun place(method: String, reference: String, address: String, pin: String, phone: String, notes: String, screenshot: Pair<ByteArray, String>?) {
+    fun place(
+        method: String,
+        reference: String,
+        address: String,
+        pin: String,
+        phone: String,
+        screenshot: Pair<ByteArray, String>?,
+    ) {
         if (_state.value.submitting || _state.value.done) return
         // The student paid the total shown for the quoted cart; if the cart has changed since (another screen, a
         // refresh), placing it would order something other than what was paid for.
@@ -330,10 +313,19 @@ class CheckoutViewModel(private val repo: AcademyRepository, private val cart: C
             return
         }
         _state.update { it.copy(submitting = true, error = null) }
-        viewModelScope.launch { send(method, reference, address, pin, phone, notes, screenshot) }
+        val left = cart.unselectedItems().map { CartLine(it.bookId, it.quantity) }
+        viewModelScope.launch { send(method, reference, address, pin, phone, screenshot, left) }
     }
 
-    private suspend fun send(method: String, reference: String, address: String, pin: String, phone: String, notes: String, screenshot: Pair<ByteArray, String>?) {
+    private suspend fun send(
+        method: String,
+        reference: String,
+        address: String,
+        pin: String,
+        phone: String,
+        screenshot: Pair<ByteArray, String>?,
+        left: List<CartLine>,
+    ) {
         val fields = mapOf(
             "items" to kotlinx.serialization.json.Json.encodeToString(kotlinx.serialization.builtins.ListSerializer(CartLine.serializer()), quotedLines),
             "paymentMethod" to method,
@@ -341,10 +333,11 @@ class CheckoutViewModel(private val repo: AcademyRepository, private val cart: C
             "deliveryAddress" to address.trim(),
             "deliveryPinCode" to pin.trim(),
             "deliveryPhoneNumber" to phone.trim(),
-            "notes" to notes.trim(),
+            // The total shown; the server refuses the order if it has changed since.
+            "expectedTotalPaise" to quotedTotal.toString(),
         )
         when (val r = repo.placeOrder(fields, screenshot)) {
-            is ApiResult.Ok -> { cart.refresh(); _state.update { it.copy(submitting = false, done = true) } }
+            is ApiResult.Ok -> { cart.afterOrder(left); _state.update { it.copy(submitting = false, done = true) } }
             is ApiResult.Err -> _state.update { it.copy(submitting = false, error = r.message) }
         }
     }
@@ -360,13 +353,16 @@ fun CheckoutScreen(onBack: () -> Unit, onDone: () -> Unit) {
     var address by rememberSaveable { mutableStateOf("") }
     var pin by rememberSaveable { mutableStateOf("") }
     var phone by rememberSaveable { mutableStateOf("") }
-    var notes by rememberSaveable { mutableStateOf("") }
     val proof = rememberProofImagePicker()
 
     Scaffold(topBar = { BackTopBar("Checkout", onBack) }) { padding ->
         Box(Modifier.padding(padding)) {
             if (state.done) {
-                MessageState(Icons.Rounded.CheckCircle, "Order placed", "The academy will verify your payment and ship the books. Track it under Account → Orders.", "Done", onDone)
+                MessageState(
+                    Icons.Rounded.CheckCircle, "Order submitted",
+                    "The academy will verify your payment and ship the books. Track it under Account → Orders.",
+                    "Done", onDone,
+                )
                 return@Box
             }
             LoadContent(state.quote, vm::load) { quote ->
@@ -388,12 +384,7 @@ fun CheckoutScreen(onBack: () -> Unit, onDone: () -> Unit) {
                         }
                     }
                     Text("Delivery", style = MaterialTheme.typography.titleLarge)
-                    OutlinedTextField(address, { address = it.take(500) }, Modifier.fillMaxWidth().height(110.dp), label = { Text("Full address") })
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        OutlinedTextField(pin, { pin = it.filter(Char::isDigit).take(10) }, Modifier.weight(1f), label = { Text("PIN code") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
-                        OutlinedTextField(phone, { phone = it.filter(Char::isDigit).take(15) }, Modifier.weight(1.3f), label = { Text("Phone") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone))
-                    }
-                    OutlinedTextField(notes, { notes = it.take(300) }, Modifier.fillMaxWidth(), label = { Text("Note for the academy (optional)") })
+                    DeliveryFields(address, { address = it }, pin, { pin = it }, phone, { phone = it })
 
                     Text("Payment", style = MaterialTheme.typography.titleLarge)
                     PaymentDetailsError(state.settingsError, vm::reloadSettings)
@@ -402,8 +393,8 @@ fun CheckoutScreen(onBack: () -> Unit, onDone: () -> Unit) {
                     PaymentConfirmFields(state.settings, method, { method = it }, reference, { reference = it }, proof)
                     state.error?.let { Banner(it, Tone.Danger) }
                     PrimaryButton(
-                        "Place order · ${rupees(quote.totalAmountInrPaise)}",
-                        { vm.place(method, reference, address, pin, phone, notes, proof.image?.upload) },
+                        "Submit Order for Approval",
+                        { vm.place(method, reference, address, pin, phone, proof.image?.upload) },
                         enabled = address.trim().length >= 10 && pin.length >= 5 && phone.length >= 10 && reference.length >= 6,
                         loading = state.submitting,
                     )
@@ -411,6 +402,36 @@ fun CheckoutScreen(onBack: () -> Unit, onDone: () -> Unit) {
                 }
             }
         }
+    }
+}
+
+/** The website's delivery fields (Delivery Address, Pin Code, Phone Number); digits only where it takes digits. */
+@Suppress("FunctionNaming") // Compose names composables like types
+@Composable
+private fun DeliveryFields(
+    address: String,
+    onAddress: (String) -> Unit,
+    pin: String,
+    onPin: (String) -> Unit,
+    phone: String,
+    onPhone: (String) -> Unit,
+) {
+    OutlinedTextField(
+        address, { onAddress(it.take(500)) }, Modifier.fillMaxWidth().height(110.dp),
+        label = { Text("Delivery Address") },
+        placeholder = { Text("Enter your full address (Street, City, State)...") },
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        OutlinedTextField(
+            pin, { onPin(it.filter(Char::isDigit).take(10)) }, Modifier.weight(1f),
+            label = { Text("Pin Code") }, placeholder = { Text("e.g. 193402") }, singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        )
+        OutlinedTextField(
+            phone, { onPhone(it.filter(Char::isDigit).take(15)) }, Modifier.weight(1.3f),
+            label = { Text("Phone Number") }, placeholder = { Text("e.g. 9876543210") }, singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+        )
     }
 }
 

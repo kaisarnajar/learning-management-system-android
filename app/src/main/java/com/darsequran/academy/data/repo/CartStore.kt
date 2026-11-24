@@ -2,6 +2,7 @@ package com.darsequran.academy.data.repo
 
 import com.darsequran.academy.data.ApiResult
 import com.darsequran.academy.data.remote.CartItem
+import com.darsequran.academy.data.remote.CartLine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -64,12 +65,41 @@ class CartStore(private val repo: AcademyRepository) {
         }
     }
 
+    private val _unselected = MutableStateFlow<Set<String>>(emptySet())
+
+    /** Books left out of the next checkout (the website's cart checkboxes); every book starts selected. */
+    val unselected: StateFlow<Set<String>> = _unselected.asStateFlow()
+
+    fun select(bookId: String, selected: Boolean) = _unselected.update { if (selected) it - bookId else it + bookId }
+
+    /** "Select all" / "Deselect all". */
+    fun selectAll(selected: Boolean) {
+        _unselected.value = if (selected) emptySet() else _items.value.map { it.bookId }.toSet()
+    }
+
+    /** The cart lines that go to checkout. */
+    fun selectedItems(): List<CartItem> = _items.value.filterNot { it.bookId in _unselected.value }
+
+    /** The cart lines left out of checkout. */
+    fun unselectedItems(): List<CartItem> = _items.value.filter { it.bookId in _unselected.value }
+
+    /**
+     * After an order: the server empties the whole cart, so the books that were left out of it ([left]) are put
+     * back, as the website keeps them in the cart. Everything is selected again, as on a fresh cart page.
+     */
+    suspend fun afterOrder(left: List<CartLine>) {
+        sending.withLock { left.forEach { repo.setCartLine(it.bookId, it.quantity) } }
+        _unselected.value = emptySet()
+        refresh()
+    }
+
     fun quantityOf(bookId: String) = _items.value.firstOrNull { it.bookId == bookId }?.quantity ?: 0
 
     fun clearLocal() {
         synchronized(this) { wishes.clear() }
         confirmed = emptyList()
         _items.value = emptyList()
+        _unselected.value = emptySet()
     }
 
     /** A book not in the cart yet appears once the server answers (it sends the title, price and cover). */
