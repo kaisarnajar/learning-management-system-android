@@ -40,6 +40,7 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Contrast
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.Dns
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Gavel
 import androidx.compose.material.icons.rounded.Info
@@ -177,6 +178,7 @@ fun AccountScreen(
     onDeleteAccount: () -> Unit,
     onContact: () -> Unit,
     onAbout: () -> Unit,
+    onEnvironment: (() -> Unit)? = null,
     vm: AccountViewModel = viewModel(factory = vmFactory { AccountViewModel(it.auth, it.repo, it.sessionStore) }),
 ) {
     val session by vm.session.collectAsStateWithLifecycle()
@@ -211,6 +213,10 @@ fun AccountScreen(
                             Column(Modifier.weight(1f)) {
                                 Text(profile?.name ?: user.name ?: "Student", style = MaterialTheme.typography.headlineSmall, color = Brand.onHero, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text(user.email, style = MaterialTheme.typography.bodySmall, color = Brand.onHero.copy(alpha = 0.8f))
+                                roleLabel(user.role)?.let {
+                                    Spacer(Modifier.height(6.dp))
+                                    Text(it, style = MaterialTheme.typography.labelLarge, color = Brand.goldSoft)
+                                }
                                 (profile?.registrationNumber ?: user.registrationNumber)?.let {
                                     Spacer(Modifier.height(6.dp))
                                     Text(it, style = MaterialTheme.typography.labelLarge, color = Brand.goldSoft)
@@ -226,18 +232,30 @@ fun AccountScreen(
             }
         }
 
-        if (session != null) {
+        // Admins and developers manage the academy rather than study in it, so their account has no learning items.
+        val admin = session?.user?.role == "ADMIN" || session?.user?.role == "DEVELOPER"
+        if (session != null && admin) {
+            item { Group("Account") }
+            item { Entry(Icons.Rounded.Notifications, "Notifications", onNotifications) }
+        }
+        if (session != null && !admin) {
             item { Group("My learning") }
             item { Entry(Icons.Rounded.Notifications, "Notifications", onNotifications) }
             item { Entry(Icons.Rounded.Payments, "Payments & receipts", onPayments) }
             item { Entry(Icons.Rounded.RequestQuote, "Fee waiver requests", onWaivers) }
             item { Entry(Icons.Rounded.Star, "My reviews", onReviews) }
             item { Entry(Icons.Rounded.ShoppingBag, "Book orders", onOrders) }
+        }
+        if (session != null) {
             item { Group("Settings") }
             item { Entry(Icons.Rounded.Edit, "Edit profile", onEditProfile) }
             if (profile?.hasPassword != false) item { Entry(Icons.Rounded.Key, "Change password", onChangePassword) }
         } else item { Group("Settings") }
         item { Entry(Icons.Rounded.Contrast, "Appearance", { themeDialog = true }, trailing = when (theme) { "light" -> "Light"; "dark" -> "Dark"; else -> "System" }) }
+        if (onEnvironment != null) {
+            item { Group("Developer") }
+            item { Entry(Icons.Rounded.Dns, "Environment", onEnvironment, trailing = com.darsequran.academy.data.CurrentEnvironment.value.label) }
+        }
         item { Group("Academy") }
         item { Entry(Icons.Rounded.SupportAgent, "Contact us", onContact) }
         item { Entry(Icons.Rounded.Info, "About the academy", onAbout) }
@@ -246,7 +264,7 @@ fun AccountScreen(
         if (session != null) {
             item { Group("") }
             item { Entry(Icons.AutoMirrored.Rounded.Logout, "Sign out", { confirmSignOut = true }) }
-            item { Entry(Icons.Rounded.DeleteForever, "Delete my account", onDeleteAccount, danger = true) }
+            if (!admin) item { Entry(Icons.Rounded.DeleteForever, "Delete my account", onDeleteAccount, danger = true) }
         }
         item {
             Text("Version ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(20.dp))
@@ -821,8 +839,15 @@ fun AboutScreen(onBack: () -> Unit, onTeachers: () -> Unit) {
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 Text("Darse Quran Academy teaches the Quran, Tajweed, Islamic jurisprudence, Hadith and the Arabic language with qualified teachers, online and in person, for students of every age.", style = MaterialTheme.typography.bodyLarge)
                 PrimaryButton("Meet our teachers", onTeachers)
-                com.darsequran.academy.ui.common.SecondaryButton("Visit the website", { openWeb(context, BuildConfig.BASE_URL + "/about") })
+                com.darsequran.academy.ui.common.SecondaryButton("Visit the website", { openWeb(context, "/about") })
             }
         }
     }
+}
+
+private fun roleLabel(role: String?): String? = when (role) {
+    "ADMIN" -> "Administrator"
+    "DEVELOPER" -> "Developer"
+    "TEACHER" -> "Teacher"
+    else -> null
 }
