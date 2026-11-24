@@ -18,6 +18,7 @@ googleId = "1.2.1"
 browser = "1.10.0"
 exifinterface = "1.4.1"
 richEditor = "1.0.0-rc13"
+detekt = "2.0.0-alpha.1"
 junit = "4.13.2"
 turbine = "1.2.1"
 androidxTestRunner = "1.7.0"
@@ -69,3 +70,4 @@ robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+detekt = { id = "dev.detekt", version.ref = "detekt" }

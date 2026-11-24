@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.detekt)
 }
 
 val localProperties = Properties().apply {
@@ -189,4 +190,10 @@ kotlin {
             "androidx.compose.foundation.layout.ExperimentalLayoutApi",
         )
     }
+}
+
+detekt {
+    // Today's findings are frozen in the baseline; new ones fail the build.
+    buildUponDefaultConfig = true
+    baseline = file("detekt-baseline.xml")
 }
