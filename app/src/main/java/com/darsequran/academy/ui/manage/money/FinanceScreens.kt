@@ -1,5 +1,6 @@
 package com.darsequran.academy.ui.manage.money
 
+import com.darsequran.academy.ui.common.ctaButtonColors
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -120,7 +121,14 @@ fun FinanceScreen(onBack: () -> Unit, onBookstore: () -> Unit, onRecord: (expens
                         OutlinedButton(onClick = {
                             runner.openExport(context, if (expenses) "Course_Expenses.xlsx" else "Course_Income.xlsx", filters + ("type" to if (expenses) "expenses" else "income") + (if (state.query.isNotBlank()) mapOf("q" to state.query) else emptyMap()))
                         }, enabled = !runner.busy, modifier = Modifier.weight(1f)) { Icon(Icons.Rounded.Download, null); Spacer(Modifier.width(6.dp)); Text("Export to Excel") }
-                        Button(onClick = { onRecord(expenses) }, modifier = Modifier.weight(1f)) { Icon(Icons.Rounded.Add, null); Spacer(Modifier.width(6.dp)); Text(if (expenses) "Record expense" else "Record payment") }
+                        Button(
+                            colors = ctaButtonColors(),
+                            onClick = { onRecord(expenses) },
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Icon(Icons.Rounded.Add, null); Spacer(Modifier.width(6.dp))
+                            Text(if (expenses) "Record expense" else "Record payment")
+                        }
                     }
                 }
                 item {

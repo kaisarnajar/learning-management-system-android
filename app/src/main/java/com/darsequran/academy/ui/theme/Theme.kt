@@ -42,21 +42,26 @@ data class BrandColors(
     val danger: Color,
     val dangerContainer: Color,
     val outlineSoft: Color,
+    /** Call-to-action buttons: the website's gold (--primary), with dark text so the label stays readable (AA). */
+    val cta: Color = Color(0xFFD4A017),
+    val onCta: Color = Color(0xFF1A1A1A),
 )
 
 private val LightBrand = BrandColors(
     gold = Color(0xFF9A7B0A),
     goldSoft = Color(0xFFD4AF37),
-    hero = Color(0xFF0F3D2E),
-    heroDeep = Color(0xFF062A1F),
+    // The website's PageHero gradient (#003527 → #002117).
+    hero = Color(0xFF003527),
+    heroDeep = Color(0xFF002117),
     onHero = Color.White,
     mint = Color(0xFF7FD1AE),
     success = Color(0xFF1E6B47),
     successContainer = Color(0xFFDDF2E6),
     warning = Color(0xFF8A5A00),
     warningContainer = Color(0xFFFCEFCF),
-    info = Color(0xFF1F5B8F),
-    infoContainer = Color(0xFFDDEBF8),
+    // The website's info tone is violet (violet-900 on violet-100).
+    info = Color(0xFF4C1D95),
+    infoContainer = Color(0xFFEDE9FE),
     danger = Color(0xFFB3261E),
     dangerContainer = Color(0xFFFBE3E1),
     outlineSoft = Color(0xFFE7E2D6),
@@ -73,8 +78,8 @@ private val DarkBrand = BrandColors(
     successContainer = Color(0xFF173A2B),
     warning = Color(0xFFF2C46D),
     warningContainer = Color(0xFF3D2E0C),
-    info = Color(0xFF9CC8F2),
-    infoContainer = Color(0xFF172C40),
+    info = Color(0xFFC4B5FD),
+    infoContainer = Color(0xFF2E1065),
     danger = Color(0xFFF2B8B5),
     dangerContainer = Color(0xFF4A1816),
     outlineSoft = Color(0xFF29322E),

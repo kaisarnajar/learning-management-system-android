@@ -1,5 +1,6 @@
 package com.darsequran.academy.ui.manage.money
 
+import com.darsequran.academy.ui.common.ctaButtonColors
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -135,7 +136,11 @@ fun SubmissionCard(row: MoneyRow, runner: ActionRunner, onOpenReceipt: (String) 
         Spacer(Modifier.height(10.dp))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             if (!approved) {
-                Button(onClick = { onDecide(true) }, enabled = !runner.busy) { Icon(Icons.Rounded.CheckCircle, null); Spacer(Modifier.padding(3.dp)); Text("Confirm") }
+                Button(
+                    colors = ctaButtonColors(),
+                    onClick = { onDecide(true) },
+                    enabled = !runner.busy,
+                ) { Icon(Icons.Rounded.CheckCircle, null); Spacer(Modifier.padding(3.dp)); Text("Confirm") }
                 OutlinedButton(onClick = { onDecide(false) }, enabled = !runner.busy) { Text("Decline", color = MaterialTheme.colorScheme.error) }
             } else {
                 ReceiptButton(row.paymentRecordId, row.receiptGeneratedAt, runner, onOpenReceipt, onChanged)

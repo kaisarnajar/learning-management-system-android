@@ -3,3 +3,7 @@ naming:
   FunctionNaming:
     # Composable functions are named like types (Compose convention).
     ignoreAnnotated: ['Composable']
+style:
+  MagicNumber:
+    # The theme is where colour values and sizes are defined.
+    excludes: ['**/ui/theme/**', '**/test/**', '**/androidTest/**']

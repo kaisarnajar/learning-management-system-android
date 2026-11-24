@@ -1,5 +1,6 @@
 package com.darsequran.academy.ui.manage.people
 
+import com.darsequran.academy.ui.common.ctaButtonColors
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -65,7 +66,12 @@ fun ActionCard(
 
 @Composable
 fun SmallPrimary(label: String, onClick: () -> Unit, enabled: Boolean = true) =
-    Button(onClick = onClick, enabled = enabled, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 6.dp)) { Text(label) }
+    Button(
+        colors = ctaButtonColors(),
+        onClick = onClick,
+        enabled = enabled,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+    ) { Text(label) }
 
 @Composable
 fun SmallOutlined(label: String, onClick: () -> Unit, enabled: Boolean = true) =

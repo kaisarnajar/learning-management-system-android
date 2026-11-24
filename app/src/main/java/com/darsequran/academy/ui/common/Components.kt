@@ -280,7 +280,7 @@ fun MessageState(
         }
         if (action != null && onAction != null) {
             Spacer(Modifier.height(20.dp))
-            Button(onClick = onAction) { Text(action) }
+            Button(onClick = onAction, colors = ctaButtonColors()) { Text(action) }
         }
     }
 }
@@ -440,12 +440,16 @@ fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
         enabled = enabled && !loading,
         modifier = modifier.fillMaxWidth().height(52.dp),
         shape = MaterialTheme.shapes.medium,
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+        colors = ctaButtonColors(),
     ) {
-        if (loading) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+        if (loading) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = Brand.onCta)
         else Text(text, style = MaterialTheme.typography.labelLarge)
     }
 }
+
+/** The website's primary button: gold with dark text. */
+@Composable
+fun ctaButtonColors() = ButtonDefaults.buttonColors(containerColor = Brand.cta, contentColor = Brand.onCta)
 
 @Composable
 fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {

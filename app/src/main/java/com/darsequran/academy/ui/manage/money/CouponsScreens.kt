@@ -1,5 +1,6 @@
 package com.darsequran.academy.ui.manage.money
 
+import com.darsequran.academy.ui.common.ctaButtonColors
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -143,7 +144,11 @@ private fun WaiverRequestCard(r: WaiverRequest, runner: ActionRunner, onChanged:
         Spacer(Modifier.height(8.dp))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (r.status == "PENDING") {
-                Button(onClick = { dialog = "approve" }, enabled = !runner.busy) { Text("Approve") }
+                Button(
+                    colors = ctaButtonColors(),
+                    onClick = { dialog = "approve" },
+                    enabled = !runner.busy,
+                ) { Text("Approve") }
                 OutlinedButton(onClick = { dialog = "reject" }, enabled = !runner.busy) { Text("Reject", color = MaterialTheme.colorScheme.error) }
             }
             if (r.status != "APPROVED") TextButton(onClick = { dialog = "delete" }, enabled = !runner.busy) { Text("Delete", color = MaterialTheme.colorScheme.error) }

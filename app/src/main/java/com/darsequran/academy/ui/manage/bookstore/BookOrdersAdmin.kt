@@ -1,5 +1,6 @@
 package com.darsequran.academy.ui.manage.bookstore
 
+import com.darsequran.academy.ui.common.ctaButtonColors
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -190,11 +191,19 @@ fun BookOrderActions(id: String, status: String, runner: ActionRunner, onChanged
 
     when (status) {
         "PENDING_VERIFICATION" -> {
-            Button(onClick = { confirm = "approve" }, enabled = !runner.busy) { Text("Approve") }
+            Button(
+                colors = ctaButtonColors(),
+                onClick = { confirm = "approve" },
+                enabled = !runner.busy,
+            ) { Text("Approve") }
             OutlinedButton(onClick = { confirm = "decline" }, enabled = !runner.busy) { Text("Decline", color = MaterialTheme.colorScheme.error) }
         }
         "APPROVED" -> {
-            Button(onClick = { shipping = true }, enabled = !runner.busy) { Text("Mark as shipped") }
+            Button(
+                colors = ctaButtonColors(),
+                onClick = { shipping = true },
+                enabled = !runner.busy,
+            ) { Text("Mark as shipped") }
             OutlinedButton(onClick = { confirm = "refund" }, enabled = !runner.busy) { Text("Refund", color = MaterialTheme.colorScheme.error) }
         }
         "SHIPPED" -> OutlinedButton(onClick = { confirm = "refund" }, enabled = !runner.busy) { Text("Refund", color = MaterialTheme.colorScheme.error) }

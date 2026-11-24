@@ -1,5 +1,6 @@
 package com.darsequran.academy.ui.manage.content
 
+import com.darsequran.academy.ui.common.ctaButtonColors
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -408,7 +409,11 @@ fun BlogApprovalDetailScreen(id: String, onBack: () -> Unit, onEdit: () -> Unit)
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = { deciding = true }, enabled = !runner.busy) { Icon(Icons.Rounded.Check, null); Text(" Approve") }
+                        Button(
+                            colors = ctaButtonColors(),
+                            onClick = { deciding = true },
+                            enabled = !runner.busy,
+                        ) { Icon(Icons.Rounded.Check, null); Text(" Approve") }
                         OutlinedButton(onClick = { deciding = false }, enabled = !runner.busy) {
                             Icon(Icons.Rounded.Close, null, tint = MaterialTheme.colorScheme.error); Text(" Reject", color = MaterialTheme.colorScheme.error)
                         }
