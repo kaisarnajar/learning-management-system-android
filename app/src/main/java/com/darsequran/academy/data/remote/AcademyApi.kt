@@ -86,7 +86,6 @@ interface AcademyApi {
     @GET("notifications") suspend fun notifications(@Query("page") page: Int, @Query("filter") filter: String = "all"): Paged<Notification>
     @GET("notifications/{id}") suspend fun notification(@Path("id") id: String): NotificationResponse
     @PATCH("notifications") suspend fun markRead(@Body body: MarkReadRequest): OkResponse
-    @POST("notifications/device-token") suspend fun registerDevice(@Body body: DeviceTokenRequest): OkResponse
 }
 
 /** The refresh call lives on its own client without the authenticator, so it can never recurse. */

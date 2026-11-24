@@ -634,6 +634,3 @@ data class NotificationResponse(val notification: Notification)
 
 @Serializable
 data class MarkReadRequest(val notificationId: String? = null, val markAllRead: Boolean? = null)
-
-@Serializable
-data class DeviceTokenRequest(val token: String, val platform: String = "android")
