@@ -37,7 +37,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -127,15 +126,15 @@ fun AttendanceTakeScreen(portal: Portal, courseId: String, date: String?, onBack
     val runner = rememberActionRunner()
 
     var day by rememberSaveable { mutableStateOf(date ?: LocalDate.now().toString()) }
-    val marks = remember { mutableStateMapOf<String, Boolean>() }
-    var initialised by rememberSaveable { mutableStateOf(false) }
+    val entries = rememberRosterEntries<Boolean>("attendance-marks-${portal.path}-$courseId-${date ?: "new"}")
+    val marks = entries.values
+    val initialised = entries.initialised
     val roster = (studentState as? Load.Ready)?.value
     val savedDay = (savedState as? Load.Ready)?.value
     LaunchedEffect(roster, savedDay) {
-        if (initialised || roster == null || (date != null && savedDay == null)) return@LaunchedEffect
+        if (roster == null || (date != null && savedDay == null)) return@LaunchedEffect
         val previous = savedDay?.records?.associate { it.enrollmentId to (it.isPresent ?: true) }.orEmpty()
-        roster.forEach { marks[it.enrollmentId] = previous[it.enrollmentId] ?: true }
-        initialised = true
+        entries.initialiseOnce { roster.associate { it.enrollmentId to (previous[it.enrollmentId] ?: true) } }
     }
 
     val present = roster?.count { marks[it.enrollmentId] ?: true } ?: 0

@@ -23,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -112,14 +111,14 @@ fun GradeFormScreen(portal: Portal, courseId: String, gradeId: String?, onBack: 
     var title by rememberSaveable { mutableStateOf("") }
     var date by rememberSaveable { mutableStateOf(LocalDate.now().toString()) }
     var maxMarks by rememberSaveable { mutableStateOf("") }
-    val marks = remember { mutableStateMapOf<String, String>() }
-    var initialised by rememberSaveable { mutableStateOf(false) }
+    val entries = rememberRosterEntries<String>("grade-marks-${portal.path}-$courseId-${gradeId ?: "new"}")
+    val marks = entries.values
+    val initialised = entries.initialised
     LaunchedEffect(roster, grade) {
-        if (initialised || roster == null || (gradeId != null && grade == null)) return@LaunchedEffect
+        if (entries.initialised || roster == null || (gradeId != null && grade == null)) return@LaunchedEffect
         if (grade != null) { title = grade.title; date = grade.date; maxMarks = grade.maxMarks.toString() }
         val previous = grade?.records?.associate { it.enrollmentId to it.marksObtained }.orEmpty()
-        roster.forEach { s -> marks[s.enrollmentId] = previous[s.enrollmentId]?.let(::formatMarks) ?: "" }
-        initialised = true
+        entries.initialiseOnce { roster.associate { s -> s.enrollmentId to (previous[s.enrollmentId]?.let(::formatMarks) ?: "") } }
     }
 
     val max = maxMarks.toIntOrNull()
