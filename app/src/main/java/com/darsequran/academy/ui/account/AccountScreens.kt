@@ -92,7 +92,6 @@ import com.darsequran.academy.data.ApiResult
 import com.darsequran.academy.data.SessionStore
 import com.darsequran.academy.data.map
 import com.darsequran.academy.data.remote.AppConfig
-import com.darsequran.academy.data.remote.ContactRequest
 import com.darsequran.academy.data.remote.Enrollment
 import com.darsequran.academy.data.remote.Notification
 import com.darsequran.academy.data.remote.PaymentHistory
@@ -612,12 +611,6 @@ fun ContactScreen(onBack: () -> Unit) {
     val session by container.sessionStore.session.collectAsStateWithLifecycle()
     var config by remember { mutableStateOf<AppConfig?>(null) }
     LaunchedEffect(Unit) { config = container.repo.appConfig().orNull() }
-    val submitter = rememberSubmitter("contact")
-    var name by rememberSaveable { mutableStateOf(session?.user?.name ?: "") }
-    var email by rememberSaveable { mutableStateOf(session?.user?.email ?: "") }
-    var phone by rememberSaveable { mutableStateOf("") }
-    var message by rememberSaveable { mutableStateOf("") }
-    LaunchedEffect(submitter.result) { if (submitter.result?.ok == true) message = "" }
     val contact = config?.brand?.contact
 
     Scaffold(topBar = { BackTopBar("Contact us", onBack) }) { padding ->
@@ -633,23 +626,7 @@ fun ContactScreen(onBack: () -> Unit) {
                     if (contact.address.isNotBlank()) ContactLine(Icons.Rounded.Description, contact.address) {}
                 }
             }
-            Text("Send a message", style = MaterialTheme.typography.titleLarge)
-            submitter.result?.let { Banner(it.message, if (it.ok) Tone.Success else Tone.Danger) }
-            if (session == null) {
-                OutlinedTextField(name, { name = it.take(100) }, Modifier.fillMaxWidth(), label = { Text("Your name") }, singleLine = true)
-                OutlinedTextField(email, { email = it.trim() }, Modifier.fillMaxWidth(), label = { Text("Your e-mail") }, singleLine = true)
-            }
-            OutlinedTextField(phone, { phone = it.take(20) }, Modifier.fillMaxWidth(), label = { Text("Phone (optional)") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone))
-            OutlinedTextField(message, { message = it.take(2000) }, Modifier.fillMaxWidth().height(160.dp), label = { Text("Message") })
-            PrimaryButton("Send", {
-                val request = ContactRequest(name.ifBlank { null }, email.ifBlank { null }, phone.ifBlank { null }, message.trim())
-                submitter.submit {
-                    when (val r = container.repo.contact(request)) {
-                        is ApiResult.Ok -> SubmitResult("Message sent. The academy will reply by e-mail.", ok = true)
-                        is ApiResult.Err -> SubmitResult(r.message, ok = false)
-                    }
-                }
-            }, enabled = message.trim().length >= 10 && (session != null || (name.isNotBlank() && email.contains("@"))), loading = submitter.busy)
+            ContactForm(session?.user)
         }
     }
 }
