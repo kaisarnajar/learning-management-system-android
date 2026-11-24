@@ -123,7 +123,7 @@ import com.darsequran.academy.ui.pay.PayScreen
 import kotlin.reflect.KClass
 import kotlinx.coroutines.delay
 
-private data class TabItem(val route: Any, val type: KClass<*>, val label: String, val icon: ImageVector, val selectedIcon: ImageVector)
+internal data class TabItem(val route: Any, val type: KClass<*>, val label: String, val icon: ImageVector, val selectedIcon: ImageVector)
 
 private val homeTab = TabItem(HomeTab, HomeTab::class, "Home", Icons.Outlined.Home, Icons.Rounded.Home)
 private val coursesTab = TabItem(CoursesTab, CoursesTab::class, "Courses", Icons.AutoMirrored.Outlined.MenuBook, Icons.AutoMirrored.Rounded.MenuBook)
@@ -131,7 +131,7 @@ private val exploreTab = TabItem(ExploreTab, ExploreTab::class, "Explore", Icons
 private val accountTab = TabItem(AccountTab, AccountTab::class, "Account", Icons.Outlined.Person, Icons.Rounded.Person)
 
 /** Which app a signed-in user sees: students the learning app, teachers that plus a Teach tab, admins the admin panel. */
-private enum class Shell(val tabs: List<TabItem>, val start: Any) {
+internal enum class Shell(val tabs: List<TabItem>, val start: Any) {
     Student(listOf(homeTab, coursesTab, exploreTab, accountTab), HomeTab),
     Teacher(
         listOf(homeTab, coursesTab, TabItem(TeachTab, TeachTab::class, "Teach", Icons.Outlined.CastForEducation, Icons.Rounded.CastForEducation), exploreTab, accountTab),
@@ -216,7 +216,7 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
     fun openHref(href: String) {
         val path = href.substringBefore('#').substringBefore('?')
         val parts = path.trim('/').split('/')
-        if (parts.getOrNull(0) == "admin") { routeForAdminHref(path)?.let { nav.navigate(it) }; return }
+        if (parts.getOrNull(0) == "admin" || parts.getOrNull(0) == "teacher") { staffLinkTarget(path, shell)?.let { nav.navigate(it) }; return }
         when {
             parts.getOrNull(0) == "blog" && parts.size >= 2 -> nav.navigate(BlogPostRoute(parts[1]))
             parts.getOrNull(0) == "fatwa" && parts.size >= 2 -> nav.navigate(FatwaDetailRoute(parts[1]))
@@ -301,17 +301,22 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                 )
             }
 
-            // ---- admin (admins and developers) and teacher tabs
-            val openAdmin: (String) -> Unit = { href -> routeForAdminHref(href)?.let { nav.navigate(it) } ?: notAvailable(context) }
-            composable<AdminDashboardTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
-                AdminDashboardScreen(session?.user?.name, session?.user?.role ?: "ADMIN", openAdmin)
+            // ---- admin (admins and developers) and teacher tabs: registered only for those roles, so no route or
+            // link can open a staff screen in a student's app (the server checks roles as well)
+            if (shell == Shell.Admin) {
+                val openAdmin: (String) -> Unit = { href -> routeForAdminHref(href)?.let { nav.navigate(it) } ?: notAvailable(context) }
+                composable<AdminDashboardTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
+                    AdminDashboardScreen(session?.user?.name, session?.user?.role ?: "ADMIN", openAdmin)
+                }
+                composable<AdminAcademicsTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Academics", AdminHubs.academics, openAdmin) }
+                composable<AdminFinanceTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Finance", AdminHubs.finance, openAdmin) }
+                composable<AdminContentTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Content", AdminHubs.content, openAdmin) }
             }
-            composable<AdminAcademicsTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Academics", AdminHubs.academics, openAdmin) }
-            composable<AdminFinanceTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Finance", AdminHubs.finance, openAdmin) }
-            composable<AdminContentTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Content", AdminHubs.content, openAdmin) }
-            composable<TeachTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { TeachHomeScreen(nav) }
+            if (shell == Shell.Teacher) {
+                composable<TeachTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { TeachHomeScreen(nav) }
+            }
             composable<EnvironmentRoute> { EnvironmentScreen(nav::popBackStack) }
-            manageGraph(nav)
+            if (shell != Shell.Student) manageGraph(nav)
 
             // ---- courses
             composable<CourseRoute> { entry ->
@@ -382,3 +387,13 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
 
 private fun notAvailable(context: android.content.Context) =
     android.widget.Toast.makeText(context, "This section opens on the website for now.", android.widget.Toast.LENGTH_SHORT).show()
+
+/**
+ * Where a website link to a staff page (`/admin/...`, `/teacher/...`, e.g. in a notification) leads in this [shell]:
+ * admin pages only for admins, the teaching tab for teachers, nowhere for anyone else.
+ */
+internal fun staffLinkTarget(path: String, shell: Shell): Any? = when (path.trim('/').substringBefore('/')) {
+    "admin" -> if (shell == Shell.Admin) routeForAdminHref(path) else null
+    "teacher" -> if (shell == Shell.Teacher) TeachTab else null
+    else -> null
+}

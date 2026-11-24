@@ -28,7 +28,8 @@ enum class Portal(val path: String) {
     Admin("admin"), Teacher("teacher");
 
     companion object {
-        fun of(path: String): Portal = entries.firstOrNull { it.path == path } ?: Admin
+        /** An unknown value gets the teacher portal, the one with fewer rights, never the admin one. */
+        fun of(path: String): Portal = entries.firstOrNull { it.path == path } ?: Teacher
     }
 }
 

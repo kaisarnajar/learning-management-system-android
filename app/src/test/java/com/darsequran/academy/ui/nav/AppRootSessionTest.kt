@@ -43,8 +43,18 @@ class AppRootSessionTest {
 
     @After fun tearDown() { runBlocking { app.container.sessionStore.clear() }; CurrentEnvironment.testBaseUrl = null; server.close() }
 
-    private fun signIn(id: String) = runBlocking {
-        app.container.sessionStore.save(TokenResponse("a-$id", "r-$id", user = SessionUser(id, "$id@example.test", name = "Student $id")))
+    private fun signIn(id: String, role: String = "USER") = runBlocking {
+        app.container.sessionStore.save(TokenResponse("a-$id", "r-$id", user = SessionUser(id, "$id@example.test", name = "Student $id", role = role)))
+    }
+
+    @Test
+    fun eachStaffShellStartsOnItsOwnTabs() {
+        signIn("ustadh", role = "TEACHER")
+        compose.setContent { AppRoot() }
+        compose.waitUntilSettled { compose.onAllNodes(hasText("Teach")).fetchSemanticsNodes().isNotEmpty() }
+        signIn("admin", role = "ADMIN")
+        compose.waitUntilSettled { compose.onAllNodes(hasText("Dashboard")).fetchSemanticsNodes().isNotEmpty() }
+        assertEquals(0, compose.onAllNodesWithText("Teach").fetchSemanticsNodes().size)
     }
 
     @Test
