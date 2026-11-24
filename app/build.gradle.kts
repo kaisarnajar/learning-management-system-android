@@ -24,6 +24,15 @@ val releaseSigning = listOf("RELEASE_STORE_FILE", "RELEASE_STORE_PASSWORD", "REL
     .associateWith { setting(it) }
 val hasReleaseSigning = releaseSigning.values.all { !it.isNullOrBlank() }
 
+/** The staging copy of the website that developers can switch to. */
+val stagingBaseUrl: String = setting("STAGING_BASE_URL") ?: "https://staging-learning-management-system-teal-ten.vercel.app"
+
+/**
+ * The version code of this build: `-PversionCode=…` (a release pipeline passes an increasing number), else the last
+ * one set here. Must only ever go up for a published app.
+ */
+val appVersionCode: Int = (findProperty("versionCode") as String?)?.toIntOrNull() ?: 2
+
 /** The "Local" environment of debug builds; the emulator reaches the Mac's localhost at 10.0.2.2. */
 val debugBaseUrl: String = localProperties.getProperty("DEBUG_BASE_URL") ?: "http://10.0.2.2:3000"
 
@@ -35,9 +44,10 @@ android {
         applicationId = "com.darsequran.academy"
         minSdk = 26
         targetSdk = 37
-        versionCode = 2
+        versionCode = appVersionCode
         versionName = "2.0.0"
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
+        buildConfigField("String", "STAGING_BASE_URL", "\"$stagingBaseUrl\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

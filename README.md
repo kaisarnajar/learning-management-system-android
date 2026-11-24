@@ -65,6 +65,8 @@ Optional settings go in `local.properties` (not committed):
 GOOGLE_WEB_CLIENT_ID=1234567890-abc.apps.googleusercontent.com
 # Where the debug build finds the website. Default: http://10.0.2.2:3000 (the emulator's alias for your computer).
 DEBUG_BASE_URL=http://localhost:3000
+# The staging website developers can switch to (default: the current Vercel staging deployment).
+STAGING_BASE_URL=https://staging.example.com
 ```
 
 Release builds always use `https://darsequranacademy.com`. Debug builds install next to the release app as
@@ -99,5 +101,7 @@ RELEASE_KEY_PASSWORD=...
 ```
 
 Without them `./gradlew :app:assembleRelease` stops with a message instead of signing with the debug key.
+Give each published build a higher version code: `./gradlew :app:bundleRelease -PversionCode=3`.
+`./gradlew :app:assembleMinified` builds the same shrunk app signed with the debug key, to try it without the upload key.
 Create the key once with Android Studio (**Build → Generate Signed App Bundle / APK → Create new**) or `keytool`,
 and keep it and its passwords somewhere safe: Play Store updates must be signed with the same key.

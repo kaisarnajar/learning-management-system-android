@@ -16,7 +16,7 @@ import kotlinx.coroutines.runBlocking
 /** A copy of the website the app can talk to. Developers switch between them; everyone else stays on the default. */
 enum class AppEnvironment(val key: String, val label: String, val baseUrl: String) {
     PRODUCTION("production", "Production", "https://darsequranacademy.com"),
-    STAGING("staging", "Staging", "https://staging-learning-management-system-teal-ten.vercel.app"),
+    STAGING("staging", "Staging", BuildConfig.STAGING_BASE_URL),
     LOCAL("local", "Local", BuildConfig.LOCAL_BASE_URL);
 
     val host: String get() = baseUrl.substringAfter("://").trimEnd('/')
