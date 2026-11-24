@@ -1,7 +1,6 @@
 package com.darsequran.academy.data
 
 import android.content.Context
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -44,19 +43,20 @@ object CurrentEnvironment {
 
 private val Context.environmentDataStore by preferencesDataStore(name = "environment")
 
-/** Remembers the chosen environment, and whether a developer has signed in on this phone (which unlocks switching). */
+/**
+ * Whether the environment switch is offered: always in debug builds; in release builds only while a developer is
+ * signed in, so a phone a developer once used doesn't keep the switch for whoever uses it next.
+ */
+fun canSwitchEnvironment(debugBuild: Boolean, role: String?): Boolean = debugBuild || role == "DEVELOPER"
+
+/** Remembers the chosen environment. */
 class EnvironmentStore(private val context: Context) {
     private val envKey = stringPreferencesKey("environment")
-    private val developerKey = booleanPreferencesKey("developer_device")
 
     private val initial = runBlocking { context.environmentDataStore.data.first() }
 
     private val _environment = MutableStateFlow(AppEnvironment.fromKey(initial[envKey]) ?: AppEnvironment.default)
     val environment: StateFlow<AppEnvironment> = _environment.asStateFlow()
-
-    private val _developerDevice = MutableStateFlow(BuildConfig.DEBUG || (initial[developerKey] ?: false))
-    /** True once a developer has signed in here; debug builds always allow switching. */
-    val canSwitch: StateFlow<Boolean> = _developerDevice.asStateFlow()
 
     init { CurrentEnvironment.value = _environment.value }
 
@@ -70,10 +70,4 @@ class EnvironmentStore(private val context: Context) {
     }
 
     fun publish(env: AppEnvironment) { _environment.value = env }
-
-    suspend fun markDeveloperDevice() {
-        if (_developerDevice.value) return
-        _developerDevice.value = true
-        context.environmentDataStore.edit { it[developerKey] = true }
-    }
 }

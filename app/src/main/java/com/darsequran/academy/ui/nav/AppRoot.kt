@@ -17,7 +17,9 @@ import androidx.compose.material.icons.rounded.CastForEducation
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.School
 import androidx.compose.runtime.key
+import com.darsequran.academy.BuildConfig
 import com.darsequran.academy.data.AppEnvironment
+import com.darsequran.academy.data.canSwitchEnvironment
 import com.darsequran.academy.ui.manage.AdminAcademicsTab
 import com.darsequran.academy.ui.manage.AdminContentTab
 import com.darsequran.academy.ui.manage.AdminDashboardScreen
@@ -167,7 +169,6 @@ fun AppRoot() {
     val session by container.sessionStore.session.collectAsStateWithLifecycle()
     val env by container.environments.environment.collectAsStateWithLifecycle()
     val shell = Shell.of(session?.user?.role)
-    LaunchedEffect(session?.user?.role) { if (session?.user?.role == "DEVELOPER") container.environments.markDeveloperDevice() }
 
     // A new environment or role starts a fresh navigation graph: nothing from the previous one carries over.
     key(env, shell) {
@@ -186,7 +187,7 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
     val context = LocalContext.current
     val container = remember { (context.applicationContext as AcademyApp).container }
     val session by container.sessionStore.session.collectAsStateWithLifecycle()
-    val canSwitch by container.environments.canSwitch.collectAsStateWithLifecycle()
+    val canSwitch = canSwitchEnvironment(BuildConfig.DEBUG, session?.user?.role)
     val tabs = shell.tabs
     var config by remember { mutableStateOf<AppConfig?>(null) }
     LaunchedEffect(Unit) { config = container.repo.appConfig().orNull() }
