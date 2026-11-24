@@ -172,7 +172,7 @@ private fun BookGrid(state: PagedState<Book>, vm: PagedViewModel<Book>, modifier
             if (state.error != null && state.items.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) { ErrorState(state.error, vm::refresh) }
             else if (!state.loading && state.items.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) { EmptyState("No books found") }
             items(state.items.distinctByKey { it.id }, key = { it.id }) { BookTile(it, Modifier.fillMaxWidth()) { onOpenBook(it.id) } }
-            if (state.error != null && state.items.isNotEmpty()) item(span = { GridItemSpan(maxLineSpan) }) { LoadMoreError(state.error, vm::loadMore) }
+            if (state.error != null && state.items.isNotEmpty()) item(span = { GridItemSpan(maxLineSpan) }) { LoadMoreError(state.error, vm::retry) }
             if (state.loading && !state.refreshing) item(span = { GridItemSpan(maxLineSpan) }) { LoadingBox(Modifier.fillMaxWidth().height(80.dp)) }
         }
     }

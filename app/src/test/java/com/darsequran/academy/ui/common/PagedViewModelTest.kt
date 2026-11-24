@@ -73,6 +73,41 @@ class PagedViewModelTest {
         assertEquals("unread", vm.state.value.filter)
     }
 
+    private fun Requests.fail(index: Int) = calls[index].answer.complete(ApiResult.Err("No connection."))
+
+    @Test
+    fun aFailedFilterChangeDoesNotShowTheOldListAndRetryStartsFromPageOne() {
+        val r = Requests()
+        val vm = PagedViewModel(r.fetch)
+        r.answer(0, "x1", "x2")
+        vm.filter("unread")
+        r.fail(1)
+        assertEquals(emptyList<String>(), vm.state.value.items)
+        assertEquals("No connection.", vm.state.value.error)
+        vm.retry()
+        assertEquals(1, r.calls[2].page)
+        assertEquals("unread", r.calls[2].filter)
+        r.answer(2, "u1")
+        assertEquals(listOf("u1"), vm.state.value.items)
+    }
+
+    @Test
+    fun aFailedRefreshKeepsTheListAndAFailedPageIsRetried() {
+        val r = Requests()
+        val vm = PagedViewModel(r.fetch)
+        r.answer(0, "a1")
+        vm.refresh()
+        r.fail(1)
+        assertEquals(listOf("a1"), vm.state.value.items)
+        vm.retry()
+        assertEquals(1, r.calls[2].page)
+        r.answer(2, "a1")
+        vm.loadMore()
+        r.fail(3)
+        vm.retry()
+        assertEquals(2, r.calls[4].page)
+    }
+
     @Test
     fun repeatedKeysAreDroppedForDisplay() {
         assertEquals(listOf("a", "b", "c"), listOf("a", "b", "b", "c", "a").distinctByKey { it })

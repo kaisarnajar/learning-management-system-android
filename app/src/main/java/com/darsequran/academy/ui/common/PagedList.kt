@@ -61,6 +61,10 @@ class PagedViewModel<T>(private val fetch: suspend (page: Int, query: String, fi
 
     private var job: Job? = null
     private var generation = 0
+    /** The search and filter the items on show were loaded for. */
+    private var shownFor: Pair<String, String?> = "" to null
+    /** The last load that failed was a reset (refresh, search or filter change), not a further page. */
+    private var resetFailed = false
 
     init { load(reset = true) }
 
@@ -68,6 +72,9 @@ class PagedViewModel<T>(private val fetch: suspend (page: Int, query: String, fi
     fun search(query: String) { _state.update { it.copy(query = query) }; load(reset = true) }
     fun filter(value: String?) { _state.update { it.copy(filter = value) }; load(reset = true) }
     fun loadMore() { if (_state.value.canLoadMore && job?.isActive != true) load(reset = false) }
+
+    /** The list footer's Retry: repeats what failed (after a failed search or filter, from the first page). */
+    fun retry() { if (resetFailed) load(reset = true) else loadMore() }
 
     private fun load(reset: Boolean) {
         if (reset) { job?.cancel(); generation++ }
@@ -78,11 +85,21 @@ class PagedViewModel<T>(private val fetch: suspend (page: Int, query: String, fi
         job = viewModelScope.launch {
             val r = fetch(page, current.query, current.filter)
             if (gen != generation) return@launch // superseded while in flight
+            resetFailed = reset && r is ApiResult.Err
             when (r) {
-                is ApiResult.Ok -> _state.update {
-                    it.copy(items = if (reset) r.value.data else it.items + r.value.data, page = page, total = r.value.totalCount, loading = false, refreshing = false)
+                is ApiResult.Ok -> {
+                    if (reset) shownFor = current.query to current.filter
+                    _state.update {
+                        it.copy(items = if (reset) r.value.data else it.items + r.value.data, page = page, total = r.value.totalCount, loading = false, refreshing = false)
+                    }
                 }
-                is ApiResult.Err -> _state.update { it.copy(loading = false, refreshing = false, error = r.message) }
+                // A failed refresh keeps the list; a failed search or filter change must not show the old results
+                // under the new chips (nor have a later page of the new filter appended to them).
+                is ApiResult.Err -> _state.update {
+                    val stale = reset && shownFor != (current.query to current.filter)
+                    if (stale) it.copy(items = emptyList(), page = 0, total = 0, loading = false, refreshing = false, error = r.message)
+                    else it.copy(loading = false, refreshing = false, error = r.message)
+                }
             }
         }
     }
@@ -117,7 +134,7 @@ fun <T> PagedListBody(
             if (state.error != null && state.items.isEmpty()) item { ErrorState(state.error!!, vm::refresh) }
             else if (!state.loading && state.items.isEmpty()) item { EmptyState(emptyTitle, if (state.query.isNotBlank()) "Try a different search." else null) }
             items(state.items.distinctByKey(key), key = key) { itemContent(it) }
-            state.error?.let { e -> if (state.items.isNotEmpty()) item { LoadMoreError(e, vm::loadMore) } }
+            state.error?.let { e -> if (state.items.isNotEmpty()) item { LoadMoreError(e, vm::retry) } }
             if (state.loading && !state.refreshing) item { if (state.items.isEmpty()) SkeletonList(4) else LoadingBox(Modifier.fillMaxWidth().height(72.dp)) }
         }
     }
