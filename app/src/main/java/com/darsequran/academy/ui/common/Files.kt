@@ -30,6 +30,22 @@ fun openWeb(context: Context, url: String?) {
     }
 }
 
+/**
+ * Opens a link that leads outside the academy: web pages in a Custom Tab, `mailto:`/`tel:` and the like in the app
+ * that handles them (not as a page of the academy's site, which is what [openWeb] would make of them).
+ */
+fun openOutside(context: Context, url: String) {
+    when (val how = outsideOpen(url)) {
+        is OutsideOpen.Web -> openWeb(context, how.url)
+        is OutsideOpen.PhoneApp -> try {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(how.uri)))
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(context, "No app on this phone can open this link.", Toast.LENGTH_SHORT).show()
+        }
+        OutsideOpen.Ignored -> Unit
+    }
+}
+
 /** Where an opened document is kept: the document cache, under a name safe for a file system. */
 private fun cacheFile(context: Context, fileName: String): File =
     File(documentCacheDir(context).apply { mkdirs() }, fileName.replace(Regex("[^A-Za-z0-9._-]"), "_"))

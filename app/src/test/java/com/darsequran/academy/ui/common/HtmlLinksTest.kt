@@ -26,7 +26,8 @@ class HtmlLinksTest {
     fun otherLinksGoOutside() {
         assertEquals(LinkTarget.Outside("https://sunnah.com/bukhari/1"), linkTarget("https://sunnah.com/bukhari/1", base))
         assertEquals(LinkTarget.Outside("mailto:info@example.test"), linkTarget("mailto:info@example.test", base))
-        assertEquals(LinkTarget.Outside("//cdn.example.test/x"), linkTarget("//cdn.example.test/x", base))
+        assertEquals(LinkTarget.Outside("https://cdn.example.test/x"), linkTarget("//cdn.example.test/x", base))
+        assertEquals(LinkTarget.InApp("/blog/x"), linkTarget("//darsequranacademy.com/blog/x", base))
     }
 
     @Test
@@ -43,4 +44,14 @@ class HtmlLinksTest {
 
     @Test
     fun previewsHaveNoImageBoxes() = assertEquals("Hello world", plainText("<p>Hello<img src='x.png'> world</p>"))
+
+    @Test
+    fun phoneLinksGoToTheirAppAndUnsafeSchemesNowhere() {
+        assertEquals(OutsideOpen.Web("https://sunnah.com/bukhari/1"), outsideOpen("https://sunnah.com/bukhari/1"))
+        assertEquals(OutsideOpen.PhoneApp("mailto:info@example.test"), outsideOpen("mailto:info@example.test"))
+        assertEquals(OutsideOpen.PhoneApp("tel:+911234567890"), outsideOpen("tel:+911234567890"))
+        assertEquals(OutsideOpen.Ignored, outsideOpen("javascript:alert(1)"))
+        assertEquals(OutsideOpen.Ignored, outsideOpen("intent://x#Intent;scheme=x;end"))
+        assertEquals(OutsideOpen.Ignored, outsideOpen("file:///data/data/x"))
+    }
 }

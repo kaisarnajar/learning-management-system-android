@@ -15,7 +15,9 @@ sealed interface LinkTarget {
 /** Relative links and links to the academy's own host stay in the app; the rest go outside. */
 fun linkTarget(href: String, baseUrl: String = CurrentEnvironment.baseUrl): LinkTarget {
     val trimmed = href.trim()
-    if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return LinkTarget.InApp(trimmed)
+    // A protocol-relative link ("//host/x") means https here: there is no page whose protocol it could follow.
+    if (trimmed.startsWith("//")) return linkTarget("https:$trimmed", baseUrl)
+    if (trimmed.startsWith("/")) return LinkTarget.InApp(trimmed)
     val url = trimmed.toHttpUrlOrNull() ?: return LinkTarget.Outside(trimmed)
     val base = baseUrl.toHttpUrlOrNull()
     val host = url.host.removePrefix("www.")
@@ -26,3 +28,23 @@ fun linkTarget(href: String, baseUrl: String = CurrentEnvironment.baseUrl): Link
 
 /** Opens a link from academy content; set by the app's navigation (see AppRoot), the browser otherwise. */
 val LocalOpenLink = staticCompositionLocalOf<((String) -> Unit)?> { null }
+
+/** Schemes of outside links that are handed to another app on the phone (mail, dialler, messages, WhatsApp). */
+private val PHONE_SCHEMES = setOf("mailto", "tel", "sms", "smsto", "whatsapp")
+
+/** How an outside link is opened: a web page in the browser, a phone link in its app, anything else not at all. */
+sealed interface OutsideOpen {
+    data class Web(val url: String) : OutsideOpen
+    data class PhoneApp(val uri: String) : OutsideOpen
+    /** `javascript:`, `intent:`, `file:`, `content:` and other schemes content must not be able to trigger. */
+    data object Ignored : OutsideOpen
+}
+
+fun outsideOpen(url: String): OutsideOpen {
+    val scheme = url.substringBefore(':', "").lowercase()
+    return when {
+        scheme == "http" || scheme == "https" -> OutsideOpen.Web(url)
+        scheme in PHONE_SCHEMES -> OutsideOpen.PhoneApp(url)
+        else -> OutsideOpen.Ignored
+    }
+}

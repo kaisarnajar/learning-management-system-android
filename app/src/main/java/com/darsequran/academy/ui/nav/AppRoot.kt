@@ -110,6 +110,7 @@ import com.darsequran.academy.ui.pay.PayScreen
 import com.darsequran.academy.ui.common.LinkTarget
 import com.darsequran.academy.ui.common.LocalOpenLink
 import com.darsequran.academy.ui.common.linkTarget
+import com.darsequran.academy.ui.common.openOutside
 import com.darsequran.academy.ui.common.openWeb
 import com.darsequran.academy.ui.common.rememberContainer
 import com.darsequran.academy.data.remote.Roles
@@ -212,7 +213,6 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
     /** Runs [block] when signed in, otherwise opens sign-in first. */
     fun signedIn(block: () -> Unit) { if (container.sessionStore.session.value != null) block() else nav.navigate(SignInRoute) }
 
-    /** Website links from notifications → app screens. */
     /** Website links (notifications, article links) → app screens; false when the app has no screen for it. */
     fun openHref(href: String): Boolean {
         val destination = routeForHref(href, shell) ?: return false
@@ -229,7 +229,7 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
     val openLink: (String) -> Unit = { href ->
         when (val target = linkTarget(href)) {
             is LinkTarget.InApp -> if (!openHref(target.path)) openWeb(context, target.path)
-            is LinkTarget.Outside -> openWeb(context, target.url)
+            is LinkTarget.Outside -> openOutside(context, target.url)
         }
     }
 
@@ -382,7 +382,8 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                     RegisterScreen(nav::popBackStack, onDone = { nav.popBackStack() }, privacyUrl = config?.policies?.privacyPolicyUrl ?: "/privacy-policy", termsUrl = config?.policies?.termsUrl ?: "/terms-and-conditions")
                 }
                 composable<ForgotPasswordRoute> { ForgotPasswordScreen(nav::popBackStack) }
-                composable<NotificationsRoute> { NotificationsScreen(nav::popBackStack) { href -> openHref(href) } }
+                // The same opener as links in content: an in-app screen when there is one, else the website (or the phone).
+                composable<NotificationsRoute> { NotificationsScreen(nav::popBackStack, openLink) }
                 composable<EditProfileRoute> { EditProfileScreen(nav::popBackStack) { nav.switchTab(CoursesTab) } }
                 composable<PaymentsRoute> { PaymentsScreen(nav::popBackStack) }
                 composable<WaiversRoute> { WaiversScreen(nav::popBackStack) }
