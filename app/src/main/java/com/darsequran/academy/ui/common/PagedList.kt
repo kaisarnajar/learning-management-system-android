@@ -2,19 +2,25 @@ package com.darsequran.academy.ui.common
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -102,7 +108,7 @@ fun <T> PagedListBody(
     val state by vm.state.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     val nearEnd by remember { derivedStateOf { (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) >= listState.layoutInfo.totalItemsCount - 3 } }
-    LaunchedEffect(nearEnd, state.items.size) { if (nearEnd) vm.loadMore() }
+    LoadMoreEffect(nearEnd, state, vm)
 
     PullToRefreshBox(state.refreshing, vm::refresh, modifier.fillMaxSize()) {
         LazyColumn(state = listState, contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxSize()) {
@@ -111,7 +117,27 @@ fun <T> PagedListBody(
             if (state.error != null && state.items.isEmpty()) item { ErrorState(state.error!!, vm::refresh) }
             else if (!state.loading && state.items.isEmpty()) item { EmptyState(emptyTitle, if (state.query.isNotBlank()) "Try a different search." else null) }
             items(state.items.distinctByKey(key), key = key) { itemContent(it) }
+            state.error?.let { e -> if (state.items.isNotEmpty()) item { LoadMoreError(e, vm::loadMore) } }
             if (state.loading && !state.refreshing) item { if (state.items.isEmpty()) SkeletonList(4) else LoadingBox(Modifier.fillMaxWidth().height(72.dp)) }
         }
+    }
+}
+
+/**
+ * Asks for the next page while the end of the list is in view. Re-checked whenever a load finishes, so a first page
+ * that fits on screen, or an end reached while a refresh was running, still continues. After a failed page it waits
+ * for [LoadMoreError]'s retry rather than retrying on its own.
+ */
+@Composable
+fun <T> LoadMoreEffect(nearEnd: Boolean, state: PagedState<T>, vm: PagedViewModel<T>) {
+    LaunchedEffect(nearEnd, state.items.size, state.loading) { if (nearEnd && state.error == null) vm.loadMore() }
+}
+
+/** The footer of a list whose next page failed to load. */
+@Composable
+fun LoadMoreError(message: String, onRetry: () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(message, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        TextButton(onClick = onRetry) { Text("Retry") }
     }
 }

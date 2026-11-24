@@ -96,6 +96,8 @@ import com.darsequran.academy.ui.common.Overline
 import com.darsequran.academy.ui.common.PagedState
 import com.darsequran.academy.ui.common.PagedViewModel
 import com.darsequran.academy.ui.common.distinctByKey
+import com.darsequran.academy.ui.common.LoadMoreEffect
+import com.darsequran.academy.ui.common.LoadMoreError
 import com.darsequran.academy.ui.common.PriceLine
 import com.darsequran.academy.ui.common.PrimaryButton
 import com.darsequran.academy.ui.common.RemoteImage
@@ -155,7 +157,7 @@ fun BookstoreScreen(onBack: () -> Unit, onOpenBook: (String) -> Unit, onCart: ()
 private fun BookGrid(state: PagedState<Book>, vm: PagedViewModel<Book>, modifier: Modifier, onOpenBook: (String) -> Unit) {
     val grid = rememberLazyGridState()
     val nearEnd by remember { derivedStateOf { (grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) >= grid.layoutInfo.totalItemsCount - 4 } }
-    LaunchedEffect(nearEnd, state.items.size) { if (nearEnd) vm.loadMore() }
+    LoadMoreEffect(nearEnd, state, vm)
     PullToRefreshBox(state.refreshing, vm::refresh, modifier.fillMaxSize()) {
         LazyVerticalGrid(
             GridCells.Adaptive(150.dp), state = grid, contentPadding = PaddingValues(20.dp),
@@ -165,7 +167,8 @@ private fun BookGrid(state: PagedState<Book>, vm: PagedViewModel<Book>, modifier
             if (state.error != null && state.items.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) { ErrorState(state.error, vm::refresh) }
             else if (!state.loading && state.items.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) { EmptyState("No books found") }
             items(state.items.distinctByKey { it.id }, key = { it.id }) { BookTile(it, Modifier.fillMaxWidth()) { onOpenBook(it.id) } }
-            if (state.loading) item(span = { GridItemSpan(maxLineSpan) }) { LoadingBox(Modifier.fillMaxWidth().height(80.dp)) }
+            if (state.error != null && state.items.isNotEmpty()) item(span = { GridItemSpan(maxLineSpan) }) { LoadMoreError(state.error, vm::loadMore) }
+            if (state.loading && !state.refreshing) item(span = { GridItemSpan(maxLineSpan) }) { LoadingBox(Modifier.fillMaxWidth().height(80.dp)) }
         }
     }
 }
