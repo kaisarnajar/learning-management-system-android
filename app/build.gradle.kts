@@ -148,6 +148,8 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.richeditor.compose)
+    // Draws the UPI QR code the website shows (encoder only, no camera or Android code).
+    implementation(libs.zxing.core)
 
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services)

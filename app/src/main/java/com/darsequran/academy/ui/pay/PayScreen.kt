@@ -193,8 +193,8 @@ fun PayScreen(
                 state.error != null -> ErrorState(state.error!!, vm::load)
                 state.done -> MessageState(
                     Icons.Rounded.CheckCircle,
-                    if (state.amountPaise == 0) "Waiver submitted" else "Payment submitted",
-                    "The academy will verify it and notify you. You can follow it under Account → Payments.",
+                    PAYMENT_SUBMITTED_TITLE,
+                    PAYMENT_SUBMITTED_BODY,
                     "Done",
                     onDone,
                 )
@@ -228,22 +228,25 @@ private fun PayFlow(state: PayState, vm: PayViewModel, courseTitle: String, head
 
             if (quote.coupons.isNotEmpty()) {
                 Spacer(Modifier.height(14.dp))
-                Overline("Fee waiver")
-                ChoiceRow("No waiver · ${rupees(quote.baseAmountPaise)}", state.couponId == null) { vm.selectCoupon(null) }
+                Overline("Available Coupons & Fee Waivers")
+                ChoiceRow("$NO_COUPON · ${rupees(quote.baseAmountPaise)}", state.couponId == null) {
+                    vm.selectCoupon(null)
+                }
                 quote.coupons.forEach { c -> ChoiceRow("${c.code} · ${c.percentage}% off · ${rupees(c.amountPaise)}", state.couponId == c.id) { vm.selectCoupon(c.id) } }
             }
 
             if (vm.type == "course" && !quote.oneTimeFee) {
                 Spacer(Modifier.height(14.dp))
-                Overline("Paying for")
-                Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Dropdown(
                         Month.of(state.month).getDisplayName(TextStyle.FULL, Locale.ENGLISH),
                         (1..12).map { Month.of(it).getDisplayName(TextStyle.FULL, Locale.ENGLISH) },
                         Modifier.weight(1.4f),
+                        label = "Starting Month",
                     ) { vm.selectMonth(it + 1) }
-                    Dropdown(state.year, quote.yearOptions, Modifier.weight(1f)) { vm.selectYear(quote.yearOptions[it]) }
+                    Dropdown(state.year, quote.yearOptions, Modifier.weight(1f), label = "Starting Year") {
+                        vm.selectYear(quote.yearOptions[it])
+                    }
                 }
             }
         }
@@ -253,7 +256,8 @@ private fun PayFlow(state: PayState, vm: PayViewModel, courseTitle: String, head
             StepHeader(2, "Pay")
             PaymentDetailsError(state.settingsError, vm::reloadSettings)
             PayWithUpiButton(settings, state.amountPaise, "$heading - $courseTitle")
-            PaymentDetailsCard(settings)
+            val note = feePaymentNote(vm.type, courseTitle, quote.feeFrequencyLabel)
+            PaymentDetailsCard(settings, state.amountPaise, note)
 
             // ---- step 3: confirm
             StepHeader(3, "Confirm")
@@ -264,9 +268,9 @@ private fun PayFlow(state: PayState, vm: PayViewModel, courseTitle: String, head
 
         state.submitError?.let { Banner(it, Tone.Danger) }
         PrimaryButton(
-            if (free) "Submit waiver" else "Submit payment of ${rupees(state.amountPaise)}",
+            paySubmitLabel(vm.type, free),
             onClick = { vm.submit(method, reference, proof.image?.upload) },
-            enabled = free || reference.length >= 6,
+            enabled = canSubmitPayment(free, reference),
             loading = state.submitting,
         )
         Spacer(Modifier.height(24.dp))
@@ -292,3 +296,28 @@ private fun ChoiceRow(label: String, selected: Boolean, onClick: () -> Unit) {
     }
 }
 
+
+/** The website's toast on the payments page after any fee submission, waivers included, split in two lines. */
+internal const val PAYMENT_SUBMITTED_TITLE = "Payment submitted."
+internal const val PAYMENT_SUBMITTED_BODY = "The academy will verify it shortly."
+
+/** The website's CouponSelector option for paying the full fee. */
+internal const val NO_COUPON = "Do not use any coupon"
+
+private const val NOTE_MAX = 80
+
+/** The website's submit button wording (EnrollmentPaymentForm and MonthlyPaymentForm). */
+internal fun paySubmitLabel(type: String, free: Boolean): String = when {
+    type == "enrollment" && free -> "Claim Fee Waiver & Enroll"
+    type == "enrollment" -> "Submit enrollment fee for verification"
+    free -> "Claim Fee Waiver"
+    else -> "Submit fee payment for verification"
+}
+
+/** The website only requires the transaction reference to be filled in; a waived fee needs none. */
+internal fun canSubmitPayment(free: Boolean, reference: String): Boolean = free || reference.isNotBlank()
+
+/** The UPI note the website's pay forms put in the QR code. */
+internal fun feePaymentNote(type: String, courseTitle: String, feeFrequencyLabel: String?): String =
+    if (type == "enrollment") "$courseTitle enrollment".take(NOTE_MAX)
+    else "$courseTitle — ${feeFrequencyLabel ?: "Monthly"}".take(NOTE_MAX)

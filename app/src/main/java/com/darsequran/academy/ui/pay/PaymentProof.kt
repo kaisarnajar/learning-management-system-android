@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -74,9 +75,19 @@ fun PaymentDetailsError(message: String?, onRetry: () -> Unit) {
     SecondaryButton("Try again", onRetry)
 }
 
-/** The academy's UPI and bank details, each with a copy button. */
+/**
+ * The academy's UPI and bank details, each with a copy button, and the UPI QR code the website shows. The QR code
+ * carries [amountPaise] and [note] when given (else only the UPI ID); [paymentRef] adds the website's "Payment
+ * reference (include if asked)" line.
+ */
+@Suppress("FunctionNaming") // a composable, named like one
 @Composable
-fun PaymentDetailsCard(settings: PaymentSettings?) {
+fun PaymentDetailsCard(
+    settings: PaymentSettings?,
+    amountPaise: Int? = null,
+    note: String? = null,
+    paymentRef: String? = null,
+) {
     if (settings == null) return
     AppCard(Modifier.fillMaxWidth()) {
         if (!settings.upiId.isNullOrBlank()) {
@@ -84,9 +95,23 @@ fun PaymentDetailsCard(settings: PaymentSettings?) {
                 Icon(Icons.Rounded.QrCode2, null, tint = Brand.gold)
                 Spacer(Modifier.width(10.dp)); Overline("UPI")
             }
+            Spacer(Modifier.height(10.dp))
+            QrCode(
+                upiQrUri(settings, amountPaise, note, paymentRef),
+                "UPI QR code — scan with Google Pay, PhonePe, or Paytm",
+                Modifier.align(Alignment.CenterHorizontally),
+            )
+            Text(
+                "Scan with Google Pay, PhonePe, Paytm, or any UPI app",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 6.dp),
+            )
             CopyRow("UPI ID", settings.upiId)
-            CopyRow("UPI number", settings.upiNumber)
+            CopyRow("UPI Number", settings.upiNumber)
             CopyRow("Payee", settings.upiPayeeName, copy = false)
+            CopyRow("Payment reference (include if asked)", paymentRef)
         }
         if (!settings.bankAccountNumber.isNullOrBlank()) {
             Spacer(Modifier.height(10.dp))
