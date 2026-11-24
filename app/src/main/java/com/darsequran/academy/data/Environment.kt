@@ -56,11 +56,16 @@ class EnvironmentStore(private val context: Context) {
 
     init { CurrentEnvironment.value = _environment.value }
 
-    suspend fun set(env: AppEnvironment) {
+    /**
+     * Points requests at [env] and remembers it. The UI hears about it through [publish], called once the
+     * environment's own session is loaded, so no screen of the old session ever talks to the new server.
+     */
+    suspend fun select(env: AppEnvironment) {
         CurrentEnvironment.value = env
-        _environment.value = env
         context.environmentDataStore.edit { it[envKey] = env.key }
     }
+
+    fun publish(env: AppEnvironment) { _environment.value = env }
 
     suspend fun markDeveloperDevice() {
         if (_developerDevice.value) return

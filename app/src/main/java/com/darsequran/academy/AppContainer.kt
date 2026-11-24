@@ -31,9 +31,10 @@ class AppContainer(context: Context) {
 
     /** Points the app at another copy of the website; that environment's own session (if any) becomes current. */
     suspend fun switchEnvironment(env: AppEnvironment) {
-        environments.set(env)
+        environments.select(env)
         sessionStore.useEnvironment(env)
         cart.clearLocal()
         repo.clearCaches()
+        environments.publish(env)
     }
 }

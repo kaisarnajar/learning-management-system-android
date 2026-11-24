@@ -77,6 +77,9 @@ class Network(private val sessionStore: SessionStore, val json: Json) {
         override fun authenticate(route: Route?, response: Response): Request? {
             if (response.request.header("Authorization") == null) return null
             if (responseCount(response) >= 2) return null
+            // A request from before an environment switch: its 401 says nothing about the current session, and
+            // retrying would send the new environment's token to the old server.
+            if (response.request.url.host != CurrentEnvironment.baseUrl.toHttpUrl().host) return null
             val usedToken = response.request.header("Authorization")?.removePrefix("Bearer ")
             return runBlocking {
                 refreshMutex.withLock {
