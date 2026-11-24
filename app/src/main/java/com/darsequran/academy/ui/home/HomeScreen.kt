@@ -98,6 +98,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.format.TextStyle
@@ -124,7 +126,9 @@ class HomeViewModel(private val repo: AcademyRepository, private val auth: AuthR
     val state: StateFlow<HomeState> = _state.asStateFlow()
 
     init {
-        viewModelScope.launch { auth.session.collect { s -> _state.update { it.copy(session = s) }; load() } }
+        viewModelScope.launch { auth.session.collect { s -> _state.update { it.copy(session = s) } } }
+        // A token refresh emits a new session for the same user: only a different user (or none) needs a reload.
+        viewModelScope.launch { auth.session.map { it?.user?.id }.distinctUntilChanged().collect { load() } }
     }
 
     private var loadJob: Job? = null

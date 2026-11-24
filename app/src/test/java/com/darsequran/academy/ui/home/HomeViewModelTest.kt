@@ -60,4 +60,16 @@ class HomeViewModelTest {
         delay(1_200)                                                        // long after the slow answer arrived
         assertEquals(emptyList<Any>(), vm.state.value.enrollments)
     }
+
+    @Test
+    fun aTokenRefreshForTheSameUserDoesNotReload() = runBlocking {
+        val vm = HomeViewModel(app.container.repo, app.container.auth)
+        withTimeout(5_000) { vm.state.first { !it.loading } }
+        val homeCalls = { server.requestCount }
+        val before = homeCalls()
+        app.container.sessionStore.save(TokenResponse("a2", "r2", user = SessionUser("u1", "student@example.test")))
+        delay(300)
+        assertEquals(before, homeCalls())
+        assertEquals("a2", vm.state.value.session?.accessToken) // the new session still reaches the screen
+    }
 }

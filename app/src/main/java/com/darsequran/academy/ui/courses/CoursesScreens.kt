@@ -93,6 +93,8 @@ import com.darsequran.academy.ui.theme.Brand
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -113,7 +115,9 @@ class CoursesViewModel(private val repo: AcademyRepository, private val auth: Au
     private var mineJob: Job? = null
 
     init {
-        viewModelScope.launch { auth.session.collect { s -> _state.update { it.copy(session = s) }; loadMine() } }
+        viewModelScope.launch { auth.session.collect { s -> _state.update { it.copy(session = s) } } }
+        // A token refresh emits a new session for the same user: only a different user (or none) needs a reload.
+        viewModelScope.launch { auth.session.map { it?.user?.id }.distinctUntilChanged().collect { loadMine() } }
     }
 
     /** Coming back from a course: its status may have changed. */
