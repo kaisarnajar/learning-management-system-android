@@ -63,7 +63,16 @@ class CheckoutViewModelTest {
         return """{"items":[$b1${if (secondBook) ",$b2" else ""}]}"""
     }
 
-    @After fun tearDown() { runBlocking { app.container.sessionStore.clear() }; CurrentEnvironment.testBaseUrl = null; server.close() }
+    @After fun tearDown() {
+        runBlocking {
+            app.container.sessionStore.clear()
+            // The container empties the cart (and its selection) when it sees the sign-out, on its own coroutine. Wait
+            // for that here: otherwise it can land in the next test, after that test has already chosen its books.
+            withTimeout(5_000) { while (app.container.cart.items.value.isNotEmpty()) delay(20) }
+        }
+        CurrentEnvironment.testBaseUrl = null
+        server.close()
+    }
 
     private fun vm() = CheckoutViewModel(app.container.repo, app.container.cart)
 
@@ -110,7 +119,8 @@ class CheckoutViewModelTest {
         withTimeout(5_000) { vm.state.first { it.quote is Load.Ready } }
         vm.place("upi", "412788901234", "House 1, Srinagar", "190001", "9999999999", null)
         withTimeout(5_000) { vm.state.first { it.done } }
-        assertFalse(orders[0], orders[0].contains("b2"))
+        // The book id with its key: the multipart boundary is random and may contain "b2" by chance.
+        assertFalse(orders[0], orders[0].contains(""""bookId":"b2""""))
         assertEquals(listOf("""{"bookId":"b2","quantity":2}"""), cartPatches.toList())
         assertTrue(app.container.cart.unselected.value.isEmpty())
     }
