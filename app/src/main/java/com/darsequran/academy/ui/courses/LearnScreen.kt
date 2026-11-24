@@ -77,6 +77,9 @@ import com.darsequran.academy.ui.common.titleCase
 import com.darsequran.academy.ui.common.toLoad
 import com.darsequran.academy.ui.common.vmFactory
 import com.darsequran.academy.ui.theme.Brand
+import com.darsequran.academy.data.remote.Enrollment
+import com.darsequran.academy.data.remote.PaymentSubmission
+import com.darsequran.academy.data.repo.orNull
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -91,6 +94,9 @@ class LearnViewModel(private val repo: AcademyRepository, val courseId: String) 
     val grades: StateFlow<Load<CourseGrades?>> = _grades.asStateFlow()
     private val _fees = MutableStateFlow<Load<PaymentHistory>>(Load.Loading)
     val fees: StateFlow<Load<PaymentHistory>> = _fees.asStateFlow()
+    /** This course's enrollment (status, fee), which decides whether a course fee can be paid from here. */
+    private val _enrollment = MutableStateFlow<Enrollment?>(null)
+    val enrollment: StateFlow<Enrollment?> = _enrollment.asStateFlow()
 
     init { loadAll() }
 
@@ -99,6 +105,7 @@ class LearnViewModel(private val repo: AcademyRepository, val courseId: String) 
         viewModelScope.launch { _attendance.value = repo.attendance(courseId).toLoad() }
         viewModelScope.launch { _grades.value = repo.grades(courseId).toLoad() }
         viewModelScope.launch { _fees.value = repo.paymentHistory().toLoad() }
+        viewModelScope.launch { repo.enrollments().orNull()?.let { list -> _enrollment.value = list.firstOrNull { it.courseId == courseId } } }
     }
 }
 
@@ -256,16 +263,29 @@ private fun GradesTab(vm: LearnViewModel) {
     }
 }
 
+/**
+ * Whether "Pay course fee" makes sense: the student is studying the course (not finished, not waiting), it has a fee,
+ * and a one-time fee isn't already paid or under review. The Pay screen's quote from the server has the final word.
+ */
+internal fun canPayCourseFee(enrollment: Enrollment?, submissions: List<PaymentSubmission>): Boolean {
+    val course = enrollment?.course ?: return false
+    if (enrollment.status != "active" || course.monthlyFeeInrPaise <= 0) return false
+    if (course.feeFrequency != "ONE_TIME") return true
+    return submissions.none { it.courseId == enrollment.courseId && it.paymentType != "enrollment" && it.status != "rejected" && it.status != "declined" }
+}
+
 private fun fmt(value: Double): String = if (value % 1.0 == 0.0) value.toInt().toString() else "%.2f".format(value)
 
 @Composable
 private fun FeesTab(vm: LearnViewModel, onPayFee: () -> Unit, onReceipt: (String) -> Unit) {
     val state by vm.fees.collectAsStateWithLifecycle()
+    val enrollment by vm.enrollment.collectAsStateWithLifecycle()
     LoadContent(state, vm::loadAll) { history ->
         val submissions = history.submissions.filter { it.courseId == vm.courseId }.sortedByDescending { it.createdAt }
+        val canPay = canPayCourseFee(enrollment, submissions)
         val records = history.records.associateBy { it.id }
         LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            item { PrimaryButton("Pay course fee", onPayFee); Spacer(Modifier.height(8.dp)) }
+            if (canPay) item { PrimaryButton("Pay course fee", onPayFee); Spacer(Modifier.height(8.dp)) }
             if (submissions.isEmpty()) item { EmptyState("No payments yet", "Payments you submit for this course are listed here.") }
             items(submissions, key = { it.id }) { s ->
                 val (label, tone) = statusLabel(s.status)
