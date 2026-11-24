@@ -1,5 +1,13 @@
 package com.darsequran.academy.ui.auth
 
+import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.selection.toggleable
 import com.darsequran.academy.ui.theme.HeroUnderStatusBar
 import android.content.Context
 import androidx.compose.foundation.Image
@@ -225,16 +233,22 @@ fun RegisterScreen(
         OutlinedTextField(name, { name = it.take(100) }, Modifier.fillMaxWidth(), label = { Text("Full name") }, singleLine = true)
         EmailField(email) { email = it }
         PasswordField(password, "Password (at least 8 characters)", onDone = {}) { password = it }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(accepted, { accepted = it })
-            Column {
-                Text("I accept the", style = MaterialTheme.typography.bodySmall)
-                Row {
-                    Text("Terms", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.clickable { openWeb(context, termsUrl) })
-                    Text(" and ", style = MaterialTheme.typography.bodySmall)
-                    Text("Privacy Policy", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.clickable { openWeb(context, privacyUrl) })
-                }
-            }
+        // The whole row ticks the box; only the two links open the documents.
+        val linkStyle = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold))
+        Row(
+            Modifier.fillMaxWidth().toggleable(accepted, role = Role.Checkbox) { accepted = it },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Checkbox(accepted, null, Modifier.padding(end = 12.dp))
+            Text(
+                buildAnnotatedString {
+                    append("I accept the ")
+                    withLink(LinkAnnotation.Clickable("terms", linkStyle) { openWeb(context, termsUrl) }) { append("Terms") }
+                    append(" and the ")
+                    withLink(LinkAnnotation.Clickable("privacy", linkStyle) { openWeb(context, privacyUrl) }) { append("Privacy Policy") }
+                },
+                style = MaterialTheme.typography.bodyMedium,
+            )
         }
         PrimaryButton(
             "Create account",
