@@ -111,4 +111,35 @@ connected phone and walk the main flows; merge `dev` into `master` (fast-forward
 
 ## Outcome
 
-_Filled in at the end of the work._
+Every finding above was fixed, on `dev`, one commit per plan step:
+
+| Commit | Findings |
+|---|---|
+| `2f4febf` | S1, S2, T2 — sign-out and session writes non-cancellable, revoke bounded to 5 s, another user's profile ignored |
+| `22eb965` | S3 — data extraction and backup rules exclude everything |
+| `935d7fc` | S4 — release builds log only the exception type |
+| `bcf431c` | L1, L2, L13 — double-tap guards on comments, fatwa questions, waivers, reviews, profile, sign-in |
+| `e808833` | L3, L4, L5 — cart restore after an order, sign-out vs an in-flight change, add-to-cart sets one copy |
+| `1bffcbf` | L6, L7, T1 — stale restored waiver dropped, UPI payee as the QR's, payment payload tests |
+| `116d825` | L9, L10 — `mailto:`/`tel:` to their apps, unsafe schemes ignored, notifications use the content link opener |
+| `3949dd8` | L11 — paging: failed search/filter clears the stale list, Retry repeats what failed |
+| `c447541` | L12, L16 — waiver list keyed, photo re-pick, camera off while uploading |
+| `d4b766f` | L14, L15, L8 — Orders replaces cart and checkout, account-deleted toast, apply → Pay through state |
+| `a1856ac` | L17, L18, L19, P1 — book cover in `rememberFormFiles`, `FormReset`, approve wording, finance student search |
+| `8f1573a` | T3 — payment approval Compose test |
+| `76ee516` | Q1, Q2 — one `ResendState`, dead code removed |
+| `dd6fee4` | Keeps the new code within the detekt and lint limits (no baseline entries added) |
+
+L7 was fixed for the payee name only. The UPI app link still sends no `tr` and keeps its 60-character note: some UPI
+apps refuse a personal UPI ID that comes with a merchant-style transaction reference, so matching the QR code there
+would risk failed payments. That is a judgement for whoever can try it with real UPI apps.
+
+**Checks.** Build of both flavors, lint, detekt, 243 unit and Robolectric tests (226 before, 17 new), the
+instrumented-test APK and the R8 staging release build: all pass.
+
+**On the phone** (Samsung SM-A566E, staging debug build, already signed in to a staging developer account; nothing
+was submitted): Home, notifications (both filters; a notification link opened My Courses), course page → Pay with a
+waiver chosen, kept through rotating to landscape and back, Explore (fatwa, blog, bookstore and cart empty states),
+the developer panel, Finance (the new student search: typing, picking and clearing), account and the fee-waiver form.
+No crashes. Sign-out, account deletion and submitting forms were not tried on the phone, because they change the
+staging account; the unit tests cover them.
