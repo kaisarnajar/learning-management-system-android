@@ -39,12 +39,16 @@ inline fun <reified VM : ViewModel> savedVmFactory(crossinline create: (AppConta
 /**
  * Calls [reload] when the user comes back to this screen (from a screen pushed on top of it, or from another
  * app), so things like a just-submitted payment show up without a manual pull-to-refresh.
+ *
+ * Not after a rotation: the screen is rebuilt then, but the user never left (it used to reload every list and page on
+ * each turn of the phone). Leaving is noted when the screen pauses, unless the Activity is only being recreated.
  */
 @androidx.compose.runtime.Composable
 fun ReloadOnReturn(reload: () -> Unit) {
-    var seen by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    val activity = androidx.activity.compose.LocalActivity.current
+    var away by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
     androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
-        if (seen) reload() else seen = true
-        onPauseOrDispose { }
+        if (away) { away = false; reload() }
+        onPauseOrDispose { if (activity?.isChangingConfigurations != true) away = true }
     }
 }
