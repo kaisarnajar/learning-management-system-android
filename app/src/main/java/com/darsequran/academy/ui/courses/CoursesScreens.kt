@@ -95,6 +95,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -293,14 +294,30 @@ class CourseDetailViewModel(private val repo: AcademyRepository, private val aut
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
 
-    init { load() }
+    private var loadJob: Job? = null
 
-    fun load() = viewModelScope.launch { _state.value = repo.course(courseId).toLoad() }
+    init {
+        load()
+        // Enrolled or not, and what to pay, depend on who is signed in: signing in from "Sign in to apply" must show it.
+        viewModelScope.launch { auth.session.map { it?.user?.id }.distinctUntilChanged().drop(1).collect { load() } }
+    }
+
+    /** Reloads in place (the page stays up meanwhile); the newest load wins. */
+    fun load() {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch { _state.value = repo.course(courseId).toLoad() }
+    }
 
     /** Applies; free courses wait for approval, paid ones continue to the enrollment-fee payment. */
-    fun apply(onPayNext: () -> Unit, onCompleteProfile: () -> Unit) = viewModelScope.launch {
+    /** One application per tap: a second tap (even in the same frame) is ignored while the first is sent. */
+    fun apply(onPayNext: () -> Unit, onCompleteProfile: () -> Unit) {
+        if (_busy.value) return
         _busy.value = true
         _message.value = null
+        viewModelScope.launch { try { sendApplication(onPayNext, onCompleteProfile) } finally { _busy.value = false } }
+    }
+
+    private suspend fun sendApplication(onPayNext: () -> Unit, onCompleteProfile: () -> Unit) {
         when (val r = repo.enroll(courseId)) {
             is ApiResult.Ok -> {
                 load()
@@ -312,7 +329,6 @@ class CourseDetailViewModel(private val repo: AcademyRepository, private val aut
                 _message.value = r.message
             }
         }
-        _busy.value = false
     }
 }
 
@@ -331,9 +347,12 @@ fun CourseDetailScreen(
     val session by vm.session.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
     val message by vm.message.collectAsStateWithLifecycle()
+    // Back from paying the enrollment fee (or anything else): the enrollment may have moved on, e.g. to "under review",
+    // and the page must not keep offering the payment just made.
+    ReloadOnReturn(vm::load)
 
     when (val s = state) {
-        Load.Loading -> LoadingBox()
+        Load.Loading -> Column { HeaderBack(onBack); LoadingBox() }
         is Load.Failed -> Column { HeaderBack(onBack); ErrorState(s.message, vm::load) }
         is Load.Ready -> {
             val detail = s.value
