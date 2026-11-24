@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Badge
@@ -34,10 +33,11 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.darsequran.academy.data.remote.Paged
 import com.darsequran.academy.data.repo.orNull
-import com.darsequran.academy.data.staff.ActionResponse
 import com.darsequran.academy.data.staff.formOf
+import com.darsequran.academy.data.staff.people.EnrollmentsAdminApi
+import com.darsequran.academy.data.staff.students.StudentEnrollment
+import com.darsequran.academy.data.staff.students.StudentsAdminApi
 import com.darsequran.academy.ui.common.Avatar
 import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.ReloadOnReturn
@@ -65,95 +65,8 @@ import com.darsequran.academy.ui.manage.common.rememberContainer
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
 import kotlinx.serialization.Serializable
-import okhttp3.MultipartBody
-import okhttp3.ResponseBody
-import retrofit2.http.DELETE
-import retrofit2.http.GET
-import retrofit2.http.Multipart
-import retrofit2.http.PATCH
-import retrofit2.http.POST
-import retrofit2.http.Part
-import retrofit2.http.Path
-import retrofit2.http.Query
-import retrofit2.http.Streaming
 
 // ------------------------------------------------------------------ API (/api/v1/admin/students)
-
-@Serializable
-data class StudentRow(
-    val id: String,
-    val name: String? = null,
-    val email: String = "",
-    val registrationNumber: String? = null,
-    val image: String? = null,
-    val gender: String? = null,
-    val createdAt: String? = null,
-)
-
-@Serializable
-data class StudentEnrollment(
-    val id: String,
-    val courseId: String,
-    val courseTitle: String = "",
-    val rollNumber: String? = null,
-    val status: String = "",
-    val statusLabel: String = "",
-    val createdAt: String? = null,
-)
-
-@Serializable
-data class StudentDetail(
-    val id: String,
-    val name: String? = null,
-    val email: String = "",
-    val registrationNumber: String? = null,
-    val image: String? = null,
-    val gender: String? = null,
-    val fatherName: String? = null,
-    val dateOfBirth: String? = null,
-    val dateOfBirthDisplay: String? = null,
-    val occupation: String? = null,
-    val occupationLabel: String? = null,
-    val address: String? = null,
-    val whatsapp: String? = null,
-    val createdAt: String? = null,
-    val profileComplete: Boolean = false,
-    val enrollments: List<StudentEnrollment> = emptyList(),
-)
-
-@Serializable data class StudentResponse(val student: StudentDetail)
-
-@Serializable
-data class StudentPayment(
-    val id: String,
-    val paidAt: String? = null,
-    val amountInrPaise: Int = 0,
-    val courseTitle: String? = null,
-    val description: String? = null,
-)
-
-interface StudentsAdminApi {
-    @GET("admin/students")
-    suspend fun list(@Query("page") page: Int, @Query("q") q: String?, @Query("sort") sort: String?): Paged<StudentRow>
-
-    @GET("admin/students/{id}") suspend fun get(@Path("id") id: String): StudentResponse
-
-    @GET("admin/students/{id}/payments")
-    suspend fun payments(@Path("id") id: String, @Query("page") page: Int = 1, @Query("pageSize") pageSize: Int = 50): Paged<StudentPayment>
-
-    @Multipart @PATCH("admin/students/{id}")
-    suspend fun update(@Path("id") id: String, @Part parts: List<MultipartBody.Part>): ActionResponse
-
-    @DELETE("admin/students/{id}") suspend fun delete(@Path("id") id: String): ActionResponse
-
-    @Streaming @GET("admin/students/{id}/id-card") suspend fun idCard(@Path("id") id: String): ResponseBody
-
-    @POST("admin/students/{id}/id-card/email") suspend fun emailIdCard(@Path("id") id: String): ActionResponse
-
-    @DELETE("admin/enrollments/{id}") suspend fun removeEnrollment(@Path("id") id: String, @Query("courseId") courseId: String): ActionResponse
-}
-
-// --------------------------------------------------------------- routes
 
 @Serializable data object StudentsAdminRoute
 @Serializable data class StudentAdminRoute(val id: String)
@@ -302,7 +215,7 @@ fun StudentDetailScreen(id: String, onBack: () -> Unit, onEdit: () -> Unit) {
             "Remove from ${e.courseTitle}?",
             "The student's account is not deleted; they can enrol again later.",
             "Remove", destructive = true,
-            onConfirm = { runner.run({ service<StudentsAdminApi>().removeEnrollment(e.id, e.courseId) }, success = "Enrollment removed.") { loader.reload() } },
+            onConfirm = { runner.run({ service<EnrollmentsAdminApi>().removeEnrollment(e.id, e.courseId) }, success = "Enrollment removed.") { loader.reload() } },
             onDismiss = { removing = null },
         )
     }

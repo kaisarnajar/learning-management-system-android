@@ -8,6 +8,7 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.activity.ComponentActivity
 import com.darsequran.academy.data.CurrentEnvironment
+import com.darsequran.academy.data.staff.courses.Portal
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer

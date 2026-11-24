@@ -101,6 +101,7 @@ interface EnrollmentsAdminApi {
 
     @GET("admin/enrollments/lookup") suspend fun lookup(@Query("email") email: String): LookupResponse
     @Multipart @POST("admin/enrollments") suspend fun enroll(@Part parts: List<MultipartBody.Part>): ActionResponse
+    @DELETE("admin/enrollments/{id}") suspend fun removeEnrollment(@Path("id") id: String, @Query("courseId") courseId: String): ActionResponse
     @Multipart @POST("admin/enrollments/{id}/approve") suspend fun approve(@Path("id") id: String, @Part parts: List<MultipartBody.Part>): ActionResponse
     @Multipart @POST("admin/enrollments/{id}/reject") suspend fun reject(@Path("id") id: String, @Part parts: List<MultipartBody.Part>): ActionResponse
 }

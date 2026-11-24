@@ -1,4 +1,4 @@
-package com.darsequran.academy.ui.manage.courses
+package com.darsequran.academy.data.staff.courses
 
 import com.darsequran.academy.data.remote.Paged
 import com.darsequran.academy.data.staff.ActionResponse
@@ -16,12 +16,6 @@ import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Streaming
-
-/*
- * Admin courses (/api/v1/admin/courses) and the course tools both portals share
- * (/api/v1/{admin|teacher}/courses/{id}/announcements|attendance|grades). The shared screens take a [Portal] and
- * pass its `path` as the first URL segment, so one screen serves the admin pages and the teacher portal.
- */
 
 /** Which website portal a course screen stands for. Kept as a string in routes. */
 enum class Portal(val path: String) {
@@ -126,7 +120,6 @@ interface AdminCoursesApi {
     @Multipart @PATCH("admin/courses/{id}") suspend fun update(@Path("id") id: String, @Part parts: List<MultipartBody.Part>): ActionResponse
     @DELETE("admin/courses/{id}") suspend fun delete(@Path("id") id: String): ActionResponse
     @GET("admin/courses/{id}/students") suspend fun roster(@Path("id") id: String, @Query("page") page: Int, @Query("q") q: String?): Paged<RosterRow>
-    @DELETE("admin/enrollments/{id}") suspend fun removeEnrollment(@Path("id") id: String, @Query("courseId") courseId: String): ActionResponse
 
     @Streaming @GET("admin/courses/{id}/{kind}/student/{enrollmentId}/card")
     suspend fun card(@Path("id") id: String, @Path("kind") kind: String, @Path("enrollmentId") enrollmentId: String): ResponseBody

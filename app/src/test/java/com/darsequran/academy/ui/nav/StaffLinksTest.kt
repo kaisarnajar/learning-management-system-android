@@ -1,7 +1,7 @@
 package com.darsequran.academy.ui.nav
 
 import com.darsequran.academy.ui.manage.TeachTab
-import com.darsequran.academy.ui.manage.courses.Portal
+import com.darsequran.academy.data.staff.courses.Portal
 import com.darsequran.academy.ui.manage.routeForAdminHref
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

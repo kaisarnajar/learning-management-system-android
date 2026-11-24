@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Grading
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.Campaign
 import androidx.compose.material.icons.rounded.Delete
@@ -12,7 +13,6 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.EventAvailable
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material.icons.automirrored.rounded.Grading
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -22,16 +22,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.darsequran.academy.data.staff.courses.AdminCoursesApi
+import com.darsequran.academy.data.staff.courses.CourseToolsApi
+import com.darsequran.academy.data.staff.courses.Portal
+import com.darsequran.academy.data.staff.courses.RosterRow
 import com.darsequran.academy.data.staff.formOf
+import com.darsequran.academy.data.staff.people.EnrollmentsAdminApi
 import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.Overline
 import com.darsequran.academy.ui.common.ReloadOnReturn
@@ -41,6 +46,7 @@ import com.darsequran.academy.ui.common.rupees
 import com.darsequran.academy.ui.manage.common.AddFab
 import com.darsequran.academy.ui.manage.common.ConfirmDialog
 import com.darsequran.academy.ui.manage.common.DetailCard
+import com.darsequran.academy.ui.manage.common.FeaturedSwitch
 import com.darsequran.academy.ui.manage.common.FormCheckbox
 import com.darsequran.academy.ui.manage.common.FormDateField
 import com.darsequran.academy.ui.manage.common.FormDropdown
@@ -57,7 +63,6 @@ import com.darsequran.academy.ui.manage.common.RowIcon
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
-import com.darsequran.academy.ui.manage.common.FeaturedSwitch
 import com.darsequran.academy.ui.manage.common.withOther
 
 /** Course status → chip tone, as the website's CourseStatusBadge colours them. */
@@ -309,7 +314,7 @@ fun CourseRosterScreen(courseId: String, onBack: () -> Unit, onAttendance: (Stri
             "Remove enrollment",
             "Remove ${s.name ?: s.email} from this course? Their account will not be deleted; they can enroll again later.",
             "Remove", destructive = true,
-            onConfirm = { runner.run({ service<AdminCoursesApi>().removeEnrollment(s.enrollmentId, courseId) }, success = "Enrollment removed.") { vm.refresh() } },
+            onConfirm = { runner.run({ service<EnrollmentsAdminApi>().removeEnrollment(s.enrollmentId, courseId) }, success = "Enrollment removed.") { vm.refresh() } },
             onDismiss = { removing = null },
         )
     }

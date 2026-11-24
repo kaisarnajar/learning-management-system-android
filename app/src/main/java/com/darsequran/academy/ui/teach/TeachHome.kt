@@ -51,10 +51,10 @@ import com.darsequran.academy.ui.manage.common.StatTile
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
 import com.darsequran.academy.ui.manage.courses.CourseAnnouncementsRoute
-import com.darsequran.academy.ui.manage.courses.CourseHeader
+import com.darsequran.academy.data.staff.courses.CourseHeader
 import com.darsequran.academy.ui.manage.courses.CourseHubRoute
-import com.darsequran.academy.ui.manage.courses.Portal
-import com.darsequran.academy.ui.manage.courses.RosterRow
+import com.darsequran.academy.data.staff.courses.Portal
+import com.darsequran.academy.data.staff.courses.RosterRow
 import com.darsequran.academy.ui.manage.courses.StudentAttendanceRoute
 import com.darsequran.academy.ui.manage.courses.StudentGradesRoute
 import com.darsequran.academy.ui.manage.courses.courseStatusTone
