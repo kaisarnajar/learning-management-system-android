@@ -84,6 +84,7 @@ import com.darsequran.academy.ui.account.PaymentsScreen
 import com.darsequran.academy.ui.account.ReviewsScreen
 import com.darsequran.academy.ui.account.WaiversScreen
 import com.darsequran.academy.ui.auth.ForgotPasswordScreen
+import com.darsequran.academy.ui.auth.GoogleWelcomeEffect
 import com.darsequran.academy.ui.auth.RegisterScreen
 import com.darsequran.academy.ui.auth.SignInScreen
 import com.darsequran.academy.ui.bookstore.BookScreen
@@ -202,6 +203,8 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
             if (config != null) break
         }
     }
+    // As the website's /auth/continue: a Google sign-in with an incomplete profile goes on to the profile form.
+    GoogleWelcomeEffect { nav.navigate(EditProfileRoute) }
 
     val backStack by nav.currentBackStackEntryAsState()
     val destination = backStack?.destination

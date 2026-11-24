@@ -11,6 +11,9 @@ import kotlinx.coroutines.withTimeout
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import org.junit.After
+import com.darsequran.academy.data.ApiResult
+import com.darsequran.academy.data.remote.Profile
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -28,6 +31,7 @@ class AuthViewModelTest {
     @Before fun setUp() { server.start(); CurrentEnvironment.testBaseUrl = server.url("/").toString() }
 
     @After fun tearDown() {
+        GoogleWelcome.disarm()
         runBlocking { ApplicationProvider.getApplicationContext<AcademyApp>().container.sessionStore.clear() }
         CurrentEnvironment.testBaseUrl = null
         server.close()
@@ -53,5 +57,36 @@ class AuthViewModelTest {
         val state = vm.settled()
         assertTrue(state.done)
         assertFalse(state.googleSignedIn)
+    }
+
+    @Test
+    fun googleRegistrationWaitsForThePolicies() {
+        val vm = vm().apply { policiesNotAccepted() }
+        assertEquals("Please agree to the Terms & Conditions and Privacy Policy to continue.", vm.state.value.error)
+    }
+
+    @Test
+    fun aGoogleStudentWithAnIncompleteProfileIsWelcomedOnce() = runBlocking {
+        server.enqueue(MockResponse(body = tokens))
+        vm().apply { google("id-token") }.settled()
+        val incomplete = ApiResult.Ok(Profile(id = "u1", email = "student@example.test", role = "USER"))
+        assertTrue(GoogleWelcome.consume { incomplete })
+        assertFalse(GoogleWelcome.consume { incomplete }) // once per sign-in
+    }
+
+    @Test
+    fun aFailedGoogleSignInWelcomesNoOne() = runBlocking {
+        server.enqueue(MockResponse(code = 401, body = """{"success":false,"error":"Invalid Google ID token."}"""))
+        vm().apply { google("id-token") }.settled()
+        assertFalse(GoogleWelcome.consume { ApiResult.Ok(Profile(id = "u1", email = "s@example.test")) })
+    }
+
+    @Test
+    fun onlyStudentsWithAnIncompleteProfileAreSentToTheForm() {
+        val profile = Profile(id = "u1", email = "s@example.test")
+        assertTrue(needsProfileAfterGoogle(ApiResult.Ok(profile)))
+        assertFalse(needsProfileAfterGoogle(ApiResult.Ok(profile.copy(profileComplete = true))))
+        assertFalse(needsProfileAfterGoogle(ApiResult.Ok(profile.copy(role = "TEACHER"))))
+        assertFalse(needsProfileAfterGoogle(ApiResult.Err("offline")))
     }
 }
