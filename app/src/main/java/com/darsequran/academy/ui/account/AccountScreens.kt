@@ -343,24 +343,33 @@ class EditProfileViewModel(private val auth: AuthRepository, private val repo: A
         val config = async { repo.appConfig().orNull() }
         _state.update { it.copy(profile = auth.profile().toLoad(), config = config.await()) }
     }
-    fun save(update: ProfileUpdate) = viewModelScope.launch {
-        _state.update { it.copy(saving = true, error = null, saved = false) }
+    /** Saves are one at a time: a second tap before the first answer (even in the same frame) is ignored. */
+    fun save(update: ProfileUpdate) {
+        if (_state.value.saving) return
         val wasComplete = (_state.value.profile as? Load.Ready)?.value?.profileComplete == true
-        when (val r = auth.updateProfile(update)) {
-            is ApiResult.Ok -> _state.update {
-                val done = profileJustCompleted(wasComplete, r.value.profileComplete)
-                it.copy(saving = false, saved = true, profile = Load.Ready(r.value), justCompleted = done)
+        _state.update { it.copy(saving = true, error = null, saved = false) }
+        viewModelScope.launch {
+            when (val r = auth.updateProfile(update)) {
+                is ApiResult.Ok -> _state.update {
+                    val done = profileJustCompleted(wasComplete, r.value.profileComplete)
+                    it.copy(saving = false, saved = true, profile = Load.Ready(r.value), justCompleted = done)
+                }
+                is ApiResult.Err -> _state.update { it.copy(saving = false, error = r.message) }
             }
-            is ApiResult.Err -> _state.update { it.copy(saving = false, error = r.message) }
         }
     }
-    fun photo(bytes: ByteArray, mime: String) = viewModelScope.launch {
+
+    /** One upload at a time. */
+    fun photo(bytes: ByteArray, mime: String) {
+        if (_state.value.photoBusy) return
         _state.update { it.copy(photoBusy = true, error = null) }
-        when (val r = auth.uploadPhoto(bytes, mime)) {
-            is ApiResult.Ok -> load()
-            is ApiResult.Err -> _state.update { it.copy(error = r.message) }
+        viewModelScope.launch {
+            when (val r = auth.uploadPhoto(bytes, mime)) {
+                is ApiResult.Ok -> load()
+                is ApiResult.Err -> _state.update { it.copy(error = r.message) }
+            }
+            _state.update { it.copy(photoBusy = false) }
         }
-        _state.update { it.copy(photoBusy = false) }
     }
 }
 

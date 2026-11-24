@@ -37,9 +37,14 @@ class ReviewsViewModel(private val repo: AcademyRepository, private val auth: Au
 
     fun edit(change: (ReviewDraft) -> ReviewDraft) { draft.value = change(draft.value) }
 
-    fun send() = viewModelScope.launch {
-        if (reviewErrors(draft.value).isNotEmpty()) return@launch
+    /** One review at a time: a second tap before the first is sent (even in the same frame) is ignored. */
+    fun send() {
+        if (sending.value || reviewErrors(draft.value).isNotEmpty()) return
         sending.value = true
+        viewModelScope.launch { post() }
+    }
+
+    private suspend fun post() {
         when (val r = repo.addReview(reviewRequest(draft.value))) {
             is ApiResult.Ok -> {
                 message.value = REVIEW_SENT to true

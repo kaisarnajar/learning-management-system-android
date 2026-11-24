@@ -40,6 +40,9 @@ class BlogPostViewModelTest {
                 val signedIn = request.headers["Authorization"] != null
                 return when (request.url.encodedPath) {
                     "/api/v1/blog/p1" -> MockResponse(body = """{"post":{"id":"p1","title":"Patience","likedByMe":$signedIn}}""")
+                    "/api/v1/blog/p1/comments" -> if (request.method == "POST") {
+                        MockResponse.Builder().body("""{"comment":{"id":"c1","content":"JazakAllah"}}""").headersDelay(300, TimeUnit.MILLISECONDS).build()
+                    } else MockResponse(body = """{"data":[]}""")
                     "/api/v1/blog/p1/like" -> MockResponse.Builder().body("""{"liked":true,"likeCount":1}""").headersDelay(300, TimeUnit.MILLISECONDS).build()
                     else -> MockResponse(code = 404)
                 }
@@ -66,6 +69,19 @@ class BlogPostViewModelTest {
         withTimeout(5_000) { while (vm.post()?.likedByMe != true) delay(20) }
         delay(400)
         assertEquals(1, requests.count { it == "POST /api/v1/blog/p1/like" })
+    }
+
+    @Test
+    fun aSecondTapWhilePostingACommentIsIgnored() = runBlocking {
+        val vm = vm()
+        withTimeout(5_000) { vm.state.first { it.post is Load.Ready } }
+        var done = 0
+        vm.comment("JazakAllah") { done++ }; vm.comment("JazakAllah") { done++ }
+        withTimeout(5_000) { while (done == 0) delay(20) }
+        delay(400)
+        assertEquals(1, requests.count { it == "POST /api/v1/blog/p1/comments" })
+        assertEquals(1, done)
+        assertEquals(listOf("c1"), vm.state.value.comments.map { it.id })
     }
 
     @Test

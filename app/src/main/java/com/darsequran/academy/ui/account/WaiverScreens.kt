@@ -77,17 +77,21 @@ class WaiversViewModel(private val repo: AcademyRepository) : ViewModel() {
         }
     }
 
-    fun request(body: WaiverRequestBody, onDone: () -> Unit) = viewModelScope.launch {
+    /** One request at a time: a second tap before the first is sent (even in the same frame) is ignored. */
+    fun request(body: WaiverRequestBody, onDone: () -> Unit) {
+        if (sending.value) return
         sending.value = true
-        when (val r = repo.requestWaiver(body)) {
-            is ApiResult.Ok -> {
-                message.value = WAIVER_SENT to true
-                onDone()
-                load()
+        viewModelScope.launch {
+            when (val r = repo.requestWaiver(body)) {
+                is ApiResult.Ok -> {
+                    message.value = WAIVER_SENT to true
+                    onDone()
+                    load()
+                }
+                is ApiResult.Err -> message.value = r.message to false
             }
-            is ApiResult.Err -> message.value = r.message to false
+            sending.value = false
         }
-        sending.value = false
     }
 
     companion object {

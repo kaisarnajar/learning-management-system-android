@@ -69,11 +69,12 @@ class AccountViewModelsTest {
         assertEquals(ReviewDraft(rating = 0, location = "Srinagar"), vm.draft.value)
 
         vm.edit { it.copy(quote = "A wonderful course with patient teachers.") }
-        vm.send().join()
+        vm.send()
+        assertEquals("nothing is sent without a rating", false, vm.sending.value)
         assertTrue("nothing is sent without a rating", posted.isEmpty())
 
         vm.edit { it.copy(rating = 4) }
-        vm.send().join()
+        vm.send(); vm.send() // a double tap sends one review
         withTimeout(5_000) { vm.message.first { it != null } }
         assertEquals(
             """{"quote":"A wonderful course with patient teachers.","rating":4,"location":"Srinagar"}""",

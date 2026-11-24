@@ -114,19 +114,26 @@ class AuthViewModel(private val auth: AuthRepository) : ViewModel() {
     private val _state = MutableStateFlow(AuthState())
     val state: StateFlow<AuthState> = _state.asStateFlow()
 
-    private fun run(block: suspend () -> ApiResult<*>, onOk: () -> Unit = { _state.value = AuthState(done = true) }) = viewModelScope.launch {
+    /** One request at a time: a second tap while one is on its way (even in the same frame) is ignored. */
+    private fun run(block: suspend () -> ApiResult<*>, onOk: () -> Unit = { _state.value = AuthState(done = true) }) {
+        if (_state.value.busy) return
         _state.value = _state.value.copy(busy = true, error = null, info = null)
-        when (val r = block()) {
-            is ApiResult.Ok -> onOk()
-            is ApiResult.Err -> _state.value = _state.value.copy(busy = false, error = r.message, unverifiedEmail = null)
+        viewModelScope.launch {
+            when (val r = block()) {
+                is ApiResult.Ok -> onOk()
+                is ApiResult.Err -> _state.value = _state.value.copy(busy = false, error = r.message, unverifiedEmail = null)
+            }
         }
     }
 
-    fun login(email: String, password: String) = viewModelScope.launch {
+    fun login(email: String, password: String) {
+        if (_state.value.busy) return
         _state.value = AuthState(busy = true)
-        when (val r = auth.login(email, password)) {
-            is ApiResult.Ok -> _state.value = AuthState(done = true)
-            is ApiResult.Err -> _state.value = AuthState(error = r.message, unverifiedEmail = if (r.code == "email_not_verified") email.trim() else null)
+        viewModelScope.launch {
+            when (val r = auth.login(email, password)) {
+                is ApiResult.Ok -> _state.value = AuthState(done = true)
+                is ApiResult.Err -> _state.value = AuthState(error = r.message, unverifiedEmail = if (r.code == "email_not_verified") email.trim() else null)
+            }
         }
     }
 
@@ -134,6 +141,7 @@ class AuthViewModel(private val auth: AuthRepository) : ViewModel() {
 
     /** Arms [GoogleWelcome] first: saving the session replaces the navigation graph, this screen included. */
     fun google(idToken: String) {
+        if (_state.value.busy) return
         GoogleWelcome.arm()
         run({ auth.google(idToken).also { if (it is ApiResult.Err) GoogleWelcome.disarm() } }) {
             _state.value = AuthState(done = true, googleSignedIn = true)
@@ -193,9 +201,11 @@ fun SignInScreen(
         state.info?.let { Banner(it, Tone.Success) }
         state.unverifiedEmail?.let { addr -> TextButton({ vm.resend(addr) }) { Text("Send the verification e-mail again") } }
         EmailField(email) { email = it }
-        PasswordField(password, "Password", onDone = { vm.login(email, password) }) { password = it }
+        // The keyboard's Done follows the same rule as the button.
+        val canSignIn = email.contains("@") && password.isNotEmpty()
+        PasswordField(password, "Password", onDone = { if (canSignIn) vm.login(email, password) }) { password = it }
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) { TextButton(onForgot) { Text("Forgot password?") } }
-        PrimaryButton("Sign in", { vm.login(email, password) }, enabled = email.contains("@") && password.isNotEmpty(), loading = state.busy)
+        PrimaryButton("Sign in", { vm.login(email, password) }, enabled = canSignIn, loading = state.busy)
         GoogleButton(vm)
         Spacer(Modifier.height(8.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {

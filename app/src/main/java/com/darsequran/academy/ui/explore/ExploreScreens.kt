@@ -214,11 +214,15 @@ class BlogPostViewModel(private val repo: AcademyRepository, private val auth: A
         }
     }
 
-    fun comment(text: String, onDone: () -> Unit) = viewModelScope.launch {
+    /** A second tap before the first comment is posted (even in the same frame) is ignored: it would post it twice. */
+    fun comment(text: String, onDone: () -> Unit) {
+        if (_state.value.busy) return
         _state.update { it.copy(busy = true, error = null) }
-        when (val r = repo.addComment(id, text)) {
-            is ApiResult.Ok -> { _state.update { it.copy(busy = false, comments = listOf(r.value) + it.comments) }; onDone() }
-            is ApiResult.Err -> _state.update { it.copy(busy = false, error = r.message) }
+        viewModelScope.launch {
+            when (val r = repo.addComment(id, text)) {
+                is ApiResult.Ok -> { _state.update { it.copy(busy = false, comments = listOf(r.value) + it.comments) }; onDone() }
+                is ApiResult.Err -> _state.update { it.copy(busy = false, error = r.message) }
+            }
         }
     }
 
@@ -389,10 +393,15 @@ class AskFatwaViewModel(private val repo: AcademyRepository) : ViewModel() {
         else it.copy(signedIn = true, name = name.orEmpty(), email = email)
     }
 
-    fun submit(websiteUrl: String) = viewModelScope.launch {
+    /** Sent once: a second tap while it is on its way (even in the same frame), or after it was sent, is ignored. */
+    fun submit(websiteUrl: String) {
         val current = form.value
-        if (current.errors().isNotEmpty()) return@launch
+        if (busy.value || done.value || current.errors().isNotEmpty()) return
         busy.value = true; error.value = null
+        send(current, websiteUrl)
+    }
+
+    private fun send(current: AskFatwaForm, websiteUrl: String) = viewModelScope.launch {
         when (val r = repo.askFatwa(current.toRequest(websiteUrl))) {
             is ApiResult.Ok -> done.value = true
             is ApiResult.Err -> error.value = r.message
