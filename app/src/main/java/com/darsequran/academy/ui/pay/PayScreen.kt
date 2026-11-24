@@ -1,6 +1,5 @@
 package com.darsequran.academy.ui.pay
 
-import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -23,21 +22,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AccountBalance
 import androidx.compose.material.icons.rounded.AddPhotoAlternate
 import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.QrCode2
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
@@ -56,11 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -298,55 +288,12 @@ private fun PayFlow(state: PayState, vm: PayViewModel, courseTitle: String, head
         if (!free) {
             // ---- step 2: pay
             StepHeader(2, "Pay")
-            if (settings?.upiId.isNullOrBlank().not()) {
-                PrimaryButton("Pay ${rupees(state.amountPaise)} with a UPI app", {
-                    if (!launchUpi(context, settings!!, state.amountPaise, "$heading - $courseTitle")) {
-                        android.widget.Toast.makeText(context, "No UPI app found. Use the details below.", android.widget.Toast.LENGTH_LONG).show()
-                    }
-                })
-            }
-            AppCard(Modifier.fillMaxWidth()) {
-                if (!settings?.upiId.isNullOrBlank()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.QrCode2, null, tint = Brand.gold)
-                        Spacer(Modifier.width(10.dp)); Overline("UPI")
-                    }
-                    CopyRow("UPI ID", settings?.upiId)
-                    CopyRow("UPI number", settings?.upiNumber)
-                    CopyRow("Payee", settings?.upiPayeeName, copy = false)
-                }
-                if (!settings?.bankAccountNumber.isNullOrBlank()) {
-                    Spacer(Modifier.height(10.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.AccountBalance, null, tint = Brand.gold)
-                        Spacer(Modifier.width(10.dp)); Overline("Bank transfer")
-                    }
-                    CopyRow("Account name", settings?.bankAccountName, copy = false)
-                    CopyRow("Account number", settings?.bankAccountNumber)
-                    CopyRow("IFSC", settings?.bankIfsc)
-                    CopyRow("Bank", listOfNotNull(settings?.bankName, settings?.bankBranch).joinToString(", "), copy = false)
-                }
-            }
+            PayWithUpiButton(settings, state.amountPaise, "$heading - $courseTitle")
+            PaymentDetailsCard(settings)
 
             // ---- step 3: confirm
             StepHeader(3, "Confirm")
-            val methods = listOfNotNull("upi" to "UPI", ("bank" to "Bank transfer").takeIf { !settings?.bankAccountNumber.isNullOrBlank() })
-            // Only ask how they paid when there is more than one way to pay.
-            if (methods.size > 1) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                methods.forEach { (value, label) ->
-                    ChoicePill(label, method == value, Modifier.weight(1f)) { method = value }
-                }
-            }
-            OutlinedTextField(
-                value = reference,
-                onValueChange = { v -> reference = v.filter { it.isLetterOrDigit() }.take(40) },
-                label = { Text("Transaction reference (UTR)") },
-                supportingText = { Text("The 12-digit reference shown in your UPI or bank app after paying.") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, capitalization = KeyboardCapitalization.Characters),
-            )
-            ScreenshotPicker(proof.image?.preview, onPick = proof::pick, onClear = proof::clear)
+            PaymentConfirmFields(settings, method, { method = it }, reference, { reference = it }, proof)
         } else {
             Banner("This fee is fully waived. Submit it for the academy to confirm.", Tone.Success)
         }
@@ -391,26 +338,6 @@ fun ChoicePill(label: String, selected: Boolean, modifier: Modifier = Modifier, 
             .clickable(onClick = onClick).padding(vertical = 14.dp),
         contentAlignment = Alignment.Center,
     ) { Text(label, style = MaterialTheme.typography.labelLarge, color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface) }
-}
-
-@Composable
-private fun CopyRow(label: String, value: String?, copy: Boolean = true) {
-    if (value.isNullOrBlank()) return
-    val clipboard = LocalClipboard.current
-    val context = LocalContext.current
-    Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-        }
-        if (copy) {
-            val scope = androidx.compose.runtime.rememberCoroutineScope()
-            IconButton({
-                scope.launch { clipboard.setClipEntry(androidx.compose.ui.platform.ClipEntry(ClipData.newPlainText(label, value))) }
-                android.widget.Toast.makeText(context, "$label copied", android.widget.Toast.LENGTH_SHORT).show()
-            }) { Icon(Icons.Rounded.ContentCopy, "Copy $label", tint = MaterialTheme.colorScheme.primary) }
-        }
-    }
 }
 
 @Composable
