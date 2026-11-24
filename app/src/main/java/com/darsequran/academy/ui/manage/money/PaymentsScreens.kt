@@ -291,7 +291,7 @@ fun ExpenseCard(row: MoneyRow, runner: ActionRunner, onChanged: () -> Unit) {
         }
     }
     if (deleting) ConfirmDialog(
-        "Delete this expense?", "${row.categoryLabel} of ${money(row.amountInrPaise)} on ${formatDate(row.paidAt)} is removed from finance. This cannot be undone.", "Delete",
+        "Delete this expense?", "${row.categoryLabel ?: row.category ?: "This expense"} of ${money(row.amountInrPaise)} on ${formatDate(row.paidAt)} is removed from finance. This cannot be undone.", "Delete",
         destructive = true,
         onConfirm = { runner.run({ service<MoneyApi>().deleteExpense(row.id) }, success = "Expense deleted.") { onChanged() } },
         onDismiss = { deleting = false },

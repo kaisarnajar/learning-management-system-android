@@ -4,17 +4,20 @@ import java.text.NumberFormat
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val inr = NumberFormat.getNumberInstance(Locale("en", "IN")).apply {
+private val indianEnglish: Locale = Locale.forLanguageTag("en-IN")
+
+private val inr = NumberFormat.getNumberInstance(indianEnglish).apply {
     minimumFractionDigits = 0
     maximumFractionDigits = 2
 }
 
-private val inrPaise = NumberFormat.getNumberInstance(Locale("en", "IN")).apply {
+private val inrPaise = NumberFormat.getNumberInstance(indianEnglish).apply {
     minimumFractionDigits = 2
     maximumFractionDigits = 2
 }
@@ -36,6 +39,8 @@ private fun parse(value: String?): java.time.ZonedDateTime? {
     return runCatching { OffsetDateTime.parse(value).atZoneSameInstant(zone) }.getOrNull()
         ?: runCatching { Instant.parse(value).atZone(zone) }.getOrNull()
         ?: runCatching { LocalDate.parse(value).atStartOfDay(zone) }.getOrNull()
+        // A date and time without a zone ("2026-11-16T10:00:00") is academy time; it used to lose its time of day.
+        ?: runCatching { LocalDateTime.parse(value).atZone(zone) }.getOrNull()
         ?: runCatching { if (value.length > 10 && value[10] == 'T') LocalDate.parse(value.take(10)).atStartOfDay(zone) else null }.getOrNull()
 }
 
@@ -45,7 +50,7 @@ fun formatDate(value: String?): String =
 
 /** Calendar-only fields stored as UTC midnight: format in UTC so the day never shifts. */
 fun formatCalendarDate(value: String?): String =
-    runCatching { LocalDate.parse(value!!.take(10)).format(dayFormat) }.getOrDefault(value ?: "")
+    value?.let { runCatching { LocalDate.parse(it.take(10)).format(dayFormat) }.getOrNull() } ?: (value ?: "")
 
 fun formatDateTime(value: String?): String = parse(value)?.format(dayTimeFormat) ?: ""
 
@@ -57,7 +62,7 @@ fun relativeTime(value: String?): String {
         seconds < 60 -> "just now"
         seconds < 3600 -> "${seconds / 60} min ago"
         seconds < 86_400 -> "${seconds / 3600} h ago"
-        seconds < 7 * 86_400 -> "${seconds / 86_400} days ago"
+        seconds < 7 * 86_400 -> "${countOf((seconds / 86_400).toInt(), "day")} ago"
         else -> time.format(dayFormat)
     }
 }
