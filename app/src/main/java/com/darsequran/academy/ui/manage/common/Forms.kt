@@ -536,3 +536,6 @@ fun FeaturedSwitch(
         featuredDescription(allowed, used, max, section, pageName, noun, condition),
     )
 }
+
+/** [options] with "Other" at the end (where a value can be typed), whether or not the server's list has it. */
+fun withOther(options: List<String>): List<String> = if (options.any { it.equals("Other", ignoreCase = true) }) options else options + "Other"

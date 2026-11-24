@@ -57,6 +57,7 @@ import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
 import com.darsequran.academy.ui.manage.common.rememberFormFiles
 import com.darsequran.academy.ui.manage.common.FeaturedSwitch
+import com.darsequran.academy.ui.manage.common.withOther
 
 // Website: /admin/library (list, delete), /[id] (view, delete), /new and /[id]/edit (cover image upload).
 
@@ -165,7 +166,8 @@ fun LibraryDetailScreen(id: String, onBack: () -> Unit, onEdit: () -> Unit) {
 /** A choice from [options] where "Other" lets the admin type their own value (the website form's topic/language). */
 @Composable
 private fun ChoiceWithOther(label: String, options: List<String>, value: String, onChange: (String) -> Unit, custom: Boolean, onCustomChange: (Boolean) -> Unit) {
-    val choices = (if (value.isNotBlank() && !custom && value !in options) listOf(value) else emptyList()) + options
+    // "Other" is always offered: with an empty library the server's topic list is empty, and there was no way in.
+    val choices = (if (value.isNotBlank() && !custom && value !in options) listOf(value) else emptyList()) + withOther(options)
     FormDropdown(label, choices.map { it to it }, if (custom) "Other" else value, { picked ->
         if (picked == "Other") { onCustomChange(true); onChange("") } else { onCustomChange(false); onChange(picked) }
     }, placeholder = "Select…")

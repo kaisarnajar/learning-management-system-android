@@ -58,6 +58,7 @@ import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
 import com.darsequran.academy.ui.manage.common.FeaturedSwitch
+import com.darsequran.academy.ui.manage.common.withOther
 
 /** Course status → chip tone, as the website's CourseStatusBadge colours them. */
 fun courseStatusTone(status: String): Tone = when (status) {
@@ -228,7 +229,7 @@ fun CourseFormScreen(id: String?, onBack: () -> Unit) {
         FormTextField("Description", description, { description = it }, singleLine = false, minLines = 4)
         FormDateField("Start date", startDate, { startDate = it })
         FormTextField("Duration", duration, { duration = it }, supporting = "e.g. 6 months, 1 year. Shown on course listings and detail pages.", maxLength = 80)
-        FormDropdown("Category", o.categories.map { it to it }, categorySelect, { categorySelect = it }, placeholder = "Select a category")
+        FormDropdown("Category", withOther(o.categories).map { it to it }, categorySelect, { categorySelect = it }, placeholder = "Select a category")
         if (categorySelect == "Other") FormTextField("Specify category", customCategory, { customCategory = it }, maxLength = 100)
         FormDropdown("Instructor", o.teachers.map { it.id to "${it.name} — ${it.specialization}" }, teacherId, { teacherId = it }, placeholder = "Select a teacher")
         FormDropdown("Level", o.levels.map { it.value to it.label }, level, { level = it }, supporting = "Used for display; fees are set below per course.")
