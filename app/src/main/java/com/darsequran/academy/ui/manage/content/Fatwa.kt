@@ -36,7 +36,6 @@ import com.darsequran.academy.ui.common.openWeb
 import com.darsequran.academy.ui.manage.common.ConfirmDialog
 import com.darsequran.academy.ui.manage.common.DetailCard
 import com.darsequran.academy.ui.manage.common.FilterOption
-import com.darsequran.academy.ui.manage.common.FormSwitch
 import com.darsequran.academy.ui.manage.common.LoadedColumn
 import com.darsequran.academy.ui.manage.common.ManageListScreen
 import com.darsequran.academy.ui.manage.common.ManageScaffold
@@ -46,6 +45,7 @@ import com.darsequran.academy.ui.manage.common.RowIcon
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
+import com.darsequran.academy.ui.manage.common.FeaturedSwitch
 
 // Website: /admin/fatwa (+ [id]) for admins, /teacher/fatwa (+ [id]) for teachers. Both answer with the same editor.
 
@@ -231,9 +231,9 @@ fun FatwaAnswerScreen(audience: FatwaAudience, id: String, onBack: () -> Unit) {
                 )
             }
             if (admin) item {
-                FormSwitch(
-                    "Show on homepage", featured ?: question.featuredOnHomepage, { featured = it },
-                    "Featured in the Fatwa section when this answer is published (up to ${data.featuredMax}; ${data.featuredCount}/${data.featuredMax} slots used). All answered questions still appear on the Fatwa page.",
+                FeaturedSwitch(
+                    featured ?: question.featuredOnHomepage, { featured = it }, question.featuredOnHomepage, data.featuredCount, data.featuredMax,
+                    "Fatwa", "Fatwa page", "answers", condition = "when this answer is published",
                 )
             }
             item {
@@ -250,7 +250,11 @@ fun FatwaAnswerScreen(audience: FatwaAudience, id: String, onBack: () -> Unit) {
                             else -> "Publish answer"
                         },
                         onClick = {
-                            runner.run({ service<ContentApi>().answerFatwa(id, answerParts(withFeatured = true)) }) { response ->
+                            val text = if (editable) answer ?: question.answer.orEmpty() else question.answer.orEmpty()
+                            // The website requires an answer of at least 20 characters; say so here rather than after a round trip.
+                            val problem = answerProblem(text)
+                            if (problem != null) runner.message(problem)
+                            else runner.run({ service<ContentApi>().answerFatwa(id, answerParts(withFeatured = true)) }) { response ->
                                 runner.message(answerPublishedMessage(response)); loader.reload()
                             }
                         },
@@ -287,4 +291,11 @@ fun FatwaAnswerScreen(audience: FatwaAudience, id: String, onBack: () -> Unit) {
     if (confirmDelete) DeleteFatwaDialog(q?.title ?: "This question", { confirmDelete = false }) {
         runner.run({ service<ContentApi>().deleteFatwa(id) }, success = "Question deleted.") { onBack() }
     }
+}
+
+/** Why an answer can't be published yet, or null. Counts the visible text, not the formatting tags. */
+internal fun answerProblem(answerHtml: String): String? = when {
+    isBlankHtml(answerHtml) -> "Write the answer first."
+    answerHtml.replace(Regex("<[^>]*>"), "").replace("&nbsp;", " ").trim().length < 20 -> "The answer must be at least 20 characters."
+    else -> null
 }

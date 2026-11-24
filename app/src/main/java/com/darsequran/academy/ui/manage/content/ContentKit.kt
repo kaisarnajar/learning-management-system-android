@@ -164,8 +164,3 @@ fun ImagesField(
         }
     }
 }
-
-/** The "Show on homepage" description the website's forms use. */
-fun featuredDescription(canFeature: Boolean, used: Int, max: Int, section: String, pageName: String, noun: String): String =
-    if (canFeature) "Featured in the $section section when published (up to $max; ${minOf(used, max)}/$max slots used). All published $noun still appear on the $pageName."
-    else "There are already $max featured $noun. Remove one from the homepage to feature this one."

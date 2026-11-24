@@ -56,6 +56,7 @@ import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
 import com.darsequran.academy.ui.manage.common.rememberFormFiles
+import com.darsequran.academy.ui.manage.common.FeaturedSwitch
 
 // Website: /admin/library (list, delete), /[id] (view, delete), /new and /[id]/edit (cover image upload).
 
@@ -241,13 +242,9 @@ fun LibraryFormScreen(id: String?, onBack: () -> Unit) {
         FormDropdown("Level", options.levels.map { it to it }, level, { level = it })
         ChoiceWithOther("Language", options.languages, language, { language = it }, customLanguage, { customLanguage = it })
         FormTextField("PDF URL", pdfUrl, { pdfUrl = it }, keyboardType = KeyboardType.Uri, supporting = "Link to the PDF, starting with https://")
-        val canFeature = item?.featuredOnHomepage == true || options.featuredCount < options.featuredMax
         FormSection("Visibility") {
             FormSwitch("Published", published, { published = it }, "Turn off to hide from the public library.")
-            FormSwitch(
-                "Show on homepage", featured && canFeature, { if (canFeature) featured = it },
-                featuredDescription(canFeature, options.featuredCount, options.featuredMax, "Featured Resources", "library", "resources"),
-            )
+            FeaturedSwitch(featured, { featured = it }, item?.featuredOnHomepage == true, options.featuredCount, options.featuredMax, "Featured Resources", "library", "resources")
         }
         if (item != null) Text("ID: ${item.id}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }

@@ -47,7 +47,6 @@ import com.darsequran.academy.ui.manage.common.FormDropdown
 import com.darsequran.academy.ui.manage.common.FormNumberField
 import com.darsequran.academy.ui.manage.common.FormScreen
 import com.darsequran.academy.ui.manage.common.FormSection
-import com.darsequran.academy.ui.manage.common.FormSwitch
 import com.darsequran.academy.ui.manage.common.FormTextField
 import com.darsequran.academy.ui.manage.common.LoadedColumn
 import com.darsequran.academy.ui.manage.common.ManageListScreen
@@ -58,6 +57,7 @@ import com.darsequran.academy.ui.manage.common.RowIcon
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
+import com.darsequran.academy.ui.manage.common.FeaturedSwitch
 
 /** Course status → chip tone, as the website's CourseStatusBadge colours them. */
 fun courseStatusTone(status: String): Tone = when (status) {
@@ -248,14 +248,7 @@ fun CourseFormScreen(id: String?, onBack: () -> Unit) {
             FormCheckbox("Reopen this course anyway. Completed enrollments become active again; certificates already issued stay as they are.", confirmReopen) { confirmReopen = it }
         }
 
-        val canFeature = form.values.featuredOnHomepage || o.featuredCount < o.featuredMax
-        FormSwitch(
-            "Show on homepage",
-            featured && canFeature,
-            { if (canFeature) featured = it },
-            description = if (canFeature) "Featured in the Featured Courses section when not in draft (up to ${o.featuredMax}; ${o.featuredCount}/${o.featuredMax} slots used). All public courses still appear on the Courses page."
-            else "There are already ${o.featuredMax} featured courses. Remove one course to add this course as a featured course.",
-        )
+        FeaturedSwitch(featured, { featured = it }, form.values.featuredOnHomepage, o.featuredCount, o.featuredMax, "Featured Courses", "Courses page", "courses", condition = "when not in draft")
         if (id != null) Text("Course ID: $id", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

@@ -505,3 +505,34 @@ fun rememberFormFiles(key: String): FormFiles = viewModel(key = key) { FormFiles
 fun showRejected(context: android.content.Context, outcome: PickOutcome) {
     if (outcome is PickOutcome.Rejected) android.widget.Toast.makeText(context, outcome.reason, android.widget.Toast.LENGTH_LONG).show()
 }
+
+/** Whether an item may be shown on the homepage: one already featured stays; a new one only while a slot is free. */
+fun canFeature(currentlyFeatured: Boolean, used: Int, max: Int): Boolean = currentlyFeatured || used < max
+
+/** The "Show on homepage" description the website's forms use. */
+fun featuredDescription(canFeature: Boolean, used: Int, max: Int, section: String, pageName: String, noun: String, condition: String = "when published"): String =
+    if (canFeature) "Featured in the $section section $condition (up to $max; ${minOf(used, max)}/$max slots used). All published $noun still appear on the $pageName."
+    else "There are already $max featured $noun. Remove one from the homepage to feature this one."
+
+/**
+ * "Show on homepage", within the homepage's [max] slots ([used] taken; [currentlyFeatured] = this item holds one).
+ * Turning it off is always allowed.
+ */
+@Composable
+fun FeaturedSwitch(
+    featured: Boolean,
+    onChange: (Boolean) -> Unit,
+    currentlyFeatured: Boolean,
+    used: Int,
+    max: Int,
+    section: String,
+    pageName: String,
+    noun: String,
+    condition: String = "when published",
+) {
+    val allowed = canFeature(currentlyFeatured, used, max)
+    FormSwitch(
+        "Show on homepage", featured && allowed, { if (allowed || !it) onChange(it) },
+        featuredDescription(allowed, used, max, section, pageName, noun, condition),
+    )
+}

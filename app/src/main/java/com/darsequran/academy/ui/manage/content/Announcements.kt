@@ -32,6 +32,7 @@ import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
 import com.darsequran.academy.ui.manage.common.rememberFormFiles
+import com.darsequran.academy.ui.manage.common.FeaturedSwitch
 
 // Website: /admin/announcements (list, homepage toggle, delete), /new and /[id]/edit.
 
@@ -154,8 +155,6 @@ fun AnnouncementFormScreen(id: String?, onBack: () -> Unit) {
         },
     ) {
         if (data == null) { Text(if (state is Load.Failed) "" else "Loading…"); return@FormScreen }
-        val currentlyFeatured = data.announcement.showOnHomepage
-        val canFeature = currentlyFeatured || data.featuredCount < data.featuredMax
         if (id == null) Text(
             "Share events such as guest scholars at a masjid. Use \"Show on homepage\" to feature up to ${data.featuredMax} items; every published item appears on the Announcements page.",
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -170,10 +169,7 @@ fun AnnouncementFormScreen(id: String?, onBack: () -> Unit) {
             picked = picked, onPickedChange = { picked = it }, max = data.maxImages,
         )
         FormSection("Visibility") {
-            FormSwitch(
-                "Show on homepage", homepage && canFeature, { if (canFeature) homepage = it },
-                featuredDescription(canFeature, data.featuredCount, data.featuredMax, "Featured Announcements", "Announcements page", "announcements"),
-            )
+            FeaturedSwitch(homepage, { homepage = it }, data.announcement.showOnHomepage, data.featuredCount, data.featuredMax, "Featured Announcements", "Announcements page", "announcements")
             FormSwitch("Published", published, { published = it; if (!it) homepage = false }, "Turn off to save as a draft (hidden from the public site). Publishing notifies every student.")
         }
     }

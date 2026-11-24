@@ -52,12 +52,12 @@ import com.darsequran.academy.ui.manage.common.FormTextField
 import com.darsequran.academy.ui.manage.common.LoadedColumn
 import com.darsequran.academy.ui.manage.common.ManageListScreen
 import com.darsequran.academy.ui.manage.common.ManageScaffold
-import com.darsequran.academy.ui.manage.common.Notice
 import com.darsequran.academy.ui.manage.common.RecordCard
 import com.darsequran.academy.ui.manage.common.paiseToRupeesText
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
+import com.darsequran.academy.ui.manage.common.FeaturedSwitch
 
 /*
  * The book catalogue: /admin/bookstore (list), /admin/bookstore/[bookId] (detail), /new and /[bookId]/edit (form).
@@ -271,18 +271,7 @@ fun BookFormScreen(id: String?, onBack: () -> Unit) {
 
         FormSection("Visibility") {
             FormSwitch("Published", published, { published = it }, "Turn off to hide from the public bookstore.")
-            val currentlyFeatured = loaded.book.featuredOnHomepage
-            val canFeature = currentlyFeatured || loaded.featuredCount < loaded.featuredMax
-            FormSwitch(
-                "Show on homepage", featured,
-                { if (canFeature || !it) featured = it },
-                if (canFeature) {
-                    "Featured in the Featured Books section when published (up to ${loaded.featuredMax}; " +
-                        "${loaded.featuredCount}/${loaded.featuredMax} slots used). All published books still appear in the bookstore."
-                } else {
-                    "There are already ${loaded.featuredMax} featured books. Remove one book from the homepage to add this item as a featured book."
-                },
-            )
+            FeaturedSwitch(featured, { featured = it }, loaded.book.featuredOnHomepage, loaded.featuredCount, loaded.featuredMax, "Featured Books", "bookstore", "books")
         }
         Spacer(Modifier.height(4.dp))
     }

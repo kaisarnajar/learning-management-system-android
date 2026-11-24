@@ -57,6 +57,7 @@ import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
 import com.darsequran.academy.ui.manage.common.rememberFormFiles
+import com.darsequran.academy.ui.manage.common.FeaturedSwitch
 
 // Website: /admin/blogs (+ new, [id]/edit), /admin/blog-approvals (+ [id]), /teacher/blogs (+ new, [id]/edit).
 
@@ -303,13 +304,9 @@ fun BlogEditorScreen(mode: BlogEditorMode, id: String?, onBack: () -> Unit) {
             picked = picked, onPickedChange = { picked = it }, max = data.maxImages, readOnly = readOnly || locked,
         )
         if (admin) {
-            val canFeature = post?.featuredOnHomepage == true || data.featuredCount < data.featuredMax
             FormSection("Publishing") {
                 FormSwitch("Publish on the public blog", published, { published = it }, "Leave off to save as a draft.")
-                FormSwitch(
-                    "Show on homepage", featured && canFeature, { if (canFeature) featured = it },
-                    featuredDescription(canFeature, data.featuredCount, data.featuredMax, "Featured Blogs", "Blog page", "posts"),
-                )
+                FeaturedSwitch(featured, { featured = it }, post?.featuredOnHomepage == true, data.featuredCount, data.featuredMax, "Featured Blogs", "Blog page", "posts")
             }
         } else if (!locked) {
             Banner("Your post will be sent to the admin for review. Once approved, it will appear on the public blog page.", Tone.Warning)
