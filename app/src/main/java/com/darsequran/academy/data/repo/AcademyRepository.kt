@@ -63,10 +63,9 @@ class AcademyRepository(private val api: AcademyApi) {
     suspend fun announcement(id: String) = apiCall { api.announcement(id).announcement }
     suspend fun contact(body: ContactRequest) = apiCall { api.contact(body) }
 
-    private var paymentSettingsCache: PaymentSettings? = null
     suspend fun paymentSettings(): ApiResult<PaymentSettings> =
-        paymentSettingsCache?.let { ApiResult.Ok(it) }
-            ?: apiCall { api.paymentSettings().settings }.also { if (it is ApiResult.Ok) paymentSettingsCache = it.value }
+        // Not cached: the academy can change its UPI or bank details at any time.
+        apiCall { api.paymentSettings().settings }
 
     // ---- student
     suspend fun enrollments() = apiCall { api.enrollments().data }
