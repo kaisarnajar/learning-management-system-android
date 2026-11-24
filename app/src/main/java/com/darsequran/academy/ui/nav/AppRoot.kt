@@ -175,11 +175,13 @@ fun AppRoot() {
     // The user matters even within one role: after a student signs out (or another signs in on the phone), the tab
     // stacks saved by switchTab would otherwise bring back the previous student's screens and data.
     key(env, shell, session?.user?.id) {
-        val nav = rememberNavController()
-        Column(Modifier.fillMaxSize()) {
-            if (env != AppEnvironment.PRODUCTION) { HeroUnderStatusBar(); EnvironmentStrip(env) { nav.navigate(EnvironmentRoute) } }
-            Box(Modifier.weight(1f).then(if (env != AppEnvironment.PRODUCTION) Modifier.consumeWindowInsets(WindowInsets.statusBars) else Modifier)) {
-                AppContent(nav, shell)
+        GraphScope("${env.key}-$shell-${session?.user?.id}") {
+            val nav = rememberNavController()
+            Column(Modifier.fillMaxSize()) {
+                if (env != AppEnvironment.PRODUCTION) { HeroUnderStatusBar(); EnvironmentStrip(env) { nav.navigate(EnvironmentRoute) } }
+                Box(Modifier.weight(1f).then(if (env != AppEnvironment.PRODUCTION) Modifier.consumeWindowInsets(WindowInsets.statusBars) else Modifier)) {
+                    AppContent(nav, shell)
+                }
             }
         }
     }
