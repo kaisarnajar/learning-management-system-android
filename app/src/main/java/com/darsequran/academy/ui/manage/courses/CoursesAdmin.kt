@@ -201,6 +201,9 @@ fun CourseFormScreen(id: String?, onBack: () -> Unit) {
         saving = runner.busy,
         snackbar = runner.snackbar,
         saveLabel = if (id == null) "Create course" else "Save changes",
+        canSave = loaded,
+        loadError = (state as? Load.Failed)?.message,
+        onRetry = { loader.reload(true) },
         onSave = {
             val parts = formOf {
                 text("title", title.trim()); text("description", description.trim()); text("startDate", startDate); text("duration", duration.trim())

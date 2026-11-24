@@ -90,6 +90,7 @@ import coil3.compose.AsyncImage
 import com.darsequran.academy.data.staff.PickedFile
 import com.darsequran.academy.data.staff.readPicked
 import com.darsequran.academy.ui.common.PrimaryButton
+import com.darsequran.academy.ui.common.ErrorState
 import com.darsequran.academy.ui.common.RemoteImage
 import com.darsequran.academy.ui.theme.Brand
 import com.darsequran.academy.ui.common.academyToday
@@ -110,6 +111,10 @@ import java.time.format.DateTimeFormatter
 
 /**
  * A form screen: scrolling fields, an error banner on top, and a Save button at the bottom (and in the top bar).
+ *
+ * An edit form passes [canSave] = false until its record has loaded, so Save can't send the still-empty fields
+ * (blanking the record), and [loadError] with [onRetry] when loading failed, which shows the error and a retry
+ * instead of the fields and Save.
  */
 @Composable
 fun FormScreen(
@@ -120,19 +125,27 @@ fun FormScreen(
     snackbar: SnackbarHostState? = null,
     saveLabel: String = "Save",
     error: String? = null,
+    canSave: Boolean = true,
+    loadError: String? = null,
+    onRetry: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val failedToLoad = loadError != null && onRetry != null
     ManageScaffold(title, onBack, snackbar, actions = {
-        TextButton(onClick = onSave, enabled = !saving) { Text(saveLabel) }
+        if (!failedToLoad) TextButton(onClick = onSave, enabled = !saving && canSave) { Text(saveLabel) }
     }) { padding ->
+        if (failedToLoad) {
+            Box(Modifier.padding(padding).fillMaxSize()) { ErrorState(loadError!!, onRetry!!) }
+            return@ManageScaffold
+        }
         Column(
             Modifier.padding(padding).fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Notice(error)
+            Notice(error ?: loadError)
             content()
             Spacer(Modifier.height(4.dp))
-            PrimaryButton(saveLabel, onSave, loading = saving)
+            PrimaryButton(saveLabel, onSave, enabled = canSave, loading = saving)
             Spacer(Modifier.height(24.dp))
         }
     }

@@ -336,7 +336,10 @@ fun StudentEditScreen(id: String, onBack: () -> Unit) {
     }
     val hasUploadedPhoto = student?.image?.let { it.isNotBlank() && !it.startsWith("/assets/") } == true
 
-    FormScreen("Edit student", onBack, runner.busy, snackbar = runner.snackbar, onSave = {
+    FormScreen(
+        "Edit student", onBack, runner.busy, snackbar = runner.snackbar,
+        canSave = loaded, loadError = (state as? Load.Failed)?.message, onRetry = { loader.reload(true) },
+        onSave = {
         runner.run({
             service<StudentsAdminApi>().update(id, formOf {
                 text("name", name); text("fatherName", father); text("dateOfBirth", dob); text("occupation", occupation)

@@ -140,6 +140,9 @@ fun InquiryReplyScreen(id: String, onBack: () -> Unit) {
         snackbar = runner.snackbar,
         saveLabel = if (replied) "Update reply & resend email" else "Send reply",
         error = error,
+        canSave = loaded,
+        loadError = (state as? Load.Failed)?.message,
+        onRetry = { loader.reload(true) },
         onSave = {
             error = if (reply.trim().length < 10) "The reply must be at least 10 characters." else null
             if (error == null) runner.run({ service<ContactInquiriesApi>().reply(id, formOf { text("reply", reply.trim()) }) }) { r ->
@@ -147,11 +150,7 @@ fun InquiryReplyScreen(id: String, onBack: () -> Unit) {
             }
         },
     ) {
-        when (val s = state) {
-            is Load.Failed -> { com.darsequran.academy.ui.manage.common.Notice(s.message); return@FormScreen }
-            Load.Loading -> { Text("Loading…"); return@FormScreen }
-            is Load.Ready -> Unit
-        }
+        if (state !is Load.Ready) { Text("Loading…"); return@FormScreen }
         val i = inquiry ?: return@FormScreen
         repliedLine(i)?.let { Text((if (replied) "Replied " else "Last updated ") + it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         DetailCard {

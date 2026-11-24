@@ -224,6 +224,9 @@ fun BookFormScreen(id: String?, onBack: () -> Unit) {
         snackbar = runner.snackbar,
         saveLabel = if (id == null) "Add book" else "Save changes",
         error = error,
+        canSave = loaded != null && (id == null || filled),
+        loadError = (state as? Load.Failed)?.message,
+        onRetry = { loader.reload(true) },
         onSave = {
             error = validate()
             if (error == null) {
@@ -242,13 +245,7 @@ fun BookFormScreen(id: String?, onBack: () -> Unit) {
             }
         },
     ) {
-        if (loaded == null) {
-            when (val s = state) {
-                is Load.Failed -> Notice(s.message)
-                else -> Text("Loading…")
-            }
-            return@FormScreen
-        }
+        if (loaded == null) { Text("Loading…"); return@FormScreen }
         val currentImage = loaded.book.imagePath.takeIf { !removeImage }
         FormImageField(
             "Book cover image", currentImage, image, { image = it },

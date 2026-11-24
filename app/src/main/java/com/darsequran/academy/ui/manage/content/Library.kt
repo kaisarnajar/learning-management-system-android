@@ -210,7 +210,9 @@ fun LibraryFormScreen(id: String?, onBack: () -> Unit) {
         saving = runner.busy,
         snackbar = runner.snackbar,
         saveLabel = if (id == null) "Create item" else "Save changes",
-        error = (state as? Load.Failed)?.message,
+        canSave = loaded && state is Load.Ready,
+        loadError = (state as? Load.Failed)?.message,
+        onRetry = { loader.reload(true) },
         onSave = {
             val parts = formOf {
                 text("title", title.trim()); text("author", author.trim()); text("topic", topic.trim()); text("level", level)

@@ -239,7 +239,9 @@ fun BlogEditorScreen(mode: BlogEditorMode, id: String?, onBack: () -> Unit) {
         saving = runner.busy,
         snackbar = runner.snackbar,
         saveLabel = saveLabel,
-        error = (state as? Load.Failed)?.message,
+        canSave = loaded && state is Load.Ready,
+        loadError = (state as? Load.Failed)?.message,
+        onRetry = { loader.reload(true) },
         onSave = {
             if (locked) { runner.message("This post can no longer be edited because it has been approved."); return@FormScreen }
             // A teacher's submission keeps its text: send it back unchanged, as the website's read-only inputs do.

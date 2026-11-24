@@ -26,6 +26,7 @@ import com.darsequran.academy.data.ApiResult
 import com.darsequran.academy.data.apiCall
 import com.darsequran.academy.data.staff.formOf
 import com.darsequran.academy.ui.common.Banner
+import com.darsequran.academy.ui.common.ErrorState
 import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.PrimaryButton
 import com.darsequran.academy.ui.common.Tone
@@ -47,7 +48,8 @@ import kotlinx.coroutines.delay
 fun TransactionsScreen(expense: Boolean, onBack: () -> Unit) {
     var expenseTab by rememberSaveable { mutableStateOf(expense) }
     val options = rememberLoader("money-finance-options") { service<MoneyApi>().options() }
-    val opts = (options.state.collectAsStateWithLifecycle().value as? Load.Ready)?.value
+    val optionsState by options.state.collectAsStateWithLifecycle()
+    val opts = (optionsState as? Load.Ready)?.value
     val runner = rememberActionRunner()
 
     ManageScaffold("Record transactions", onBack, runner.snackbar) { padding ->
@@ -58,6 +60,7 @@ fun TransactionsScreen(expense: Boolean, onBack: () -> Unit) {
             Text("Manually log payments received from students or operational expenses.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             FilterChips(listOf(FilterOption(null, "Record Payment"), FilterOption("expenses", "Record Expense")), if (expenseTab) "expenses" else null, onSelect = { expenseTab = it == "expenses" })
             when {
+                optionsState is Load.Failed -> ErrorState((optionsState as Load.Failed).message, { options.reload(true) })
                 opts == null -> Text("Loading…")
                 expenseTab -> RecordExpenseForm(opts, runner)
                 else -> RecordPaymentForm(opts, runner)

@@ -172,7 +172,8 @@ fun TeacherFormScreen(id: String?, onBack: () -> Unit) {
     val container = rememberContainer()
     val scope = rememberCoroutineScope()
     val loader = if (id != null) rememberLoader("admin-teacher-$id") { service<TeachersAdminApi>().get(id).teacher } else null
-    val existing = loader?.state?.collectAsStateWithLifecycle()?.value?.let { (it as? Load.Ready)?.value }
+    val loadState = loader?.state?.collectAsStateWithLifecycle()?.value
+    val existing = (loadState as? Load.Ready)?.value
 
     var loaded by rememberSaveable { mutableStateOf(id == null) }
     var email by rememberSaveable { mutableStateOf("") }
@@ -218,6 +219,9 @@ fun TeacherFormScreen(id: String?, onBack: () -> Unit) {
         snackbar = runner.snackbar,
         saveLabel = if (id == null) "Create teacher" else "Save changes",
         error = error,
+        canSave = loaded,
+        loadError = (loadState as? Load.Failed)?.message,
+        onRetry = { loader?.reload(true) },
         onSave = {
             error = when {
                 !verified -> "Verify the account e-mail first."

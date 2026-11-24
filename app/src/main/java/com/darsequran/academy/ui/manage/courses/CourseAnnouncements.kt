@@ -233,7 +233,9 @@ fun AnnouncementFormScreen(
             personal -> "Send message"
             else -> "Post announcement"
         },
-        error = (state as? Load.Failed)?.message,
+        canSave = loaded,
+        loadError = (state as? Load.Failed)?.message,
+        onRetry = { loader?.reload(true) },
         onSave = {
             if (title.trim().length < 3 || body.trim().length < 10) { runner.message(error ?: "Add a title and a message."); return@FormScreen }
             val parts = formOf {

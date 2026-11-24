@@ -144,7 +144,9 @@ fun GradeFormScreen(portal: Portal, courseId: String, gradeId: String?, onBack: 
         saving = runner.busy,
         snackbar = runner.snackbar,
         saveLabel = "Save grades",
-        error = failed,
+        canSave = roster != null && initialised,
+        loadError = failed,
+        onRetry = { students.reload(true); existing?.reload(true) },
         onSave = {
             val problem = validate()
             if (problem != null) runner.message(problem)

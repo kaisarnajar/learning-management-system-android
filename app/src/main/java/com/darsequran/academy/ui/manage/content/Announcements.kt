@@ -136,7 +136,9 @@ fun AnnouncementFormScreen(id: String?, onBack: () -> Unit) {
         saving = runner.busy,
         snackbar = runner.snackbar,
         saveLabel = if (id == null) "Publish announcement" else "Save changes",
-        error = (state as? Load.Failed)?.message,
+        canSave = loaded,
+        loadError = (state as? Load.Failed)?.message,
+        onRetry = { loader.reload(true) },
         onSave = {
             val parts = formOf {
                 text("title", title.trim()); text("body", body); text("eventDate", eventDate); text("location", location.trim())

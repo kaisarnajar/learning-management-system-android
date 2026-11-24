@@ -43,7 +43,8 @@ import com.darsequran.academy.ui.manage.common.rememberLoader
 fun PaymentSettingsScreen(onBack: () -> Unit) {
     val loader = rememberLoader("money-settings") { service<MoneyApi>().settings().settings }
     val runner = rememberActionRunner()
-    val loaded = (loader.state.collectAsStateWithLifecycle().value as? Load.Ready)?.value
+    val state by loader.state.collectAsStateWithLifecycle()
+    val loaded = (state as? Load.Ready)?.value
     var ready by rememberSaveable { mutableStateOf(false) }
     var upiId by rememberSaveable { mutableStateOf("") }
     var upiNumber by rememberSaveable { mutableStateOf("") }
@@ -66,7 +67,10 @@ fun PaymentSettingsScreen(onBack: () -> Unit) {
         }
     }
 
-    FormScreen("Payment details", onBack, runner.busy, snackbar = runner.snackbar, saveLabel = "Save payment details", onSave = {
+    FormScreen(
+        "Payment details", onBack, runner.busy, snackbar = runner.snackbar, saveLabel = "Save payment details",
+        canSave = ready, loadError = (state as? Load.Failed)?.message, onRetry = { loader.reload(true) },
+        onSave = {
         runner.run({
             service<MoneyApi>().saveSettings(formOf {
                 text("upiId", upiId); text("upiNumber", upiNumber); text("upiPayeeName", payee)
