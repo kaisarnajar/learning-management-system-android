@@ -52,10 +52,8 @@ import androidx.compose.material.icons.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.RequestQuote
 import androidx.compose.material.icons.rounded.ShoppingBag
 import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.material.icons.rounded.SupportAgent
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -102,8 +100,6 @@ import com.darsequran.academy.data.remote.PaymentSubmission
 import com.darsequran.academy.ui.common.StatusKind
 import com.darsequran.academy.data.remote.Profile
 import com.darsequran.academy.data.remote.ProfileUpdate
-import com.darsequran.academy.data.remote.Review
-import com.darsequran.academy.data.remote.ReviewRequest
 import com.darsequran.academy.data.repo.AcademyRepository
 import com.darsequran.academy.data.repo.AuthRepository
 import com.darsequran.academy.data.repo.orNull
@@ -489,71 +485,6 @@ private fun SubmissionCard(s: PaymentSubmission, titles: Map<String, String>) {
                                 }
                             }
                         }
-}
-
-// ================================================================ reviews
-
-class ReviewsViewModel(private val repo: AcademyRepository) : ViewModel() {
-    val state = MutableStateFlow<Load<List<Review>>>(Load.Loading)
-    val sending = MutableStateFlow(false)
-    val message = MutableStateFlow<Pair<String, Boolean>?>(null)
-    init { load() }
-    fun load() = viewModelScope.launch { state.value = repo.myReviews().toLoad() }
-    fun send(body: ReviewRequest, onDone: () -> Unit) = viewModelScope.launch {
-        sending.value = true
-        when (val r = repo.addReview(body)) {
-            is ApiResult.Ok -> { message.value = "Thank you! Your review will appear once the academy approves it." to true; onDone(); load() }
-            is ApiResult.Err -> message.value = r.message to false
-        }
-        sending.value = false
-    }
-}
-
-@Composable
-fun ReviewsScreen(onBack: () -> Unit) {
-    val vm: ReviewsViewModel = viewModel(factory = vmFactory { ReviewsViewModel(it.repo) })
-    val state by vm.state.collectAsStateWithLifecycle()
-    val sending by vm.sending.collectAsStateWithLifecycle()
-    val message by vm.message.collectAsStateWithLifecycle()
-    var rating by rememberSaveable { mutableStateOf(5) }
-    var quote by rememberSaveable { mutableStateOf("") }
-    var course by rememberSaveable { mutableStateOf("") }
-    var location by rememberSaveable { mutableStateOf("") }
-    Scaffold(topBar = { BackTopBar("My reviews", onBack) }) { padding ->
-        Box(Modifier.padding(padding)) {
-            LoadContent(state, vm::load) { reviews ->
-                LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    item {
-                        AppCard(Modifier.fillMaxWidth()) {
-                            Text("Share your experience", style = MaterialTheme.typography.titleLarge)
-                            Spacer(Modifier.height(8.dp))
-                            Row { (1..5).forEach { i -> IconButton({ rating = i }) { Icon(if (i <= rating) Icons.Rounded.Star else Icons.Rounded.StarBorder, "$i stars", tint = Brand.goldSoft) } } }
-                            OutlinedTextField(quote, { quote = it.take(600) }, Modifier.fillMaxWidth().height(120.dp), label = { Text("Your review") })
-                            Spacer(Modifier.height(8.dp))
-                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                OutlinedTextField(course, { course = it.take(100) }, Modifier.weight(1f), label = { Text("Course") }, singleLine = true)
-                                OutlinedTextField(location, { location = it.take(100) }, Modifier.weight(1f), label = { Text("City") }, singleLine = true)
-                            }
-                            Spacer(Modifier.height(10.dp))
-                            message?.let { (t, ok) -> Banner(t, if (ok) Tone.Success else Tone.Danger); Spacer(Modifier.height(8.dp)) }
-                            PrimaryButton("Submit review", { vm.send(ReviewRequest(quote.trim(), rating, course.ifBlank { null }, location.ifBlank { null })) { quote = ""; course = ""; location = "" } }, enabled = quote.trim().length >= 20, loading = sending)
-                        }
-                    }
-                    items(reviews, key = { it.id }) { r ->
-                        val (label, tone) = statusLabel(r.status ?: "pending", StatusKind.Review)
-                        AppCard(Modifier.fillMaxWidth()) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Row(Modifier.weight(1f)) { repeat(r.rating) { Icon(Icons.Rounded.Star, null, Modifier.size(16.dp), tint = Brand.goldSoft) } }
-                                StatusChip(label, tone)
-                            }
-                            Spacer(Modifier.height(6.dp))
-                            Text("“${r.quote}”", style = MaterialTheme.typography.bodyMedium)
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
 // ========================================================== notifications

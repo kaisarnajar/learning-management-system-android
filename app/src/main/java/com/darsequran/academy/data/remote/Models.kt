@@ -297,6 +297,7 @@ data class Review(
     val initials: String? = null,
     val rating: Int = 5,
     val status: String? = null,
+    val featuredOnHomepage: Boolean = false,
     val createdAt: String? = null,
 )
 
