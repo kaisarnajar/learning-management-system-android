@@ -55,6 +55,7 @@ import com.darsequran.academy.data.remote.CourseAttendance
 import com.darsequran.academy.data.remote.CourseGrades
 import com.darsequran.academy.data.remote.PaymentHistory
 import com.darsequran.academy.data.repo.AcademyRepository
+import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.BackTopBar
 import com.darsequran.academy.ui.common.EmptyState
@@ -109,6 +110,7 @@ fun LearnScreen(
     onReceipt: (String) -> Unit,
     vm: LearnViewModel = viewModel(key = "learn-$courseId", factory = vmFactory { LearnViewModel(it.repo, courseId) }),
 ) {
+    ReloadOnReturn(vm::loadAll)
     var tab by rememberSaveable { mutableIntStateOf(0) }
     val snackbar = remember { SnackbarHostState() }
     Scaffold(

@@ -69,6 +69,7 @@ import com.darsequran.academy.data.remote.CourseDetailResponse
 import com.darsequran.academy.data.remote.Enrollment
 import com.darsequran.academy.data.repo.AcademyRepository
 import com.darsequran.academy.data.repo.AuthRepository
+import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.Avatar
 import com.darsequran.academy.ui.common.Banner
@@ -119,6 +120,9 @@ class CoursesViewModel(private val repo: AcademyRepository, private val auth: Au
         loadCatalogue(reset = true)
     }
 
+    /** Coming back from a course: its status may have changed; keep the catalogue's scroll and pages. */
+    fun reloadMine() { loadMine() }
+
     fun refresh() {
         _state.update { it.copy(refreshing = true) }
         loadMine(); loadCatalogue(reset = true)
@@ -163,6 +167,7 @@ fun CoursesScreen(
     vm: CoursesViewModel = viewModel(factory = vmFactory { CoursesViewModel(it.repo, it.auth) }),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
+    ReloadOnReturn(vm::reloadMine)
     val signedIn = state.session != null
     var tab by rememberSaveable { mutableIntStateOf(0) }
     val showMine = signedIn && tab == 0

@@ -71,6 +71,7 @@ import com.darsequran.academy.data.remote.SiteAnnouncement
 import com.darsequran.academy.data.repo.AcademyRepository
 import com.darsequran.academy.data.repo.AuthRepository
 import com.darsequran.academy.data.repo.orNull
+import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.ArabicText
 import com.darsequran.academy.ui.common.Avatar
@@ -125,6 +126,7 @@ class HomeViewModel(private val repo: AcademyRepository, private val auth: AuthR
     }
 
     fun refresh() = load(refreshing = true)
+    fun reload() = load()
 
     private fun load(refreshing: Boolean = false) = viewModelScope.launch {
         _state.update { it.copy(refreshing = refreshing, error = null) }
@@ -194,7 +196,7 @@ fun HomeScreen(
     vm: HomeViewModel = viewModel(factory = vmFactory { HomeViewModel(it.repo, it.auth) }),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { /* first load happens in init */ }
+    ReloadOnReturn(vm::reload)
 
     PullToRefreshBox(isRefreshing = state.refreshing, onRefresh = vm::refresh, modifier = Modifier.fillMaxSize()) {
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {

@@ -1,5 +1,7 @@
 package com.darsequran.academy.ui.common
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
@@ -27,3 +29,16 @@ val CreationExtras.container: AppContainer
 /** `viewModel(factory = vmFactory { MyViewModel(it.repo) })`. */
 inline fun <reified VM : ViewModel> vmFactory(crossinline create: (AppContainer) -> VM): ViewModelProvider.Factory =
     viewModelFactory { initializer { create(container) } }
+
+/**
+ * Calls [reload] when the user comes back to this screen (from a screen pushed on top of it, or from another
+ * app), so things like a just-submitted payment show up without a manual pull-to-refresh.
+ */
+@androidx.compose.runtime.Composable
+fun ReloadOnReturn(reload: () -> Unit) {
+    var seen by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
+        if (seen) reload() else seen = true
+        onPauseOrDispose { }
+    }
+}

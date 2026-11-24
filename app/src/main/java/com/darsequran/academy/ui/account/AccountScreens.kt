@@ -106,6 +106,7 @@ import com.darsequran.academy.data.repo.AcademyRepository
 import com.darsequran.academy.data.repo.AuthRepository
 import com.darsequran.academy.data.repo.orNull
 import com.darsequran.academy.ui.auth.PasswordField
+import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.Avatar
 import com.darsequran.academy.ui.common.BackTopBar
@@ -182,6 +183,7 @@ fun AccountScreen(
     val profile by vm.profile.collectAsStateWithLifecycle()
     val theme by vm.theme.collectAsStateWithLifecycle()
     val config by vm.config.collectAsStateWithLifecycle()
+    ReloadOnReturn { vm.refresh() }
     val context = LocalContext.current
     var themeDialog by remember { mutableStateOf(false) }
     var confirmSignOut by remember { mutableStateOf(false) }
