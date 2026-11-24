@@ -368,9 +368,13 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                 composable<BookstoreRoute> { BookstoreScreen(nav::popBackStack, { nav.navigate(BookRoute(it)) }, { signedIn { nav.navigate(CartRoute) } }) }
                 composable<BookRoute> { BookScreen(it.toRoute<BookRoute>().id, nav::popBackStack, { signedIn { nav.navigate(CartRoute) } }, { nav.navigate(SignInRoute) }) }
                 composable<CartRoute> { CartScreen(nav::popBackStack, { nav.navigate(CheckoutRoute) }, { nav.popBackStack() }) }
-                // Orders replaces the cart and the finished checkout, wherever the cart was opened from (the bookstore, a book
-                // on Home, a link): Back must not return to "Order submitted".
-                composable<CheckoutRoute> { CheckoutScreen(nav::popBackStack) { nav.navigate(OrdersRoute) { popUpTo<CartRoute> { inclusive = true } } } }
+                // Orders replaces the cart and the finished checkout, wherever the cart was opened from (the
+                // bookstore, a book on Home, a link): Back must not return to "Order submitted".
+                composable<CheckoutRoute> {
+                    CheckoutScreen(nav::popBackStack) {
+                        nav.navigate(OrdersRoute) { popUpTo<CartRoute> { inclusive = true } }
+                    }
+                }
                 composable<OrdersRoute> { OrdersScreen(nav::popBackStack) { nav.navigate(OrderRoute(it)) } }
                 composable<OrderRoute> { OrderScreen(it.toRoute<OrderRoute>().id, nav::popBackStack) }
 
@@ -384,7 +388,7 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                     RegisterScreen(nav::popBackStack, onDone = { nav.popBackStack() }, privacyUrl = config?.policies?.privacyPolicyUrl ?: "/privacy-policy", termsUrl = config?.policies?.termsUrl ?: "/terms-and-conditions")
                 }
                 composable<ForgotPasswordRoute> { ForgotPasswordScreen(nav::popBackStack) }
-                // The same opener as links in content: an in-app screen when there is one, else the website (or the phone).
+                // The same opener as links in content: an in-app screen when there is one, else the website.
                 composable<NotificationsRoute> { NotificationsScreen(nav::popBackStack, openLink) }
                 composable<EditProfileRoute> { EditProfileScreen(nav::popBackStack) { nav.switchTab(CoursesTab) } }
                 composable<PaymentsRoute> { PaymentsScreen(nav::popBackStack) }

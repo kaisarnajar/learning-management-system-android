@@ -42,7 +42,6 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -346,7 +345,9 @@ class CourseDetailViewModel(private val repo: AcademyRepository, private val aut
                 else _message.value = ENROLL_REQUESTED
             }
             is ApiResult.Err -> {
-                if (r.message.contains("complete your profile", ignoreCase = true)) _next.value = AfterApply.COMPLETE_PROFILE
+                if (r.message.contains("complete your profile", ignoreCase = true)) {
+                    _next.value = AfterApply.COMPLETE_PROFILE
+                }
                 _message.value = r.message
             }
         }
@@ -372,16 +373,7 @@ fun CourseDetailScreen(
     // Back from paying the enrollment fee (or anything else): the enrollment may have moved on, e.g. to "under review",
     // and the page must not keep offering the payment just made.
     ReloadOnReturn(vm::load)
-    val next by vm.next.collectAsStateWithLifecycle()
-    LaunchedEffect(next, state) {
-        val title = (state as? Load.Ready)?.value?.course?.title ?: return@LaunchedEffect
-        when (next) {
-            CourseDetailViewModel.AfterApply.PAY -> onPay("enrollment", title)
-            CourseDetailViewModel.AfterApply.COMPLETE_PROFILE -> onCompleteProfile()
-            null -> return@LaunchedEffect
-        }
-        vm.consumeNext()
-    }
+    AfterApplyEffect(vm, (state as? Load.Ready)?.value?.course?.title, onPay, onCompleteProfile)
 
     when (val s = state) {
         Load.Loading -> Column { HeaderBack(onBack); LoadingBox() }

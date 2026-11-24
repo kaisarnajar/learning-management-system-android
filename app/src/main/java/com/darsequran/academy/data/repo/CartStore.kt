@@ -35,7 +35,10 @@ class CartStore(private val repo: AcademyRepository) {
     suspend fun refresh(): ApiResult<List<CartItem>> {
         val asked = generation
         return repo.cart().also {
-            if (it is ApiResult.Ok && asked == generation) { confirmed = it.value; if (pending.get() == 0) _items.value = it.value }
+            if (it is ApiResult.Ok && asked == generation) {
+                confirmed = it.value
+                if (pending.get() == 0) _items.value = it.value
+            }
         }
     }
 
@@ -128,11 +131,12 @@ class CartStore(private val repo: AcademyRepository) {
         _unselected.value = emptySet()
     }
 
-    /** A book not in the cart yet appears once the server answers (it sends the title, price and cover). */
-    private fun List<CartItem>.withQuantity(bookId: String, quantity: Int) =
-        if (quantity == 0) filterNot { it.bookId == bookId } else map { if (it.bookId == bookId) it.copy(quantity = quantity) else it }
-
     companion object {
         const val MAX_PER_BOOK = 20
     }
 }
+
+/** A book not in the cart yet appears once the server answers (it sends the title, price and cover). */
+private fun List<CartItem>.withQuantity(bookId: String, quantity: Int) =
+    if (quantity == 0) filterNot { it.bookId == bookId }
+    else map { if (it.bookId == bookId) it.copy(quantity = quantity) else it }

@@ -44,7 +44,8 @@ class SessionSafetyTest {
         }
         server.start()
         CurrentEnvironment.testBaseUrl = server.url("/").toString()
-        runBlocking { app.container.sessionStore.save(TokenResponse("a", "r", user = SessionUser("u1", "one@example.test"))) }
+        val user = SessionUser("u1", "one@example.test")
+        runBlocking { app.container.sessionStore.save(TokenResponse("a", "r", user = user)) }
     }
 
     @After fun tearDown() {

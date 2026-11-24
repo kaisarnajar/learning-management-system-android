@@ -41,7 +41,8 @@ class BlogPostViewModelTest {
                 return when (request.url.encodedPath) {
                     "/api/v1/blog/p1" -> MockResponse(body = """{"post":{"id":"p1","title":"Patience","likedByMe":$signedIn}}""")
                     "/api/v1/blog/p1/comments" -> if (request.method == "POST") {
-                        MockResponse.Builder().body("""{"comment":{"id":"c1","content":"JazakAllah"}}""").headersDelay(300, TimeUnit.MILLISECONDS).build()
+                        MockResponse.Builder().body("""{"comment":{"id":"c1","content":"JazakAllah"}}""")
+                            .headersDelay(300, TimeUnit.MILLISECONDS).build()
                     } else MockResponse(body = """{"data":[]}""")
                     "/api/v1/blog/p1/like" -> MockResponse.Builder().body("""{"liked":true,"likeCount":1}""").headersDelay(300, TimeUnit.MILLISECONDS).build()
                     else -> MockResponse(code = 404)

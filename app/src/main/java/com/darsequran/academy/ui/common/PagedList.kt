@@ -97,8 +97,8 @@ class PagedViewModel<T>(private val fetch: suspend (page: Int, query: String, fi
                 // under the new chips (nor have a later page of the new filter appended to them).
                 is ApiResult.Err -> _state.update {
                     val stale = reset && shownFor != (current.query to current.filter)
-                    if (stale) it.copy(items = emptyList(), page = 0, total = 0, loading = false, refreshing = false, error = r.message)
-                    else it.copy(loading = false, refreshing = false, error = r.message)
+                    val failed = it.copy(loading = false, refreshing = false, error = r.message)
+                    if (stale) failed.copy(items = emptyList(), page = 0, total = 0) else failed
                 }
             }
         }

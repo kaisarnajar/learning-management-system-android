@@ -45,7 +45,10 @@ class CartStoreTest {
                 "PATCH" -> {
                     val body = request.body!!.utf8()
                     val quantity = Regex("\"quantity\":(\\d+)").find(body)!!.groupValues[1].toInt()
-                    if ("\"b2\"" in body) { sent += quantity; return MockResponse(code = 409, body = """{"error":"Only 0 in stock."}""") }
+                    if ("\"b2\"" in body) {
+                        sent += quantity
+                        return MockResponse(code = 409, body = """{"error":"Only 0 in stock."}""")
+                    }
                     sent += quantity
                     if (failNext) { failNext = false; MockResponse(code = 409, body = """{"error":"Only 2 in stock."}""") }
                     else MockResponse.Builder().body(items(quantity)).headersDelay(80, TimeUnit.MILLISECONDS).build()

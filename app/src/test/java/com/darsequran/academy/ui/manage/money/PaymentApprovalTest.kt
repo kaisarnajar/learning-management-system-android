@@ -37,9 +37,11 @@ class PaymentApprovalTest {
                 return when (request.url.encodedPath) {
                     "/api/v1/admin/payments" -> MockResponse(
                         body = """{"data":[{"kind":"submission","id":"p1","amountInrPaise":50000,"status":"pending",
-                            "user":{"name":"Amina","email":"amina@example.test"},"courseTitle":"Tajweed"}],"totalCount":1}""",
+                            "user":{"name":"Amina","email":"amina@example.test"},"courseTitle":"Tajweed"}],
+                            "totalCount":1}""",
                     )
-                    "/api/v1/admin/payments/p1/approve", "/api/v1/admin/payments/p1/decline" -> MockResponse(body = """{"success":true}""")
+                    "/api/v1/admin/payments/p1/approve", "/api/v1/admin/payments/p1/decline" ->
+                        MockResponse(body = """{"success":true}""")
                     else -> MockResponse(code = 404)
                 }
             }
@@ -63,7 +65,7 @@ class PaymentApprovalTest {
         val listLoads = count("GET /api/v1/admin/payments")
         compose.onNodeWithText("Confirm").performClick()
         compose.onNodeWithText("from Amina and notify the student?", substring = true).assertExists()
-        assertEquals("nothing is sent before the dialog is confirmed", 0, count("POST /api/v1/admin/payments/p1/approve"))
+        assertEquals("not sent before the dialog is confirmed", 0, count("POST /api/v1/admin/payments/p1/approve"))
         compose.onAllNodesWithText("Confirm")[1].performClick() // the card's button, then the dialog's
         compose.waitUntilSettled { count("GET /api/v1/admin/payments") > listLoads }
         assertEquals(1, count("POST /api/v1/admin/payments/p1/approve"))
@@ -74,7 +76,7 @@ class PaymentApprovalTest {
     fun decliningAsksFirstThenDeclinesOnce() {
         openScreen()
         compose.onNodeWithText("Decline").performClick()
-        assertEquals("nothing is sent before the dialog is confirmed", 0, count("POST /api/v1/admin/payments/p1/decline"))
+        assertEquals("not sent before the dialog is confirmed", 0, count("POST /api/v1/admin/payments/p1/decline"))
         compose.onNodeWithText("Decline payment").assertExists()
         compose.onAllNodesWithText("Decline")[1].performClick() // the card's button, then the dialog's
         compose.waitUntilSettled { count("POST /api/v1/admin/payments/p1/decline") == 1 }

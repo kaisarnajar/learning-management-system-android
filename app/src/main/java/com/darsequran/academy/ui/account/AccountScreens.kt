@@ -604,7 +604,10 @@ fun DeleteAccountScreen(onBack: () -> Unit, onDeleted: () -> Unit) {
     val done = submitter.result?.ok == true
     Scaffold(topBar = { BackTopBar("Delete account", onBack) }) { padding ->
         Column(Modifier.padding(padding).verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            if (done) { MessageState(Icons.Rounded.CheckCircle, "Account deleted", ACCOUNT_DELETED, "Close", onDeleted); return@Column }
+            if (done) {
+                MessageState(Icons.Rounded.CheckCircle, "Account deleted", ACCOUNT_DELETED, "Close", onDeleted)
+                return@Column
+            }
             Banner("This permanently deletes your account. It cannot be undone.", Tone.Danger, icon = Icons.Rounded.DeleteForever)
             Text("What happens", style = MaterialTheme.typography.titleLarge)
             listOf(
@@ -626,7 +629,9 @@ fun DeleteAccountScreen(onBack: () -> Unit, onDeleted: () -> Unit) {
                     submitter.submit {
                         // Said before the session is cleared: that replaces the whole navigation graph, this screen
                         // (and any message it could show) included. The cart empties itself on sign-out.
-                        val said = { Toast.makeText(context.applicationContext, ACCOUNT_DELETED, Toast.LENGTH_LONG).show() }
+                        val said = {
+                            Toast.makeText(context.applicationContext, ACCOUNT_DELETED, Toast.LENGTH_LONG).show()
+                        }
                         when (val r = container.auth.deleteAccount(pass, typed, beforeSignOut = said)) {
                             is ApiResult.Ok -> SubmitResult(ACCOUNT_DELETED, ok = true)
                             is ApiResult.Err -> SubmitResult(r.message, ok = false)

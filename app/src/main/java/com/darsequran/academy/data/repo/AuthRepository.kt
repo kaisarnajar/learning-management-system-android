@@ -49,7 +49,9 @@ class AuthRepository(private val api: AcademyApi, private val sessionStore: Sess
      */
     suspend fun logout(): Unit = withContext(NonCancellable) {
         val refresh = sessionStore.session.value?.refreshToken
-        if (refresh != null) withTimeoutOrNull(LOGOUT_REVOKE_TIMEOUT_MS) { apiCall { api.logout(RefreshRequest(refresh)) } }
+        if (refresh != null) {
+            withTimeoutOrNull(LOGOUT_REVOKE_TIMEOUT_MS) { apiCall { api.logout(RefreshRequest(refresh)) } }
+        }
         sessionStore.clear()
     }
 

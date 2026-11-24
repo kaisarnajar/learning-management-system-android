@@ -44,7 +44,8 @@ class CourseDetailViewModelTest {
                     )
                     "/api/v1/enrollments" -> {
                         enrolls.incrementAndGet()
-                        MockResponse.Builder().body("""{"success":true,"requiresEnrollmentFee":true}""").headersDelay(200, TimeUnit.MILLISECONDS).build()
+                        MockResponse.Builder().body("""{"success":true,"requiresEnrollmentFee":true}""")
+                            .headersDelay(200, TimeUnit.MILLISECONDS).build()
                     }
                     else -> MockResponse(code = 404)
                 }

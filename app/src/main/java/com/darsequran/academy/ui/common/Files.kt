@@ -11,6 +11,7 @@ import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import com.darsequran.academy.data.documentCacheDir
 import com.darsequran.academy.data.resolveUrl
 import kotlinx.coroutines.CancellationException
@@ -38,7 +39,7 @@ fun openOutside(context: Context, url: String) {
     when (val how = outsideOpen(url)) {
         is OutsideOpen.Web -> openWeb(context, how.url)
         is OutsideOpen.PhoneApp -> try {
-            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(how.uri)))
+            context.startActivity(Intent(Intent.ACTION_VIEW, how.uri.toUri()))
         } catch (e: ActivityNotFoundException) {
             Toast.makeText(context, "No app on this phone can open this link.", Toast.LENGTH_SHORT).show()
         }
