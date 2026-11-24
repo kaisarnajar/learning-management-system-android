@@ -92,7 +92,9 @@ import com.darsequran.academy.ui.common.statusLabel
 import com.darsequran.academy.ui.common.vmFactory
 import com.darsequran.academy.ui.theme.Brand
 import com.darsequran.academy.ui.common.academyToday
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -125,10 +127,18 @@ class HomeViewModel(private val repo: AcademyRepository, private val auth: AuthR
         viewModelScope.launch { auth.session.collect { s -> _state.update { it.copy(session = s) }; load() } }
     }
 
+    private var loadJob: Job? = null
+
     fun refresh() = load(refreshing = true)
     fun reload() = load()
 
-    private fun load(refreshing: Boolean = false) = viewModelScope.launch {
+    /** The newest load wins: a slower one started for the previous session must not overwrite it (or its user's data). */
+    private fun load(refreshing: Boolean = false) {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch { loadNow(refreshing) }
+    }
+
+    private suspend fun loadNow(refreshing: Boolean) = coroutineScope {
         _state.update { it.copy(refreshing = refreshing, error = null) }
         val signedIn = auth.session.value != null
         val home = async { repo.home() }
