@@ -45,6 +45,7 @@ suspend fun <T> apiCall(block: suspend () -> T): ApiResult<T> = try {
 } catch (e: IOException) {
     ApiResult.Err("No connection. Check your internet and try again.")
 } catch (e: Exception) {
+    // The exception's own message is for developers (it can name classes or internals), so it goes to the log only.
     android.util.Log.w("ApiCall", "Unexpected failure", e)
-    ApiResult.Err(e.message ?: "Something went wrong.")
+    ApiResult.Err("Something went wrong. Please try again.")
 }

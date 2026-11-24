@@ -59,6 +59,12 @@ class ApiCallTest {
     }
 
     @Test
+    fun unexpectedExceptionsDoNotShowTheirMessage() = runTest {
+        val err = failWith(IllegalStateException("Expected BEGIN_OBJECT at com.darsequran.academy.data.remote.Course"))
+        assertEquals("Something went wrong. Please try again.", err.message)
+    }
+
+    @Test
     fun cancellationIsRethrown() = runTest {
         try {
             apiCall<Unit> { throw CancellationException("left the screen") }
