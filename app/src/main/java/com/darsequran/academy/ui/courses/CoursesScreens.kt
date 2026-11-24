@@ -192,7 +192,9 @@ private fun MyCoursesList(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         StatusChip(label, tone)
                         Spacer(Modifier.weight(1f))
-                        e.rollNumber?.let { Text("Roll no. $it", style = MaterialTheme.typography.labelMedium, color = Brand.gold) }
+                        e.rollNumber?.let {
+                            Text(rollNumberLabel(it), style = MaterialTheme.typography.labelMedium, color = Brand.gold)
+                        }
                     }
                     Spacer(Modifier.height(10.dp))
                     Text(e.course?.title ?: "Course", style = MaterialTheme.typography.titleLarge)
@@ -204,18 +206,16 @@ private fun MyCoursesList(
                             Text(it.name, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                    Spacer(Modifier.height(10.dp))
-                    Text(
-                        when (e.status) {
-                            "active" -> "Open the course for updates, attendance, marks and fees"
-                            "completed" -> "Course completed — your records are still here"
-                            "awaiting_enrollment_fee" -> "Pay the enrollment fee to complete your application"
-                            "pending_approval" -> "The academy is reviewing your application"
-                            else -> "Your application was not approved. You can apply again."
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    enrollmentNotes(e).forEachIndexed { i, note ->
+                        Spacer(Modifier.height(6.dp))
+                        val refusal = i == 0 && e.status == EnrollmentStatus.REJECTED // the website shows it in red
+                        Text(
+                            note,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (refusal) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }

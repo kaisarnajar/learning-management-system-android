@@ -376,6 +376,9 @@ data class Enrollment(
     val status: String,
     val rollNumber: Int? = null,
     val createdAt: String = "",
+    val completedAt: String? = null,
+    /** When an admin turned the request down. */
+    val rejectedAt: String? = null,
     val course: Course? = null,
 )
 

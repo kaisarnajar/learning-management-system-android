@@ -43,6 +43,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -52,9 +54,9 @@ import com.darsequran.academy.data.remote.CourseAnnouncement
 import com.darsequran.academy.data.remote.CourseAnnouncementsResponse
 import com.darsequran.academy.data.remote.CourseAttendance
 import com.darsequran.academy.data.remote.CourseGrades
+import com.darsequran.academy.data.remote.GradeEntry
 import com.darsequran.academy.data.remote.PaymentHistory
 import com.darsequran.academy.data.repo.AcademyRepository
-import com.darsequran.academy.ui.common.countOf
 import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.announcementCategory
@@ -127,7 +129,7 @@ fun LearnScreen(
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             PrimaryScrollableTabRow(selectedTabIndex = tab, edgePadding = 12.dp, containerColor = MaterialTheme.colorScheme.background) {
-                listOf("Updates", "Attendance", "Marks", "Fees").forEachIndexed { i, label ->
+                listOf("Announcements", "Attendance", "Grades", "Fees").forEachIndexed { i, label ->
                     Tab(tab == i, { tab = i }, text = { Text(label) })
                 }
             }
@@ -141,23 +143,33 @@ fun LearnScreen(
     }
 }
 
+@Suppress("FunctionNaming") // Compose names composables like types
 @Composable
 private fun UpdatesTab(vm: LearnViewModel, snackbar: SnackbarHostState) {
     val state by vm.updates.collectAsStateWithLifecycle()
     LoadContent(state, vm::loadAll) { data ->
         if (data.courseWide.isEmpty() && data.personal.isEmpty()) {
-            EmptyState("No updates yet", "Announcements from your teacher will appear here.")
+            EmptyState("No announcements yet. Check back later.")
         } else LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (data.personal.isNotEmpty()) {
-                item { Overline("Messages for you") }
+                item { SectionHeading("For you", "Private messages from your instructor") }
                 items(data.personal, key = { "p" + it.id }) { AnnouncementItem(it, personal = true, snackbar) }
                 item { Spacer(Modifier.height(8.dp)) }
             }
             if (data.courseWide.isNotEmpty()) {
-                item { Overline("Course announcements") }
+                item { SectionHeading("Course-wide", "Visible to everyone in this course") }
                 items(data.courseWide, key = { "c" + it.id }) { AnnouncementItem(it, personal = false, snackbar) }
             }
         }
+    }
+}
+
+@Suppress("FunctionNaming") // Compose names composables like types
+@Composable
+private fun SectionHeading(title: String, subtitle: String) {
+    Column {
+        Text(title, style = MaterialTheme.typography.titleLarge)
+        Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -167,7 +179,12 @@ private fun AnnouncementItem(item: CourseAnnouncement, personal: Boolean, snackb
     val scope = rememberCoroutineScope()
     AppCard(Modifier.fillMaxWidth(), color = if (personal) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.45f) else MaterialTheme.colorScheme.surfaceContainerLowest) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (personal) { Icon(Icons.Rounded.Lock, null, Modifier.size(14.dp), tint = Brand.gold); Spacer(Modifier.width(6.dp)) }
+            if (personal) {
+                Icon(Icons.Rounded.Lock, null, Modifier.size(14.dp), tint = Brand.gold)
+                Spacer(Modifier.width(6.dp))
+                Text("For you only", style = MaterialTheme.typography.labelMedium, color = Brand.gold)
+                Text(" · ", style = MaterialTheme.typography.labelMedium, color = Brand.gold)
+            }
             Text(item.authorName.ifBlank { "Academy" }, style = MaterialTheme.typography.labelMedium, color = Brand.gold, modifier = Modifier.weight(1f))
             Text(relativeTime(item.createdAt), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -192,28 +209,29 @@ private fun AnnouncementItem(item: CourseAnnouncement, personal: Boolean, snackb
     }
 }
 
+@Suppress("FunctionNaming") // Compose names composables like types
 @Composable
 private fun AttendanceTab(vm: LearnViewModel) {
     val state by vm.attendance.collectAsStateWithLifecycle()
     LoadContent(state, vm::loadAll) { data ->
         if (data == null || data.totalClasses == 0) {
-            EmptyState("No classes recorded yet", "Your attendance appears here once your teacher takes it.")
+            EmptyState("No attendance records found yet.")
         } else LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             item {
-                AppCard(Modifier.fillMaxWidth()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        ProgressRing(data.percentage / 100f, "${data.percentage}%")
-                        Spacer(Modifier.width(20.dp))
-                        Column {
-                            Text("${data.presentClasses} of ${countOf(data.totalClasses, "class", "classes")}", style = MaterialTheme.typography.titleLarge)
-                            Text("${data.absentClasses} absent", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                }
+                SummaryCard(
+                    "Your Attendance", "Review your presence across all conducted sessions.",
+                    listOf(
+                        "Sessions" to "${data.totalClasses}",
+                        "Present" to "${data.presentClasses}",
+                        "Absent" to "${data.absentClasses}",
+                        "Rate" to "${data.percentage}%",
+                    ),
+                )
             }
             items(data.records.sortedByDescending { it.date }, key = { it.id }) { r ->
                 Row(
-                    Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(14.dp),
+                    Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium)
+                        .background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(formatCalendarDate(r.date), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
@@ -224,38 +242,79 @@ private fun AttendanceTab(vm: LearnViewModel) {
     }
 }
 
+/** A website report header: a title, a line under it, and its figures (label over value). */
+@Suppress("FunctionNaming") // Compose names composables like types
+@Composable
+private fun SummaryCard(title: String, subtitle: String, figures: List<Pair<String, String>>) {
+    AppCard(Modifier.fillMaxWidth()) {
+        Text(title, style = MaterialTheme.typography.titleLarge)
+        Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(14.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            figures.forEach { (label, value) ->
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(value, style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        label.uppercase(), style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Suppress("FunctionNaming") // Compose names composables like types
 @Composable
 private fun GradesTab(vm: LearnViewModel) {
     val state by vm.grades.collectAsStateWithLifecycle()
     LoadContent(state, vm::loadAll) { data ->
         if (data == null || data.grades.isEmpty()) {
-            EmptyState("No marks yet", "Exam results appear here once your teacher records them.")
+            EmptyState("No grade records found for this student yet.")
         } else LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             item {
-                AppCard(Modifier.fillMaxWidth()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        ProgressRing(data.overallPercentage / 100f, "${data.overallPercentage}%")
-                        Spacer(Modifier.width(20.dp))
-                        Column {
-                            Text("${fmt(data.totalMarksObtained)} / ${fmt(data.totalMaxMarks)}", style = MaterialTheme.typography.titleLarge)
-                            Text("Total across ${data.grades.size} exam${if (data.grades.size == 1) "" else "s"}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                }
+                val sum = gradeSummary(data.grades)
+                SummaryCard(
+                    "Grade Report", "Detailed performance summary.",
+                    listOf(
+                        "Exams" to "${sum.exams}",
+                        "Obtained" to formatMarks(sum.obtained),
+                        "Max" to formatMarks(sum.max),
+                        "Percentage" to "${sum.percentage}%",
+                    ),
+                )
             }
-            items(data.grades.sortedByDescending { it.date }, key = { it.id }) { g ->
-                AppCard(Modifier.fillMaxWidth()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text(g.title, style = MaterialTheme.typography.titleMedium)
-                            Text(formatCalendarDate(g.date), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Text(
-                            if (g.marksObtained == null) "Not graded" else "${fmt(g.marksObtained)} / ${fmt(g.maxMarks)}",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    }
+            items(data.grades.sortedByDescending { it.date }, key = { it.id }) { g -> GradeRow(g) }
+        }
+    }
+}
+
+@Suppress("FunctionNaming") // Compose names composables like types
+@Composable
+private fun GradeRow(g: GradeEntry) {
+    val (marks, note) = gradeMarks(g)
+    AppCard(Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(g.title, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    formatCalendarDate(g.date), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    marks, style = MaterialTheme.typography.titleMedium,
+                    color = if (g.marksObtained == null) MaterialTheme.colorScheme.onSurfaceVariant
+                    else MaterialTheme.colorScheme.primary,
+                    modifier = if (g.marksObtained == null) Modifier.semantics { contentDescription = "Not graded" }
+                    else Modifier,
+                )
+                note?.let {
+                    Text(
+                        it, style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
         }
@@ -273,7 +332,6 @@ internal fun canPayCourseFee(enrollment: Enrollment?, submissions: List<PaymentS
     return submissions.none { it.courseId == enrollment.courseId && it.paymentType != "enrollment" && it.status != "rejected" && it.status != "declined" }
 }
 
-private fun fmt(value: Double): String = if (value % 1.0 == 0.0) value.toInt().toString() else "%.2f".format(value)
 
 @Composable
 private fun FeesTab(vm: LearnViewModel, onPayFee: () -> Unit) {

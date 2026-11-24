@@ -17,6 +17,7 @@ object EnrollmentStatus {
     const val COMPLETED = "completed"
     const val AWAITING_ENROLLMENT_FEE = "awaiting_enrollment_fee"
     const val PENDING_APPROVAL = "pending_approval"
+    const val REJECTED = "rejected"
 
     /** Studying or finished: the course's own screens (updates, attendance, marks, fees) are open to the student. */
     fun opensLearn(status: String): Boolean = status == ACTIVE || status == COMPLETED
