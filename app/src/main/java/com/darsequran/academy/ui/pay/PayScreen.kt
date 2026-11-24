@@ -66,6 +66,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
@@ -85,6 +86,7 @@ import com.darsequran.academy.ui.common.PrimaryButton
 import com.darsequran.academy.ui.common.SecondaryButton
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.rupees
+import com.darsequran.academy.ui.common.savedVmFactory
 import com.darsequran.academy.ui.common.vmFactory
 import com.darsequran.academy.ui.theme.Brand
 import com.darsequran.academy.ui.common.academyToday
@@ -116,8 +118,24 @@ data class PayState(
     val amountPaise: Int get() = quote?.coupons?.firstOrNull { it.id == couponId }?.amountPaise ?: (quote?.baseAmountPaise ?: 0)
 }
 
-class PayViewModel(private val repo: AcademyRepository, val courseId: String, val type: String) : ViewModel() {
-    private val _state = MutableStateFlow(PayState())
+/**
+ * The fee payment flow. The waiver, month and year chosen live in [saved] too: paying sends the student to their UPI
+ * app, and if the phone kills this app meanwhile they must come back to the same choices, or the transaction id they
+ * paid with would be submitted for another month or amount.
+ */
+class PayViewModel(
+    private val repo: AcademyRepository,
+    val courseId: String,
+    val type: String,
+    private val saved: SavedStateHandle,
+) : ViewModel() {
+    private val _state = MutableStateFlow(
+        PayState(
+            couponId = saved[COUPON],
+            month = saved[MONTH] ?: academyToday().monthValue,
+            year = saved[YEAR] ?: academyToday().year.toString(),
+        ),
+    )
     val state: StateFlow<PayState> = _state.asStateFlow()
 
     init { load() }
@@ -132,16 +150,23 @@ class PayViewModel(private val repo: AcademyRepository, val courseId: String, va
                     loading = false,
                     quote = q.value,
                     settings = (settings.await() as? ApiResult.Ok)?.value,
-                    year = q.value.yearOptions.firstOrNull { y -> y == academyToday().year.toString() } ?: q.value.yearOptions.firstOrNull() ?: it.year,
+                    year = if (saved.contains(YEAR)) it.year
+                    else q.value.yearOptions.firstOrNull { y -> y == academyToday().year.toString() } ?: q.value.yearOptions.firstOrNull() ?: it.year,
                 )
             }
             is ApiResult.Err -> _state.update { it.copy(loading = false, error = q.message) }
         }
     }
 
-    fun selectCoupon(id: String?) = _state.update { it.copy(couponId = id) }
-    fun selectMonth(m: Int) = _state.update { it.copy(month = m) }
-    fun selectYear(y: String) = _state.update { it.copy(year = y) }
+    fun selectCoupon(id: String?) { saved[COUPON] = id; _state.update { it.copy(couponId = id) } }
+    fun selectMonth(m: Int) { saved[MONTH] = m; _state.update { it.copy(month = m) } }
+    fun selectYear(y: String) { saved[YEAR] = y; _state.update { it.copy(year = y) } }
+
+    private companion object {
+        const val COUPON = "couponId"
+        const val MONTH = "month"
+        const val YEAR = "year"
+    }
 
     /** One submission per payment: a second tap (even in the same frame) or a tap after success is ignored. */
     fun submit(method: String, reference: String, screenshot: Pair<ByteArray, String>?) {
@@ -207,7 +232,7 @@ fun PayScreen(
     title: String,
     onBack: () -> Unit,
     onDone: () -> Unit,
-    vm: PayViewModel = viewModel(key = "pay-$courseId-$type", factory = vmFactory { PayViewModel(it.repo, courseId, type) }),
+    vm: PayViewModel = viewModel(key = "pay-$courseId-$type", factory = savedVmFactory { c, saved -> PayViewModel(c.repo, courseId, type, saved) }),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     val heading = if (type == "enrollment") "Enrollment fee" else "Course fee"

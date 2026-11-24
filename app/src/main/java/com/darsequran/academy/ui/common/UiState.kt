@@ -2,8 +2,10 @@ package com.darsequran.academy.ui.common
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -29,6 +31,10 @@ val CreationExtras.container: AppContainer
 /** `viewModel(factory = vmFactory { MyViewModel(it.repo) })`. */
 inline fun <reified VM : ViewModel> vmFactory(crossinline create: (AppContainer) -> VM): ViewModelProvider.Factory =
     viewModelFactory { initializer { create(container) } }
+
+/** [vmFactory] for a ViewModel that keeps choices across process death in a [SavedStateHandle]. */
+inline fun <reified VM : ViewModel> savedVmFactory(crossinline create: (AppContainer, SavedStateHandle) -> VM): ViewModelProvider.Factory =
+    viewModelFactory { initializer { create(container, createSavedStateHandle()) } }
 
 /**
  * Calls [reload] when the user comes back to this screen (from a screen pushed on top of it, or from another

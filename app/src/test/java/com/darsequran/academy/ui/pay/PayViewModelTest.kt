@@ -1,5 +1,6 @@
 package com.darsequran.academy.ui.pay
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.darsequran.academy.AcademyApp
@@ -49,7 +50,7 @@ class PayViewModelTest {
 
     @Test
     fun aDoubleTapSubmitsOnePayment() = runBlocking {
-        val vm = PayViewModel(app.container.repo, "c1", "course")
+        val vm = PayViewModel(app.container.repo, "c1", "course", SavedStateHandle())
         withTimeout(5_000) { vm.state.first { it.quote != null } }
         vm.submit("UPI", "123456789012", null)
         vm.submit("UPI", "123456789012", null)
@@ -57,5 +58,27 @@ class PayViewModelTest {
         vm.submit("UPI", "123456789012", null) // a tap after success
         delay(300)
         assertEquals(1, submissions.get())
+    }
+
+    @Test
+    fun choicesComeBackAfterTheAppWasKilled() = runBlocking {
+        // What the system hands back after process death, from the choices made before paying.
+        val saved = SavedStateHandle(mapOf("couponId" to "waiver-50", "month" to 3, "year" to "2025"))
+        val vm = PayViewModel(app.container.repo, "c1", "course", saved)
+        withTimeout(5_000) { vm.state.first { it.quote != null } }
+        val s = vm.state.value
+        assertEquals("waiver-50", s.couponId)
+        assertEquals(3, s.month)
+        assertEquals("2025", s.year) // the quote's year options don't override a year already chosen
+    }
+
+    @Test
+    fun choicesAreRecorded() {
+        val saved = SavedStateHandle()
+        val vm = PayViewModel(app.container.repo, "c1", "course", saved)
+        vm.selectCoupon("waiver-50"); vm.selectMonth(7); vm.selectYear("2026")
+        assertEquals("waiver-50", saved.get<String>("couponId"))
+        assertEquals(7, saved.get<Int>("month"))
+        assertEquals("2026", saved.get<String>("year"))
     }
 }
