@@ -129,7 +129,17 @@ class NetworkAuthTest {
     fun concurrent401sShareOneRefresh() = runBlocking {
         validAccess = "expired"
         val (session, api) = network(Session("access-1", "refresh-1", user))
-        (1..3).map { async(Dispatchers.IO) { api.ping() } }.awaitAll() // below OkHttp's 5-per-host limit; see the deadlock test
+        (1..3).map { async(Dispatchers.IO) { api.ping() } }.awaitAll()
+        assertEquals(1, refreshCalls.get())
+        assertEquals("access-2", session.session.value?.accessToken)
+    }
+
+    /** More 401s than OkHttp's per-host limit (5) once deadlocked: the refresh queued behind the requests awaiting it. */
+    @Test(timeout = 15_000)
+    fun manyConcurrent401sDoNotDeadlockTheRefresh() = runBlocking {
+        validAccess = "expired"
+        val (session, api) = network(Session("access-1", "refresh-1", user))
+        (1..10).map { async(Dispatchers.IO) { api.ping() } }.awaitAll()
         assertEquals(1, refreshCalls.get())
         assertEquals("access-2", session.session.value?.accessToken)
     }

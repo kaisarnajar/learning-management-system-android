@@ -9,6 +9,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import okhttp3.Authenticator
+import okhttp3.Dispatcher
 import okhttp3.Interceptor
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -56,7 +57,10 @@ class Network(private val sessionStore: SessionSource, val json: Json) {
         .addInterceptor(logging)
         .build()
 
-    private val refreshApi: RefreshApi = retrofit(baseClient).create(RefreshApi::class.java)
+    // Its own dispatcher: requests waiting in the authenticator hold the shared client's per-host slots (5), so a
+    // refresh queued behind them would never run and every request would hang.
+    private val refreshApi: RefreshApi =
+        retrofit(baseClient.newBuilder().dispatcher(Dispatcher()).build()).create(RefreshApi::class.java)
 
     /** Adds the Bearer token to every call when signed in (a retry already carries the fresh one). */
     private val authHeader = Interceptor { chain ->
