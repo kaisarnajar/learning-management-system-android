@@ -93,11 +93,11 @@ fun PendingPaymentsScreen(onBack: () -> Unit, onOpenReceipt: (String) -> Unit) {
         if (approve) ConfirmDialog(
             "Confirm payment", "Approve this payment of ${money(row.amountInrPaise)} from ${row.user?.display} and notify the student?", "Confirm",
             onConfirm = {
-                runner.run({ service<MoneyApi>().approve(row.id) }, success = "Payment approved and recorded. The student has been notified by e-mail.") { vm.refresh() }
+                runner.run({ service<MoneyApi>().approve(row.id) }, success = "Payment approved and recorded. The student will be notified.") { vm.refresh() }
             },
             onDismiss = { confirming = null },
         ) else ConfirmDialog(
-            "Decline payment", "Decline this payment and ask the student to resubmit? They are notified by e-mail.", "Decline", destructive = true,
+            "Decline payment", "Decline this payment and ask the student to resubmit? They will be notified.", "Decline", destructive = true,
             onConfirm = {
                 runner.run({ service<MoneyApi>().decline(row.id) }, success = "Payment declined. The student has been notified and can resubmit.") { vm.refresh() }
             },

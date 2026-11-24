@@ -63,7 +63,8 @@ import com.darsequran.academy.ui.manage.money.ScreenshotThumb
  * The website acts on orders from the list rows; the app offers the same actions on each card and on the detail.
  */
 
-private const val NOTIFIED = "The student has been notified by email — if they don't see it, ask them to check their Spam/Junk folder."
+// The order endpoints don't report whether the e-mail went out, so the message doesn't claim it did.
+private const val NOTIFIED = "The student will be notified."
 
 /** The tab counts from the latest page of the book-order list, kept across rotation. */
 class BookOrderBadges : ViewModel() {
