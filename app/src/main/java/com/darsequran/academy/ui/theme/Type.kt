@@ -3,44 +3,70 @@ package com.darsequran.academy.ui.theme
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontVariation
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.darsequran.academy.R
 
-val Typography = Typography(
-    headlineLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Bold,
-        fontSize = 28.sp,
-        lineHeight = 34.sp
-    ),
-    headlineMedium = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 22.sp,
-        lineHeight = 28.sp
-    ),
-    titleLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 18.sp,
-        lineHeight = 24.sp
-    ),
-    bodyLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 22.sp
-    ),
-    bodyMedium = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 20.sp
-    ),
-    labelLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
-        lineHeight = 20.sp
-    )
+/** Headings: the website's serif (variable font, weights set through the wght axis). */
+val SerifFamily = FontFamily(
+    serif(FontWeight.Normal),
+    serif(FontWeight.Medium),
+    serif(FontWeight.SemiBold),
+    serif(FontWeight.Bold),
+    serif(FontWeight.Normal, italic = true),
 )
+
+private fun serif(weight: FontWeight, italic: Boolean = false) = Font(
+    if (italic) R.font.sourceserif4_italic else R.font.sourceserif4,
+    weight,
+    if (italic) FontStyle.Italic else FontStyle.Normal,
+    variationSettings = FontVariation.Settings(FontVariation.weight(weight.weight)),
+)
+
+/** Body and interface: the website's sans. */
+val SansFamily = FontFamily(
+    Font(R.font.poppins_regular, FontWeight.Normal),
+    Font(R.font.poppins_medium, FontWeight.Medium),
+    Font(R.font.poppins_semibold, FontWeight.SemiBold),
+    Font(R.font.poppins_semibold, FontWeight.Bold),
+)
+
+/** Arabic (verses, hadith) and Urdu titles. */
+val ArabicFamily = FontFamily(
+    Font(R.font.amiri_regular, FontWeight.Normal),
+    Font(R.font.amiri_bold, FontWeight.Bold),
+)
+
+private val base = Typography()
+
+val AcademyTypography = Typography(
+    displayLarge = base.displayLarge.copy(fontFamily = SerifFamily, fontWeight = FontWeight.SemiBold),
+    displayMedium = base.displayMedium.copy(fontFamily = SerifFamily, fontWeight = FontWeight.SemiBold),
+    displaySmall = base.displaySmall.copy(fontFamily = SerifFamily, fontWeight = FontWeight.SemiBold),
+    headlineLarge = base.headlineLarge.copy(fontFamily = SerifFamily, fontWeight = FontWeight.SemiBold),
+    headlineMedium = base.headlineMedium.copy(fontFamily = SerifFamily, fontWeight = FontWeight.SemiBold, fontSize = 26.sp),
+    headlineSmall = base.headlineSmall.copy(fontFamily = SerifFamily, fontWeight = FontWeight.SemiBold, fontSize = 22.sp),
+    titleLarge = base.titleLarge.copy(fontFamily = SerifFamily, fontWeight = FontWeight.SemiBold, fontSize = 20.sp),
+    titleMedium = base.titleMedium.copy(fontFamily = SansFamily, fontWeight = FontWeight.SemiBold, fontSize = 15.sp),
+    titleSmall = base.titleSmall.copy(fontFamily = SansFamily, fontWeight = FontWeight.SemiBold, fontSize = 13.sp),
+    bodyLarge = base.bodyLarge.copy(fontFamily = SansFamily, fontSize = 15.sp, lineHeight = 24.sp),
+    bodyMedium = base.bodyMedium.copy(fontFamily = SansFamily, fontSize = 14.sp, lineHeight = 21.sp),
+    bodySmall = base.bodySmall.copy(fontFamily = SansFamily, fontSize = 12.sp, lineHeight = 17.sp),
+    labelLarge = base.labelLarge.copy(fontFamily = SansFamily, fontWeight = FontWeight.SemiBold, fontSize = 14.sp),
+    labelMedium = base.labelMedium.copy(fontFamily = SansFamily, fontWeight = FontWeight.Medium, fontSize = 12.sp),
+    labelSmall = base.labelSmall.copy(fontFamily = SansFamily, fontWeight = FontWeight.Medium, fontSize = 11.sp),
+)
+
+/** Small-caps style label used above sections and on the inspiration card. */
+val OverlineStyle = TextStyle(
+    fontFamily = SansFamily,
+    fontWeight = FontWeight.SemiBold,
+    fontSize = 11.sp,
+    letterSpacing = 0.14.em,
+)
+
+val ArabicStyle = TextStyle(fontFamily = ArabicFamily, fontSize = 26.sp, lineHeight = 48.sp)
