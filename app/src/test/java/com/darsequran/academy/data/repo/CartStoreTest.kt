@@ -7,7 +7,11 @@ import com.darsequran.academy.data.CurrentEnvironment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import com.darsequran.academy.data.remote.SessionUser
+import com.darsequran.academy.data.remote.TokenResponse
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -47,10 +51,14 @@ class CartStoreTest {
         }
         server.start()
         CurrentEnvironment.testBaseUrl = server.url("/").toString()
-        runBlocking { cart.refresh() }
+        // A cart belongs to a signed-in student: signing in fetches it (one copy of b1).
+        runBlocking {
+            app.container.sessionStore.save(TokenResponse("a", "r", user = SessionUser("u1", "student@example.test")))
+            withTimeout(5_000) { while (cart.quantityOf("b1") != 1) delay(20) }
+        }
     }
 
-    @After fun tearDown() { cart.clearLocal(); CurrentEnvironment.testBaseUrl = null; server.close() }
+    @After fun tearDown() { runBlocking { app.container.sessionStore.clear() }; CurrentEnvironment.testBaseUrl = null; server.close() }
 
     @Test
     fun quickTapsAllCount() = runBlocking {

@@ -12,6 +12,7 @@ import com.darsequran.academy.data.repo.CartStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
@@ -40,6 +41,14 @@ class AppContainer(context: Context) {
                 withContext(Dispatchers.IO) { clearDocumentCache(appContext) }
             }
         }
+        // The cart belongs to the signed-in student on the current server: fetch it when they sign in, empty it when
+        // they leave, whichever screen is open. Keyed on the published environment, which changes only once requests
+        // go to the new server.
+        appScope.launch {
+            combine(environments.environment, sessionStore.session) { env, s -> s?.takeIf { it.env == env }?.user?.id?.let { env to it } }
+                .distinctUntilChanged()
+                .collect { owner -> if (owner == null) cart.clearLocal() else cart.refresh() }
+        }
     }
 
     /** A Retrofit service for one part of the API, e.g. `container.service<StudentsAdminApi>()`. */
@@ -51,7 +60,6 @@ class AppContainer(context: Context) {
         // old token never reaches the new one), because a session is only sent to the environment that issued it.
         sessionStore.useEnvironment(env)
         environments.select(env)
-        cart.clearLocal()
         repo.clearCaches()
         environments.publish(env)
     }

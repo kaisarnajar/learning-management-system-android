@@ -134,7 +134,9 @@ fun CartAction(cart: CartStore, onClick: () -> Unit) {
 class CartViewModel(val cart: CartStore, private val auth: AuthRepository) : ViewModel() {
     val session: StateFlow<Session?> get() = auth.session
     val message = MutableStateFlow<String?>(null)
-    init { viewModelScope.launch { auth.session.collect { if (it != null) cart.refresh() else cart.clearLocal() } } }
+    // Signing in and out is handled by AppContainer; opening a bookstore screen just catches up with changes made
+    // elsewhere (e.g. on the website).
+    init { if (auth.session.value != null) viewModelScope.launch { cart.refresh() } }
     fun change(bookId: String, delta: Int) = viewModelScope.launch { message.value = cart.change(bookId, delta) }
 }
 
