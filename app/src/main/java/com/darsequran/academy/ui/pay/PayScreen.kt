@@ -3,7 +3,6 @@ package com.darsequran.academy.ui.pay
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -58,6 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.darsequran.academy.data.ApiResult
+import com.darsequran.academy.data.readImageAsJpeg
 import com.darsequran.academy.data.repo.orNull
 import com.darsequran.academy.data.remote.PaymentQuote
 import com.darsequran.academy.data.remote.PaymentSettings
@@ -77,15 +77,12 @@ import com.darsequran.academy.ui.common.rememberProofImagePicker
 import com.darsequran.academy.ui.common.savedVmFactory
 import com.darsequran.academy.ui.theme.Brand
 import com.darsequran.academy.ui.common.academyToday
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
 import java.time.Month
 import java.time.format.TextStyle
 import java.util.Locale
@@ -195,17 +192,8 @@ class PayViewModel(
     }
 }
 
-/** Reads a picked image and re-encodes it as a JPEG no wider than 1600px (keeps uploads small). */
-suspend fun readImage(context: Context, uri: Uri): Pair<ByteArray, String>? = withContext(Dispatchers.IO) {
-    runCatching {
-        val bitmap = context.contentResolver.openInputStream(uri).use { BitmapFactory.decodeStream(it) } ?: return@runCatching null
-        val scale = minOf(1f, 1600f / maxOf(bitmap.width, bitmap.height))
-        val scaled = if (scale < 1f) Bitmap.createScaledBitmap(bitmap, (bitmap.width * scale).toInt(), (bitmap.height * scale).toInt(), true) else bitmap
-        val out = ByteArrayOutputStream()
-        scaled.compress(Bitmap.CompressFormat.JPEG, 85, out)
-        out.toByteArray() to "image/jpeg"
-    }.getOrNull()
-}
+/** A picked image as a small, upright JPEG (see [readImageAsJpeg]), ready to upload; null when it can't be read. */
+suspend fun readImage(context: Context, uri: Uri): Pair<ByteArray, String>? = context.readImageAsJpeg(uri)?.let { it to "image/jpeg" }
 
 /** Opens the payer's UPI app with payee, amount and note filled in. */
 fun launchUpi(context: Context, settings: PaymentSettings, amountPaise: Int, note: String): Boolean {

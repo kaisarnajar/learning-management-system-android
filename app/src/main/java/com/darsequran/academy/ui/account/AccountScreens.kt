@@ -377,7 +377,12 @@ private fun ProfileForm(p: Profile, state: EditState, vm: EditProfileViewModel) 
     var whatsapp by rememberSaveable { mutableStateOf(p.whatsappLocal ?: "") }
     var picked by remember { mutableStateOf<Uri?>(null) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { picked = it }
-    LaunchedEffect(picked) { picked?.let { uri -> readImage(context, uri)?.let { (b, m) -> vm.photo(b, m) } } }
+    LaunchedEffect(picked) {
+        val uri = picked ?: return@LaunchedEffect
+        val image = readImage(context, uri)
+        if (image != null) vm.photo(image.first, image.second)
+        else android.widget.Toast.makeText(context, "That photo couldn't be read. Try another one.", android.widget.Toast.LENGTH_LONG).show()
+    }
     val selectedCountry = countries.firstOrNull { it.code == country }
 
     Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp).imePadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {

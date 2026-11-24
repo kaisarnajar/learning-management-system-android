@@ -44,6 +44,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.darsequran.academy.data.staff.PickedFile
+import com.darsequran.academy.data.staff.PickOutcome
+import com.darsequran.academy.data.staff.UploadLimit
 import com.darsequran.academy.data.staff.readPicked
 import com.darsequran.academy.ui.common.RemoteImage
 import com.darsequran.academy.ui.common.openWeb
@@ -108,8 +110,13 @@ fun ImagesField(
     val slots = (max - (current.size - removed.size) - picked.size).coerceAtLeast(0)
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(maxOf(2, max))) { uris: List<Uri> ->
         scope.launch {
-            val files = uris.take(slots).mapNotNull { context.readPicked(it) }
-            onPickedChange(picked + files)
+            val outcomes = uris.take(slots).map { context.readPicked(it, UploadLimit.Image) }
+            onPickedChange(picked + outcomes.filterIsInstance<PickOutcome.Picked>().map { it.file })
+            val problems = buildList {
+                if (uris.size > slots) add("Only $slots more photo${if (slots == 1) "" else "s"} fit, so ${uris.size - slots} weren't added.")
+                outcomes.filterIsInstance<PickOutcome.Rejected>().forEach { add(it.reason) }
+            }
+            if (problems.isNotEmpty()) android.widget.Toast.makeText(context, problems.distinct().joinToString("\n"), android.widget.Toast.LENGTH_LONG).show()
         }
     }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

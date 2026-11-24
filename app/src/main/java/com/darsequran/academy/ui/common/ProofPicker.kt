@@ -3,6 +3,7 @@ package com.darsequran.academy.ui.common
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -52,12 +53,15 @@ fun rememberProofImagePicker(): ProofImagePicker {
         )
     }
     LaunchedEffect(uri) {
-        picker.image = uri?.let { u ->
-            withContext(Dispatchers.IO) {
-                readImage(context, u)?.let { (bytes, mime) ->
-                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.let { ProofImage(bytes, mime, it) }
-                }
+        val u = uri ?: run { picker.image = null; return@LaunchedEffect }
+        picker.image = withContext(Dispatchers.IO) {
+            readImage(context, u)?.let { (bytes, mime) ->
+                BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.let { ProofImage(bytes, mime, it) }
             }
+        }
+        if (picker.image == null) {
+            uri = null
+            Toast.makeText(context, "That image couldn't be read. Try another screenshot.", Toast.LENGTH_LONG).show()
         }
     }
     return picker

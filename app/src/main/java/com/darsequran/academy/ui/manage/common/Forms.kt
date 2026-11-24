@@ -90,6 +90,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.darsequran.academy.data.staff.PickedFile
+import com.darsequran.academy.data.staff.PickOutcome
+import com.darsequran.academy.data.staff.UploadLimit
 import com.darsequran.academy.data.staff.readPicked
 import com.darsequran.academy.ui.common.PrimaryButton
 import com.darsequran.academy.ui.common.ErrorState
@@ -356,11 +358,12 @@ fun FormImageField(
     onPick: (PickedFile?) -> Unit,
     supporting: String? = null,
     onRemoveCurrent: (() -> Unit)? = null,
+    limit: UploadLimit = UploadLimit.Cover,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
-        if (uri != null) scope.launch { onPick(context.readPicked(uri)) }
+        if (uri != null) scope.launch { context.readPicked(uri, limit).let { if (it is PickOutcome.Picked) onPick(it.file) else showRejected(context, it) } }
     }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -399,11 +402,12 @@ fun FormFileField(
     onPick: (PickedFile?) -> Unit,
     currentName: String? = null,
     supporting: String? = null,
+    limit: UploadLimit = UploadLimit.Attachment,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-        if (uri != null) scope.launch { onPick(context.readPicked(uri)) }
+        if (uri != null) scope.launch { context.readPicked(uri, limit).let { if (it is PickOutcome.Picked) onPick(it.file) else showRejected(context, it) } }
     }
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -496,3 +500,8 @@ class FormFiles : ViewModel() {
 /** The [FormFiles] of one form; [key] must differ per form and record. */
 @Composable
 fun rememberFormFiles(key: String): FormFiles = viewModel(key = key) { FormFiles() }
+
+/** Tells the admin why a chosen file wasn't taken (too big, wrong type, unreadable). */
+fun showRejected(context: android.content.Context, outcome: PickOutcome) {
+    if (outcome is PickOutcome.Rejected) android.widget.Toast.makeText(context, outcome.reason, android.widget.Toast.LENGTH_LONG).show()
+}
