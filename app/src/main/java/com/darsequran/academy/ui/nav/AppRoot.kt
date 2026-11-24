@@ -220,21 +220,8 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
     /** Website links from notifications → app screens. */
     /** Website links (notifications, article links) → app screens; false when the app has no screen for it. */
     fun openHref(href: String): Boolean {
-        val path = href.substringBefore('#').substringBefore('?')
-        val parts = path.trim('/').split('/')
-        if (parts.getOrNull(0) == "admin" || parts.getOrNull(0) == "teacher") return staffLinkTarget(path, shell)?.let { nav.navigate(it) } != null
-        when {
-            parts.getOrNull(0) == "blog" && parts.size >= 2 -> nav.navigate(BlogPostRoute(parts[1]))
-            parts.getOrNull(0) == "fatwa" && parts.size >= 2 -> nav.navigate(FatwaDetailRoute(parts[1]))
-            parts.getOrNull(0) == "announcements" && parts.size >= 2 -> nav.navigate(AnnouncementRoute(parts[1]))
-            parts.getOrNull(0) == "courses" && parts.size >= 2 -> nav.navigate(CourseRoute(parts[1]))
-            parts.take(2) == listOf("profile", "courses") && parts.size >= 3 -> nav.navigate(LearnRoute(parts[2], "Course"))
-            parts.take(2) == listOf("profile", "payments") -> nav.navigate(PaymentsRoute)
-            parts.take(2) == listOf("profile", "cart") || parts.getOrNull(0) == "bookstore" -> nav.navigate(OrdersRoute)
-            parts.take(2) == listOf("profile", "waiver-requests") -> nav.navigate(WaiversRoute)
-            parts.getOrNull(0) == "profile" -> nav.switchTab(CoursesTab)
-            else -> return false
-        }
+        val destination = routeForHref(href, shell) ?: return false
+        if (destination.isTab) nav.switchTab(destination.route) else nav.navigate(destination.route)
         return true
     }
 
@@ -404,13 +391,3 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
 
 private fun notAvailable(context: android.content.Context) =
     android.widget.Toast.makeText(context, "This section opens on the website for now.", android.widget.Toast.LENGTH_SHORT).show()
-
-/**
- * Where a website link to a staff page (`/admin/...`, `/teacher/...`, e.g. in a notification) leads in this [shell]:
- * admin pages only for admins, the teaching tab for teachers, nowhere for anyone else.
- */
-internal fun staffLinkTarget(path: String, shell: Shell): Any? = when (path.trim('/').substringBefore('/')) {
-    "admin" -> if (shell == Shell.Admin) routeForAdminHref(path) else null
-    "teacher" -> if (shell == Shell.Teacher) TeachTab else null
-    else -> null
-}

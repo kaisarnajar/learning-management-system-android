@@ -1,8 +1,8 @@
 package com.darsequran.academy.ui.nav
 
+import com.darsequran.academy.ui.manage.TeachTab
 import com.darsequran.academy.ui.manage.courses.Portal
 import com.darsequran.academy.ui.manage.routeForAdminHref
-import com.darsequran.academy.ui.manage.TeachTab
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -14,15 +14,15 @@ class StaffLinksTest {
     @Test
     fun adminLinksOpenOnlyForAdmins() {
         assertNotNull("the sample must be a page the app has", routeForAdminHref(adminPage))
-        assertEquals(routeForAdminHref(adminPage), staffLinkTarget(adminPage, Shell.Admin))
-        assertNull(staffLinkTarget(adminPage, Shell.Student))
-        assertNull(staffLinkTarget(adminPage, Shell.Teacher))
+        assertEquals(HrefDestination(routeForAdminHref(adminPage)!!), routeForHref(adminPage, Shell.Admin))
+        assertNull(routeForHref(adminPage, Shell.Student))
+        assertNull(routeForHref(adminPage, Shell.Teacher))
     }
 
     @Test
     fun teacherLinksOpenTheTeachingTabOnlyForTeachers() {
-        assertEquals(TeachTab, staffLinkTarget("/teacher/courses/c1/attendance", Shell.Teacher))
-        assertNull(staffLinkTarget("/teacher/courses/c1/attendance", Shell.Student))
+        assertEquals(HrefDestination(TeachTab, isTab = true), routeForHref("/teacher/courses/c1/attendance", Shell.Teacher))
+        assertNull(routeForHref("/teacher/courses/c1/attendance", Shell.Student))
     }
 
     @Test
