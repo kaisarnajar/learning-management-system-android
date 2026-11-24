@@ -1,5 +1,8 @@
 package com.darsequran.academy.ui.courses
 
+import kotlinx.coroutines.async
+import com.darsequran.academy.data.remote.Profile
+import com.darsequran.academy.data.repo.orNull
 import com.darsequran.academy.ui.theme.HeroUnderStatusBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -272,6 +275,10 @@ class CourseDetailViewModel(private val repo: AcademyRepository, private val aut
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
 
+    /** The signed-in user's profile: whether it is complete and the e-mail verified decide the enrol button. */
+    private val _profile = MutableStateFlow<Profile?>(null)
+    val profile: StateFlow<Profile?> = _profile.asStateFlow()
+
     private var loadJob: Job? = null
 
     init {
@@ -283,7 +290,26 @@ class CourseDetailViewModel(private val repo: AcademyRepository, private val aut
     /** Reloads in place (the page stays up meanwhile); the newest load wins. */
     fun load() {
         loadJob?.cancel()
-        loadJob = viewModelScope.launch { _state.value = repo.course(courseId).toLoad() }
+        loadJob = viewModelScope.launch {
+            val me = async { if (auth.session.value != null) auth.profile().orNull() else null }
+            _state.value = repo.course(courseId).toLoad()
+            _profile.value = me.await()
+        }
+    }
+
+    /** "Verify your email to enroll": sends the verification e-mail again. */
+    fun resendVerification() {
+        val email = _profile.value?.email ?: return
+        if (_busy.value) return
+        _busy.value = true
+        viewModelScope.launch {
+            try {
+                _message.value = when (val r = auth.resendVerification(email)) {
+                    is ApiResult.Ok -> "$VERIFICATION_SENT $email. Open the link in it, then come back to enroll."
+                    is ApiResult.Err -> r.message
+                }
+            } finally { _busy.value = false }
+        }
     }
 
     /** Applies; free courses wait for approval, paid ones continue to the enrollment-fee payment. */
@@ -300,7 +326,7 @@ class CourseDetailViewModel(private val repo: AcademyRepository, private val aut
             is ApiResult.Ok -> {
                 load()
                 if (r.value.requiresEnrollmentFee == true) onPayNext()
-                else _message.value = "Application sent. The academy will review it soon."
+                else _message.value = ENROLL_REQUESTED
             }
             is ApiResult.Err -> {
                 if (r.message.contains("complete your profile", ignoreCase = true)) onCompleteProfile()
@@ -325,6 +351,7 @@ fun CourseDetailScreen(
     val session by vm.session.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
     val message by vm.message.collectAsStateWithLifecycle()
+    val profile by vm.profile.collectAsStateWithLifecycle()
     // Back from paying the enrollment fee (or anything else): the enrollment may have moved on, e.g. to "under review",
     // and the page must not keep offering the payment just made.
     ReloadOnReturn(vm::load)
@@ -337,9 +364,19 @@ fun CourseDetailScreen(
             val course = detail.course
             Scaffold(
                 bottomBar = {
-                    CourseActionBar(detail, session != null, busy, onSignIn, onApply = {
-                        vm.apply(onPayNext = { onPay("enrollment", course.title) }, onCompleteProfile = onCompleteProfile)
-                    }, onPay = { onPay("enrollment", course.title) }, onOpen = { onOpenLearn(course.title) })
+                    CourseActionBar(
+                        detail, enrollGate(session != null, profile), busy,
+                        EnrollActions(
+                            signIn = onSignIn,
+                            apply = {
+                                vm.apply(onPayNext = { onPay("enrollment", course.title) }, onCompleteProfile = onCompleteProfile)
+                            },
+                            pay = { onPay("enrollment", course.title) },
+                            open = { onOpenLearn(course.title) },
+                            completeProfile = onCompleteProfile,
+                            verifyEmail = vm::resendVerification,
+                        ),
+                    )
                 },
                 containerColor = MaterialTheme.colorScheme.background,
             ) { padding ->
@@ -361,8 +398,13 @@ fun CourseDetailScreen(
                         }
                     }
                     Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        message?.let { Banner(it, if (it.startsWith("Application sent")) Tone.Success else Tone.Warning) }
-                        if (!detail.enrollmentOpen && detail.enrollment == null) Banner("This course is not accepting new students right now.", Tone.Warning)
+                        message?.let {
+                            val good = it == ENROLL_REQUESTED || it.startsWith(VERIFICATION_SENT)
+                            Banner(it, if (good) Tone.Success else Tone.Warning)
+                        }
+                        if (!detail.enrollmentOpen && detail.enrollment == null) {
+                            Banner(enrollmentClosedMessage(course.status), Tone.Warning)
+                        }
 
                         AppCard(Modifier.fillMaxWidth()) {
                             InfoRow(Icons.Rounded.CalendarMonth, "Starts", course.startDate.ifBlank { null }?.let(::formatCalendarDate) ?: "To be announced")
@@ -370,6 +412,11 @@ fun CourseDetailScreen(
                             InfoRow(Icons.Rounded.SignalCellularAlt, "Level", course.level.ifBlank { "All levels" })
                             InfoRow(Icons.Rounded.Payments, "Enrollment fee", if (course.priceInrPaise > 0) rupees(course.priceInrPaise) else "Free")
                             InfoRow(Icons.Rounded.Payments, "Course fee", courseFeeText(course), last = true)
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                FEES_NOTE, style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
 
                         course.teacher?.let { t ->
@@ -415,28 +462,69 @@ private fun InfoRow(icon: ImageVector, label: String, value: String, last: Boole
     if (!last) Box(Modifier.fillMaxWidth().height(1.dp).background(Brand.outlineSoft))
 }
 
+private const val ENROLL_REQUESTED = "Enrollment requested. The academy will review it soon."
+private const val VERIFICATION_SENT = "Verification e-mail sent to"
+private const val FEES_NOTE = "Fees are set by the academy for each course. Paid courses require an enrollment fee " +
+    "before access is granted; monthly fees are paid from your profile after enrollment is active."
+
+/** The website's message for a course that takes no new students (getCourseEnrollmentClosedMessage). */
+internal fun enrollmentClosedMessage(status: String): String = when (status) {
+    "DRAFT" -> "This course is not available."
+    "ON_HOLD" -> "Enrollment is temporarily on hold for this course."
+    "COMPLETED" -> "This course has completed. New enrollments are closed."
+    "COMING_SOON" -> "Enrollment has not started yet. Coming soon!"
+    else -> "Enrollment is not available for this course."
+}
+
+/** What stands between this person and requesting enrollment, checked in the website's order. */
+internal enum class EnrollGate { SignIn, CompleteProfile, VerifyEmail, Ready }
+
+/** The profile still loading counts as ready: the server checks again when the request is sent. */
+internal fun enrollGate(signedIn: Boolean, profile: Profile?): EnrollGate = when {
+    !signedIn -> EnrollGate.SignIn
+    profile == null -> EnrollGate.Ready
+    !profile.profileComplete -> EnrollGate.CompleteProfile
+    profile.emailVerified == null -> EnrollGate.VerifyEmail
+    else -> EnrollGate.Ready
+}
+
+internal class EnrollActions(
+    val signIn: () -> Unit,
+    val apply: () -> Unit,
+    val pay: () -> Unit,
+    val open: () -> Unit,
+    val completeProfile: () -> Unit,
+    val verifyEmail: () -> Unit,
+)
+
+/** The enrol button's label and whether it acts: the website's CourseEnrollButton, state by state. */
+internal fun enrollButton(
+    detail: CourseDetailResponse,
+    gate: EnrollGate,
+    actions: EnrollActions,
+): Triple<String, () -> Unit, Boolean> {
+    // A rejected request behaves like none: the student may request again.
+    val enrollment = detail.enrollment?.takeIf { it.status != "rejected" }
+    return when {
+        enrollment?.status == "completed" -> Triple("Completed — Open course", actions.open, true)
+        enrollment?.status == "active" -> Triple("Enrolled — Open course", actions.open, true)
+        enrollment?.status == "pending_approval" -> Triple("Awaiting enrollment approval", {}, false)
+        enrollment?.status == "awaiting_enrollment_fee" ->
+            if (enrollment.enrollmentFeePending) Triple("Awaiting payment verification", {}, false)
+            else Triple("Pay enrollment fee · ${rupees(detail.course.priceInrPaise)}", actions.pay, true)
+        enrollment != null -> Triple("Open course", actions.open, true)
+        !detail.enrollmentOpen -> Triple("Not accepting students", {}, false)
+        gate == EnrollGate.SignIn -> Triple("Sign in to request enrollment", actions.signIn, true)
+        gate == EnrollGate.CompleteProfile -> Triple("Complete profile to enroll", actions.completeProfile, true)
+        gate == EnrollGate.VerifyEmail -> Triple("Verify your email to enroll", actions.verifyEmail, true)
+        else -> Triple("Request enrollment", actions.apply, true)
+    }
+}
+
 /** The single next step for this person and this course. */
 @Composable
-private fun CourseActionBar(
-    detail: CourseDetailResponse,
-    signedIn: Boolean,
-    busy: Boolean,
-    onSignIn: () -> Unit,
-    onApply: () -> Unit,
-    onPay: () -> Unit,
-    onOpen: () -> Unit,
-) {
-    val enrollment = detail.enrollment
-    val (label, action, enabled) = when {
-        !signedIn -> Triple("Sign in to apply", onSignIn, true)
-        enrollment == null || enrollment.status == "rejected" ->
-            if (detail.enrollmentOpen) Triple(if (enrollment == null) "Apply for this course" else "Apply again", onApply, true)
-            else Triple("Not accepting students", {}, false)
-        enrollment.status == "awaiting_enrollment_fee" ->
-            if (enrollment.enrollmentFeePending) Triple("Payment under review", {}, false) else Triple("Pay enrollment fee · ${rupees(detail.course.priceInrPaise)}", onPay, true)
-        enrollment.status == "pending_approval" -> Triple("Awaiting approval", {}, false)
-        else -> Triple("Open course", onOpen, true)
-    }
+private fun CourseActionBar(detail: CourseDetailResponse, gate: EnrollGate, busy: Boolean, actions: EnrollActions) {
+    val (label, action, enabled) = enrollButton(detail, gate, actions)
     Surface(color = MaterialTheme.colorScheme.surfaceContainerLowest, shadowElevation = 8.dp) {
         Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars).padding(horizontal = 20.dp, vertical = 12.dp)) {
             PrimaryButton(label, action, enabled = enabled, loading = busy)
