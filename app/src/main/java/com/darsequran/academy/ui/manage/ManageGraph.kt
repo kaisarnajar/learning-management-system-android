@@ -2,6 +2,13 @@ package com.darsequran.academy.ui.manage
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import com.darsequran.academy.ui.manage.people.AuditLogRoute
+import com.darsequran.academy.ui.manage.people.CertificatesAdminRoute
+import com.darsequran.academy.ui.manage.people.EnrollmentsAdminRoute
+import com.darsequran.academy.ui.manage.people.InquiriesAdminRoute
+import com.darsequran.academy.ui.manage.people.ReviewsAdminRoute
+import com.darsequran.academy.ui.manage.people.TeachersAdminRoute
+import com.darsequran.academy.ui.manage.people.peopleGraph
 import com.darsequran.academy.ui.manage.students.StudentsAdminRoute
 import com.darsequran.academy.ui.manage.students.studentsAdminGraph
 import com.darsequran.academy.ui.teach.teachGraph
@@ -20,11 +27,18 @@ import com.darsequran.academy.ui.teach.teachGraph
 fun NavGraphBuilder.manageGraph(nav: NavHostController) {
     studentsAdminGraph(nav)
     teachGraph(nav)
+    peopleGraph(nav)
 }
 
 /** Website admin page → the app screen that does the same job. */
 val adminHrefRoutes: Map<String, Any> = mapOf(
     "/admin/students" to StudentsAdminRoute,
+    "/admin/teachers" to TeachersAdminRoute,
+    "/admin/enrollments" to EnrollmentsAdminRoute,
+    "/admin/certificates" to CertificatesAdminRoute,
+    "/admin/review-approvals" to ReviewsAdminRoute,
+    "/admin/contact-inquiries" to InquiriesAdminRoute,
+    "/admin/audit-log" to AuditLogRoute,
 )
 
 /** The app screen for a website admin path, or null when the app has none. */
