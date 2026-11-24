@@ -32,7 +32,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
@@ -143,8 +142,8 @@ private fun BookOrderCard(order: BookOrderRow, runner: ActionRunner, onOpen: () 
         )
         Spacer(Modifier.height(6.dp))
         Text(
-            listOfNotNull(paymentMethodLabel(order.paymentMethod), order.upiTransactionId).joinToString(" · "),
-            style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace,
+            listOfNotNull(paymentMethodLabel(order.paymentMethod), order.upiTransactionId?.let { "Ref. $it" }).joinToString(" · "),
+            style = MaterialTheme.typography.bodySmall,
         )
         if (order.status == "SHIPPED" && order.courierServiceName != null) {
             Text(
@@ -160,8 +159,13 @@ private fun BookOrderCard(order: BookOrderRow, runner: ActionRunner, onOpen: () 
     }
 }
 
-fun paymentMethodLabel(method: String?): String =
-    method?.takeIf { it.isNotBlank() }?.replaceFirstChar { it.uppercase() } ?: "—"
+fun paymentMethodLabel(method: String?): String = when (method?.lowercase()) {
+    null, "" -> "—"
+    "upi" -> "UPI"
+    "bank", "bank_transfer" -> "Bank transfer"
+    "cash" -> "Cash"
+    else -> method.replace('_', ' ').replaceFirstChar { it.uppercase() }
+}
 
 /** "View screenshot": the payment proof, full size. */
 @Composable
