@@ -1,5 +1,6 @@
 package com.darsequran.academy.ui.account
 
+import com.darsequran.academy.ui.theme.HeroUnderStatusBar
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -187,6 +188,7 @@ fun AccountScreen(
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 32.dp)) {
         item {
+            HeroUnderStatusBar()
             HeroBox(Modifier.fillMaxWidth()) {
                 Column(Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(20.dp).padding(top = 8.dp)) {
                     if (session == null) {

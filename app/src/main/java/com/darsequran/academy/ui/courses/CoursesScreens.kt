@@ -1,5 +1,6 @@
 package com.darsequran.academy.ui.courses
 
+import com.darsequran.academy.ui.theme.HeroUnderStatusBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -375,6 +376,7 @@ fun CourseDetailScreen(
                 containerColor = MaterialTheme.colorScheme.background,
             ) { padding ->
                 Column(Modifier.padding(bottom = padding.calculateBottomPadding()).verticalScroll(rememberScrollState())) {
+                    HeroUnderStatusBar()
                     HeroBox(Modifier.fillMaxWidth()) {
                         Column(Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(bottom = 24.dp)) {
                             IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back", tint = Brand.onHero) }

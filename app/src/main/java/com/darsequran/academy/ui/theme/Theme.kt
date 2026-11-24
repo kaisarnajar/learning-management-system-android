@@ -10,6 +10,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+import android.app.Activity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
@@ -160,12 +169,41 @@ fun AcademyTheme(themeSetting: String = "system", content: @Composable () -> Uni
         "dark" -> true
         else -> isSystemInDarkTheme()
     }
-    CompositionLocalProvider(LocalBrand provides if (dark) DarkBrand else LightBrand) {
+    val heroes = remember { HeroTracker() }
+    val lightIcons = !dark && heroes.count == 0
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as? Activity)?.window ?: return@SideEffect
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = lightIcons
+                isAppearanceLightNavigationBars = !dark
+            }
+        }
+    }
+    CompositionLocalProvider(LocalBrand provides if (dark) DarkBrand else LightBrand, LocalHeroes provides heroes) {
         MaterialTheme(
             colorScheme = if (dark) DarkScheme else LightScheme,
             typography = AcademyTypography,
             shapes = AcademyShapes,
             content = content,
         )
+    }
+}
+
+/** Counts the dark heroes drawn under the status bar, so its icons turn light only while one is showing. */
+class HeroTracker {
+    var count by mutableIntStateOf(0)
+}
+
+val LocalHeroes = staticCompositionLocalOf { HeroTracker() }
+
+/** Call from a screen whose dark hero sits under the status bar. */
+@Composable
+fun HeroUnderStatusBar() {
+    val heroes = LocalHeroes.current
+    DisposableEffect(heroes) {
+        heroes.count++
+        onDispose { heroes.count-- }
     }
 }

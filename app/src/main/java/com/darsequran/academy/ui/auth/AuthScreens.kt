@@ -1,5 +1,6 @@
 package com.darsequran.academy.ui.auth
 
+import com.darsequran.academy.ui.theme.HeroUnderStatusBar
 import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -269,6 +270,7 @@ fun ForgotPasswordScreen(onBack: () -> Unit, vm: AuthViewModel = viewModel(key =
 @Composable
 private fun AuthFrame(title: String, subtitle: String, onBack: () -> Unit, content: @Composable () -> Unit) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).imePadding()) {
+        HeroUnderStatusBar()
         HeroBox(Modifier.fillMaxWidth()) {
             Column(Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(bottom = 28.dp)) {
                 IconButton(onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back", tint = Brand.onHero) }

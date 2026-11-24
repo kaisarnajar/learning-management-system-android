@@ -1,5 +1,6 @@
 package com.darsequran.academy.ui.home
 
+import com.darsequran.academy.ui.theme.HeroUnderStatusBar
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -279,6 +280,7 @@ fun HomeScreen(
 
 @Composable
 private fun HomeHero(session: Session?, unread: Int, inspiration: Inspiration?, onNotifications: () -> Unit, onSignIn: () -> Unit) {
+    HeroUnderStatusBar()
     HeroBox(Modifier.fillMaxWidth()) {
         Column(Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
