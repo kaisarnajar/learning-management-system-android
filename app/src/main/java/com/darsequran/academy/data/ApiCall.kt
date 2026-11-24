@@ -38,6 +38,10 @@ suspend fun <T> apiCall(block: suspend () -> T): ApiResult<T> = try {
         else -> "Something went wrong (${e.code()})."
     }
     ApiResult.Err(message, e.code(), body?.code)
+} catch (e: kotlinx.serialization.SerializationException) {
+    // Usually a web page where JSON was expected: the server is older (or newer) than this app.
+    android.util.Log.w("ApiCall", "Unexpected response", e)
+    ApiResult.Err("The server's answer wasn't what this app expects. The server may not have this feature yet.")
 } catch (e: IOException) {
     ApiResult.Err("No connection. Check your internet and try again.")
 } catch (e: Exception) {
