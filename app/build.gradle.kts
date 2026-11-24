@@ -69,6 +69,15 @@ android {
             // Never signed with the debug key; checkReleaseSigning stops a release build without the upload key.
             signingConfig = if (hasReleaseSigning) signingConfigs.getByName("release") else null
         }
+        // The release build (R8, resource shrinking) signed with the debug key, installable next to the others: lets
+        // CI and developers check the minified app without the upload key. Never distributed.
+        create("minified") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            applicationIdSuffix = ".minified"
+            resValue("string", "app_name", "DQA (minified)")
+            matchingFallbacks += "release"
+        }
     }
 
     compileOptions {
