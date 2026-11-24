@@ -8,10 +8,7 @@ import com.darsequran.academy.data.remote.SessionUser
 import com.darsequran.academy.data.remote.TokenResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -39,8 +36,8 @@ interface SessionSource {
 /**
  * Persists the session. [session] is the single source of truth for "am I signed in?".
  *
- * Each environment (production, staging) keeps its own session, so a developer who switches keeps being
- * signed in on each. Production uses the original key names, so sessions from before environments existed survive.
+ * The keys carry the environment (production keeps the original names, so sessions from before environments existed
+ * survive), although each build now talks to one server only.
  */
 class SessionStore(
     private val context: Context,
@@ -48,7 +45,7 @@ class SessionStore(
     private val json: Json,
     initialEnvironment: AppEnvironment,
 ) : SessionSource {
-    @Volatile private var env: AppEnvironment = initialEnvironment
+    private val env: AppEnvironment = initialEnvironment
 
     private class Keys(private val env: AppEnvironment) {
         private fun key(name: String) = stringPreferencesKey(if (env == AppEnvironment.PRODUCTION) name else "${env.key}_$name")
@@ -62,17 +59,6 @@ class SessionStore(
     // refresh authenticator is visible to the very next request.
     private val _session = MutableStateFlow(runBlocking { readOnce(env) })
     override val session: StateFlow<Session?> = _session.asStateFlow()
-
-    private val _signedOut = MutableSharedFlow<AppEnvironment>(extraBufferCapacity = 1)
-
-    /** The current environment's session ended: signed out, account deleted, or the refresh token refused. */
-    val signedOut: SharedFlow<AppEnvironment> = _signedOut.asSharedFlow()
-
-    /** Loads the session of [environment]; called before requests are pointed at it. */
-    suspend fun useEnvironment(environment: AppEnvironment) {
-        env = environment
-        _session.value = readOnce(environment)
-    }
 
     /** "system", "light" or "dark". */
     val theme: StateFlow<String> = context.sessionDataStore.data
@@ -125,10 +111,7 @@ class SessionStore(
     }
 
     private suspend fun remove(env: AppEnvironment) {
-        if (env == this.env && _session.value != null) {
-            _session.value = null
-            _signedOut.tryEmit(env)
-        }
+        if (env == this.env) _session.value = null
         val keys = Keys(env)
         context.sessionDataStore.edit { it.remove(keys.access); it.remove(keys.refresh); it.remove(keys.user) }
     }

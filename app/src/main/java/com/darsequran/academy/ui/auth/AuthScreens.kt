@@ -181,7 +181,6 @@ fun SignInScreen(
     onDone: () -> Unit,
     onRegister: () -> Unit,
     onForgot: () -> Unit,
-    onEnvironment: (() -> Unit)? = null,
     vm: AuthViewModel = viewModel(key = "signin", factory = vmFactory { AuthViewModel(it.auth) }),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
@@ -203,7 +202,6 @@ fun SignInScreen(
             Text("New to the academy?", style = MaterialTheme.typography.bodyMedium)
             TextButton(onRegister) { Text("Create an account") }
         }
-        if (onEnvironment != null) com.darsequran.academy.ui.manage.EnvironmentLink(com.darsequran.academy.data.CurrentEnvironment.value, onEnvironment)
     }
 }
 

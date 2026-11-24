@@ -7,6 +7,3 @@ import kotlinx.serialization.Serializable
 
 // Teacher tab (teachers keep the student tabs and get this one too).
 @Serializable data object TeachTab
-
-// Developer
-@Serializable data object EnvironmentRoute

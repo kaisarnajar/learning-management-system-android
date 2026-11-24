@@ -3,7 +3,7 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>ComplexCondition:CourseGrades.kt:entries.initialised || roster == null || (gradeId != null &amp;&amp; grade == null)</ID>
-    <ID>CyclomaticComplexMethod:AccountScreens.kt:@Composable fun AccountScreen( onSignIn: () -&gt; Unit, onRegister: () -&gt; Unit, onEditProfile: () -&gt; Unit, onPayments: () -&gt; Unit, onWaivers: () -&gt; Unit, onReviews: () -&gt; Unit, onOrders: () -&gt; Unit, onNotifications: () -&gt; Unit, onChangePassword: () -&gt; Unit, onDeleteAccount: () -&gt; Unit, onContact: () -&gt; Unit, onAbout: () -&gt; Unit, onEnvironment: (() -&gt; Unit)? = null, vm: AccountViewModel = viewModel(factory = vmFactory { AccountViewModel(it.auth, it.repo, it.sessionStore) }), )</ID>
+    <ID>CyclomaticComplexMethod:AccountScreens.kt:@Composable fun AccountScreen( onSignIn: () -&gt; Unit, onRegister: () -&gt; Unit, onEditProfile: () -&gt; Unit, onPayments: () -&gt; Unit, onWaivers: () -&gt; Unit, onReviews: () -&gt; Unit, onOrders: () -&gt; Unit, onNotifications: () -&gt; Unit, onChangePassword: () -&gt; Unit, onDeleteAccount: () -&gt; Unit, onContact: () -&gt; Unit, onAbout: () -&gt; Unit, vm: AccountViewModel = viewModel(factory = vmFactory { AccountViewModel(it.auth, it.repo, it.sessionStore) }), )</ID>
     <ID>CyclomaticComplexMethod:AccountScreens.kt:@Composable fun ContactScreen(onBack: () -&gt; Unit)</ID>
     <ID>CyclomaticComplexMethod:AccountScreens.kt:@Composable fun DeleteAccountScreen(onBack: () -&gt; Unit, onDeleted: () -&gt; Unit)</ID>
     <ID>CyclomaticComplexMethod:AccountScreens.kt:@Composable fun PaymentsScreen(onBack: () -&gt; Unit)</ID>
@@ -37,7 +37,7 @@
     <ID>EmptyElseBlock:CourseGrades.kt:if (failed == null) Text("Loading…")</ID>
     <ID>ForEachOnRange:AccountScreens.kt:1..5</ID>
     <ID>ForEachOnRange:PeopleKit.kt:1..5</ID>
-    <ID>LongMethod:AccountScreens.kt:@Composable fun AccountScreen( onSignIn: () -&gt; Unit, onRegister: () -&gt; Unit, onEditProfile: () -&gt; Unit, onPayments: () -&gt; Unit, onWaivers: () -&gt; Unit, onReviews: () -&gt; Unit, onOrders: () -&gt; Unit, onNotifications: () -&gt; Unit, onChangePassword: () -&gt; Unit, onDeleteAccount: () -&gt; Unit, onContact: () -&gt; Unit, onAbout: () -&gt; Unit, onEnvironment: (() -&gt; Unit)? = null, vm: AccountViewModel = viewModel(factory = vmFactory { AccountViewModel(it.auth, it.repo, it.sessionStore) }), )</ID>
+    <ID>LongMethod:AccountScreens.kt:@Composable fun AccountScreen( onSignIn: () -&gt; Unit, onRegister: () -&gt; Unit, onEditProfile: () -&gt; Unit, onPayments: () -&gt; Unit, onWaivers: () -&gt; Unit, onReviews: () -&gt; Unit, onOrders: () -&gt; Unit, onNotifications: () -&gt; Unit, onChangePassword: () -&gt; Unit, onDeleteAccount: () -&gt; Unit, onContact: () -&gt; Unit, onAbout: () -&gt; Unit, vm: AccountViewModel = viewModel(factory = vmFactory { AccountViewModel(it.auth, it.repo, it.sessionStore) }), )</ID>
     <ID>LongMethod:AccountScreens.kt:@Composable fun PaymentsScreen(onBack: () -&gt; Unit)</ID>
     <ID>LongMethod:Announcements.kt:@Composable fun AnnouncementsListScreen(onBack: () -&gt; Unit, onOpen: (String) -&gt; Unit, onNew: () -&gt; Unit)</ID>
     <ID>LongMethod:Announcements.kt:@Composable fun SiteAnnouncementFormScreen(id: String?, onBack: () -&gt; Unit)</ID>
@@ -115,7 +115,7 @@
     <ID>MagicNumber:CourseAnnouncements.kt:3</ID>
     <ID>MagicNumber:CourseAttendance.kt:404</ID>
     <ID>MagicNumber:CoursesScreens.kt:1.4f</ID>
-    <ID>MagicNumber:DeveloperScreens.kt:0xFFB45309</ID>
+    <ID>MagicNumber:EnvironmentStrip.kt:0xFFB45309</ID>
     <ID>MagicNumber:DeveloperScreens.kt:1_000_000</ID>
     <ID>MagicNumber:DeveloperScreens.kt:8</ID>
     <ID>MagicNumber:ExploreScreens.kt:0.72f</ID>

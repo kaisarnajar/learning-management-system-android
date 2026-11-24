@@ -55,7 +55,7 @@ app/src/main/java/com/darsequran/academy/
 You need Android Studio (or its bundled JDK) and the Android SDK.
 
 ```bash
-./gradlew :app:assembleDebug
+./gradlew :app:assembleStagingDebug
 ```
 
 Optional settings go in `local.properties` (not committed):
@@ -63,18 +63,24 @@ Optional settings go in `local.properties` (not committed):
 ```properties
 # The Web client ID from Google Cloud (OAuth). Without it the "Continue with Google" button is hidden.
 GOOGLE_WEB_CLIENT_ID=1234567890-abc.apps.googleusercontent.com
-# The staging website developers can switch to (default: the current Vercel staging deployment).
+# The staging website the staging flavor talks to (default: the current Vercel staging deployment).
 STAGING_BASE_URL=https://staging.example.com
 ```
 
-Release builds start on `https://darsequranacademy.com`. Debug builds install next to the release app as
-"DQA (debug)" (`com.darsequran.academy.debug`), and the minified test build as "DQA (minified)".
-
 ### Which server a build talks to
 
-Debug and minified builds start on **staging** and are the builds to test with: never test against production. A
-debug build can still switch to production from the developer screen (tap the orange staging strip); release builds
-offer the switch only to a signed-in developer. There is no local-server setup.
+The server is fixed when the app is built, by its **flavor**; nothing inside the app can change it. Two flavors times
+two build types make four apps, which can all be installed side by side:
+
+| Variant | Server | Signed with | App name (`applicationId`) | Used for |
+|---|---|---|---|---|
+| `stagingDebug` | staging | debug key | DQA Staging (debug) (`com.darsequran.academy.staging.debug`) | everyday development |
+| `productionDebug` | production | debug key | DQA (debug) (`com.darsequran.academy.debug`) | rare debugging against live data |
+| `stagingRelease` | staging | debug key | DQA Staging (`com.darsequran.academy.staging`) | trying the shrunk (R8) release app |
+| `productionRelease` | production | upload key | Darse Quran Academy (`com.darsequran.academy`) | the Play Store |
+
+Test with the **staging** apps: never test against production. Staging builds show an orange STAGING strip at the
+top. There is no local-server setup.
 
 Staging's demo seed (`ALLOW_DEMO_SEED` on the website) gives you students, courses, payments and content to try the
 app with. To try paying, set a UPI ID in the website's admin payment settings; for checkout, books need stock.
@@ -91,8 +97,9 @@ RELEASE_KEY_ALIAS=upload
 RELEASE_KEY_PASSWORD=...
 ```
 
-Without them `./gradlew :app:assembleRelease` stops with a message instead of signing with the debug key.
-Give each published build a higher version code: `./gradlew :app:bundleRelease -PversionCode=3`.
-`./gradlew :app:assembleMinified` builds the same shrunk app signed with the debug key, to try it without the upload key.
+Without them `./gradlew :app:assembleProductionRelease` stops with a message instead of signing with the debug key.
+Give each published build a higher version code: `./gradlew :app:bundleProductionRelease -PversionCode=3`.
+`./gradlew :app:assembleStagingRelease` builds the same shrunk app on staging, signed with the debug key, to try it
+without the upload key.
 Create the key once with Android Studio (**Build → Generate Signed App Bundle / APK → Create new**) or `keytool`,
 and keep it and its passwords somewhere safe: Play Store updates must be signed with the same key.

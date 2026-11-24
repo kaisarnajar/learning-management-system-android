@@ -13,12 +13,9 @@ import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.runtime.key
 import com.darsequran.academy.BuildConfig
 import com.darsequran.academy.data.AppEnvironment
-import com.darsequran.academy.data.canSwitchEnvironment
+import com.darsequran.academy.ui.common.EnvironmentStrip
 import com.darsequran.academy.ui.manage.AdminDashboardScreen
 import com.darsequran.academy.ui.manage.AdminDashboardTab
-import com.darsequran.academy.ui.manage.EnvironmentRoute
-import com.darsequran.academy.ui.manage.EnvironmentScreen
-import com.darsequran.academy.ui.manage.EnvironmentStrip
 import com.darsequran.academy.ui.manage.TeachTab
 import com.darsequran.academy.ui.manage.manageGraph
 import com.darsequran.academy.ui.manage.routeForAdminHref
@@ -168,21 +165,19 @@ fun AppRoot() {
     val context = LocalContext.current
     val container = rememberContainer()
     val session by container.sessionStore.session.collectAsStateWithLifecycle()
-    val env by container.environments.environment.collectAsStateWithLifecycle()
+    val env = AppEnvironment.current
     val shell = Shell.of(session?.user?.role)
-    // The strip opens the server switch only for someone allowed to use it (see canSwitchEnvironment).
-    val canSwitch = canSwitchEnvironment(BuildConfig.DEBUG, session?.user?.role)
 
-    // A new environment, role or user starts a fresh navigation graph: nothing from the previous one carries over.
+    // A new role or user starts a fresh navigation graph: nothing from the previous one carries over.
     // The user matters even within one role: after a student signs out (or another signs in on the phone), the tab
     // stacks saved by switchTab would otherwise bring back the previous student's screens and data.
-    key(env, shell, session?.user?.id) {
+    key(shell, session?.user?.id) {
         GraphScope("${env.key}-$shell-${session?.user?.id}") {
             val nav = rememberNavController()
             Column(Modifier.fillMaxSize()) {
                 if (env != AppEnvironment.PRODUCTION) {
                     HeroUnderStatusBar()
-                    EnvironmentStrip(env, if (canSwitch) ({ nav.navigate(EnvironmentRoute) }) else null)
+                    EnvironmentStrip(env)
                 }
                 Box(Modifier.weight(1f).then(if (env != AppEnvironment.PRODUCTION) Modifier.consumeWindowInsets(WindowInsets.statusBars) else Modifier)) {
                     AppContent(nav, shell)
@@ -197,7 +192,6 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
     val context = LocalContext.current
     val container = rememberContainer()
     val session by container.sessionStore.session.collectAsStateWithLifecycle()
-    val canSwitch = canSwitchEnvironment(BuildConfig.DEBUG, session?.user?.role)
     val tabs = shell.tabs
     var config by remember { mutableStateOf<AppConfig?>(null) }
     // Branding, lookups (e.g. fatwa categories) and policy links: keep trying until it loads, e.g. after starting offline.
@@ -309,7 +303,6 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                         onWaivers = { nav.navigate(WaiversRoute) }, onReviews = { nav.navigate(ReviewsRoute) }, onOrders = { nav.navigate(OrdersRoute) },
                         onNotifications = { nav.navigate(NotificationsRoute) }, onChangePassword = { nav.navigate(ChangePasswordRoute) },
                         onDeleteAccount = { nav.navigate(DeleteAccountRoute) }, onContact = { nav.navigate(ContactRoute) }, onAbout = { nav.navigate(AboutRoute) },
-                        onEnvironment = if (canSwitch) ({ nav.navigate(EnvironmentRoute) }) else null,
                     )
                 }
 
@@ -324,7 +317,6 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                 if (shell == Shell.Teacher) {
                     composable<TeachTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { TeachHomeScreen(nav) }
                 }
-                composable<EnvironmentRoute> { EnvironmentScreen(nav::popBackStack) }
                 if (shell != Shell.Student) manageGraph(nav)
 
                 // ---- courses
@@ -384,7 +376,6 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                 composable<SignInRoute> {
                     SignInScreen(
                         nav::popBackStack, onDone = { nav.popBackStack() }, onRegister = { nav.navigate(RegisterRoute) { popUpTo(SignInRoute) { inclusive = true } } }, onForgot = { nav.navigate(ForgotPasswordRoute) },
-                        onEnvironment = if (canSwitch) ({ nav.navigate(EnvironmentRoute) }) else null,
                     )
                 }
                 composable<RegisterRoute> {

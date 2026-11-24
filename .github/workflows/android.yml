@@ -23,11 +23,21 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v5
 
-      - name: Build, lint and unit-test
-        run: ./gradlew :app:assembleDebug :app:lintDebug :app:detekt :app:testDebugUnitTest :app:assembleDebugAndroidTest
+      # Robolectric downloads its Android jars from Maven on first use; keep them, so a slow or failed download
+      # doesn't fail the tests.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/robolectric
+          key: robolectric-${{ hashFiles('gradle/libs.versions.toml') }}
 
-      - name: Minified build (R8)
-        run: ./gradlew :app:assembleMinified
+      - name: Build, lint and unit-test
+        run: >-
+          ./gradlew :app:assembleStagingDebug :app:assembleProductionDebug :app:lintStagingDebug :app:detekt
+          :app:testStagingDebugUnitTest :app:assembleStagingDebugAndroidTest
+
+      # The shrunk release app on staging, signed with the debug key; productionRelease needs the upload key.
+      - name: Release build on staging (R8)
+        run: ./gradlew :app:assembleStagingRelease
 
       - name: Upload reports
         if: always()

@@ -25,7 +25,7 @@ val releaseSigning = listOf("RELEASE_STORE_FILE", "RELEASE_STORE_PASSWORD", "REL
     .associateWith { setting(it) }
 val hasReleaseSigning = releaseSigning.values.all { !it.isNullOrBlank() }
 
-/** The staging copy of the website that developers can switch to. */
+/** The staging copy of the website, which the staging flavor talks to. */
 val stagingBaseUrl: String = setting("STAGING_BASE_URL") ?: "https://staging-learning-management-system-teal-ten.vercel.app"
 
 /**
@@ -45,8 +45,24 @@ android {
         versionCode = appVersionCode
         versionName = "2.0.0"
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
-        buildConfigField("String", "STAGING_BASE_URL", "\"$stagingBaseUrl\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    // Which copy of the website the app talks to, fixed when it is built: there is no switch inside the app.
+    // staging: testing, never real data. production: the published app.
+    flavorDimensions += "server"
+    productFlavors {
+        create("staging") {
+            dimension = "server"
+            applicationIdSuffix = ".staging"
+            buildConfigField("String", "SERVER", "\"staging\"")
+            buildConfigField("String", "BASE_URL", "\"$stagingBaseUrl\"")
+        }
+        create("production") {
+            dimension = "server"
+            buildConfigField("String", "SERVER", "\"production\"")
+            buildConfigField("String", "BASE_URL", "\"https://darsequranacademy.com\"")
+        }
     }
 
     signingConfigs {
@@ -60,33 +76,20 @@ android {
 
     buildTypes {
         debug {
-            // Debug builds start on staging and can switch to production. There is no local server.
-            buildConfigField("String", "DEFAULT_ENVIRONMENT", "\"staging\"")
             applicationIdSuffix = ".debug"
-            resValue("string", "app_name", "DQA (debug)")
         }
         release {
-            // Release builds start on production; developers can switch to staging.
-            buildConfigField("String", "DEFAULT_ENVIRONMENT", "\"production\"")
-            resValue("string", "app_name", "Darse Quran Academy")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Never signed with the debug key; checkReleaseSigning stops a release build without the upload key.
-            signingConfig = if (hasReleaseSigning) signingConfigs.getByName("release") else null
-        }
-        // The release build (R8, resource shrinking) signed with the debug key, installable next to the others: lets
-        // CI and developers check the minified app without the upload key. Never distributed.
-        create("minified") {
-            initWith(getByName("release"))
-            signingConfig = signingConfigs.getByName("debug")
-            applicationIdSuffix = ".minified"
-            resValue("string", "app_name", "DQA (minified)")
-            matchingFallbacks += "release"
-            // A testing build: starts on staging, never on production.
-            buildConfigField("String", "DEFAULT_ENVIRONMENT", "\"staging\"")
+            // Signed per flavor below: stagingRelease with the debug key (anyone can install and test the shrunk app),
+            // productionRelease only with the upload key (checkReleaseSigning stops it without one).
+            signingConfig = null
         }
     }
+    productFlavors.getByName("staging").signingConfig = signingConfigs.getByName("debug")
+    productFlavors.getByName("production").signingConfig =
+        if (hasReleaseSigning) signingConfigs.getByName("release") else null
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -180,7 +183,22 @@ val checkReleaseSigning by tasks.registering {
         )
     }
 }
-tasks.matching { it.name == "packageRelease" || it.name == "bundleRelease" }.configureEach { dependsOn(checkReleaseSigning) }
+tasks.matching { it.name == "packageProductionRelease" || it.name == "bundleProductionRelease" }
+    .configureEach { dependsOn(checkReleaseSigning) }
+
+// The launcher name says which app it is: four can sit side by side on one phone.
+androidComponents {
+    onVariants { variant ->
+        val server = variant.productFlavors.first { it.first == "server" }.second
+        val name = when {
+            server == "production" && variant.buildType == "release" -> "Darse Quran Academy"
+            server == "production" -> "DQA (debug)"
+            variant.buildType == "release" -> "DQA Staging"
+            else -> "DQA Staging (debug)"
+        }
+        variant.resValues.put(variant.makeResValueKey("string", "app_name"), com.android.build.api.variant.ResValue(name))
+    }
+}
 
 kotlin {
     compilerOptions {
