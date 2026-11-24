@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -44,12 +43,9 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -80,6 +76,8 @@ import com.darsequran.academy.ui.common.HeroBox
 import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.LoadingBox
 import com.darsequran.academy.ui.common.Overline
+import com.darsequran.academy.ui.common.PagedListBody
+import com.darsequran.academy.ui.common.PagedViewModel
 import com.darsequran.academy.ui.common.PrimaryButton
 import com.darsequran.academy.ui.common.SkeletonList
 import com.darsequran.academy.ui.common.StatusChip
@@ -96,19 +94,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 // =================================================================== tab
 
+/** The signed-in user's courses; the catalogue is a separate [PagedViewModel] (see [CoursesScreen]). */
 data class CoursesState(
     val session: Session? = null,
     val mine: Load<List<Enrollment>> = Load.Loading,
-    val catalogue: List<Course> = emptyList(),
-    val catalogueLoading: Boolean = true,
-    val catalogueError: String? = null,
-    val page: Int = 1,
-    val total: Int = 0,
-    val query: String = "",
     val refreshing: Boolean = false,
 )
 
@@ -116,45 +110,26 @@ class CoursesViewModel(private val repo: AcademyRepository, private val auth: Au
     private val _state = MutableStateFlow(CoursesState())
     val state: StateFlow<CoursesState> = _state.asStateFlow()
 
+    private var mineJob: Job? = null
+
     init {
         viewModelScope.launch { auth.session.collect { s -> _state.update { it.copy(session = s) }; loadMine() } }
-        loadCatalogue(reset = true)
     }
 
-    /** Coming back from a course: its status may have changed; keep the catalogue's scroll and pages. */
+    /** Coming back from a course: its status may have changed. */
     fun reloadMine() { loadMine() }
 
     fun refresh() {
         _state.update { it.copy(refreshing = true) }
-        loadMine(); loadCatalogue(reset = true)
+        loadMine()
     }
 
-    fun search(query: String) {
-        _state.update { it.copy(query = query) }
-        loadCatalogue(reset = true)
-    }
-
-    fun loadMore() {
-        val s = _state.value
-        if (!s.catalogueLoading && s.catalogue.size < s.total) loadCatalogue(reset = false)
-    }
-
-    private fun loadMine() = viewModelScope.launch {
-        if (auth.session.value == null) { _state.update { it.copy(mine = Load.Ready(emptyList())) }; return@launch }
-        _state.update { it.copy(mine = repo.enrollments().toLoad()) }
-    }
-
-    private fun loadCatalogue(reset: Boolean) = viewModelScope.launch {
-        val page = if (reset) 1 else _state.value.page + 1
-        _state.update { it.copy(catalogueLoading = true, catalogueError = null) }
-        when (val r = repo.courses(page, _state.value.query)) {
-            is ApiResult.Ok -> _state.update {
-                it.copy(
-                    catalogue = if (reset) r.value.data else it.catalogue + r.value.data,
-                    page = page, total = r.value.totalCount, catalogueLoading = false, refreshing = false,
-                )
-            }
-            is ApiResult.Err -> _state.update { it.copy(catalogueError = r.message, catalogueLoading = false, refreshing = false) }
+    /** The newest load wins: one started for the previous session must not overwrite this one's courses. */
+    private fun loadMine() {
+        mineJob?.cancel()
+        mineJob = viewModelScope.launch {
+            val mine = if (auth.session.value == null) Load.Ready(emptyList()) else repo.enrollments().toLoad()
+            _state.update { it.copy(mine = mine, refreshing = false) }
         }
     }
 }
@@ -166,6 +141,7 @@ fun CoursesScreen(
     onOpenLearn: (Enrollment) -> Unit,
     onSignIn: () -> Unit,
     vm: CoursesViewModel = viewModel(factory = vmFactory { CoursesViewModel(it.repo, it.auth) }),
+    catalogue: PagedViewModel<Course> = viewModel(key = "course-catalogue", factory = vmFactory { c -> PagedViewModel { p, q, _ -> c.repo.courses(p, q) } }),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     ReloadOnReturn(vm::reloadMine)
@@ -181,9 +157,12 @@ fun CoursesScreen(
                     Tab(tab == 1, { tab = 1 }, text = { Text("Catalogue") })
                 }
             }
-            PullToRefreshBox(isRefreshing = state.refreshing, onRefresh = vm::refresh, modifier = Modifier.fillMaxSize()) {
-                if (showMine) MyCoursesList(state.mine, onOpenCourse, onOpenLearn, vm::refresh) { tab = 1 }
-                else CatalogueList(state, vm, onOpenCourse)
+            if (showMine) PullToRefreshBox(isRefreshing = state.refreshing, onRefresh = vm::refresh, modifier = Modifier.fillMaxSize()) {
+                MyCoursesList(state.mine, onOpenCourse, onOpenLearn, vm::refresh) { tab = 1 }
+            } else {
+                PagedListBody(catalogue, searchHint = "Search courses", emptyTitle = "No courses found", key = { it.id }) {
+                    CourseCard(it) { onOpenCourse(it.id) }
+                }
             }
         }
     }
@@ -237,24 +216,6 @@ private fun MyCoursesList(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun CatalogueList(state: CoursesState, vm: CoursesViewModel, onOpenCourse: (String) -> Unit) {
-    val listState = rememberLazyListState()
-    val nearEnd by remember { derivedStateOf { (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) >= listState.layoutInfo.totalItemsCount - 3 } }
-    LaunchedEffect(nearEnd) { if (nearEnd) vm.loadMore() }
-
-    LazyColumn(state = listState, contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxSize()) {
-        item { SearchField(state.query, "Search courses", vm::search) }
-        if (state.catalogueError != null && state.catalogue.isEmpty()) {
-            item { ErrorState(state.catalogueError, vm::refresh) }
-        } else if (!state.catalogueLoading && state.catalogue.isEmpty()) {
-            item { EmptyState("No courses found", if (state.query.isNotBlank()) "Try a different search." else null) }
-        }
-        items(state.catalogue, key = { it.id }) { CourseCard(it) { onOpenCourse(it.id) } }
-        if (state.catalogueLoading) item { LoadingBox(Modifier.fillMaxWidth().height(80.dp)) }
     }
 }
 
