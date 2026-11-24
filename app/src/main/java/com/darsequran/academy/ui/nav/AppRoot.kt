@@ -125,6 +125,7 @@ import com.darsequran.academy.ui.common.LocalOpenLink
 import com.darsequran.academy.ui.common.linkTarget
 import com.darsequran.academy.ui.common.openWeb
 import com.darsequran.academy.ui.common.rememberContainer
+import com.darsequran.academy.data.remote.Roles
 import kotlin.reflect.KClass
 import kotlinx.coroutines.delay
 
@@ -155,8 +156,8 @@ internal enum class Shell(val tabs: List<TabItem>, val start: Any) {
 
     companion object {
         fun of(role: String?) = when (role) {
-            "ADMIN", "DEVELOPER" -> Admin
-            "TEACHER" -> Teacher
+            Roles.ADMIN, Roles.DEVELOPER -> Admin
+            Roles.TEACHER -> Teacher
             else -> Student
         }
     }
@@ -309,7 +310,7 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                 if (shell == Shell.Admin) {
                     val openAdmin: (String) -> Unit = { href -> routeForAdminHref(href)?.let { nav.navigate(it) } ?: notAvailable(context) }
                     composable<AdminDashboardTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
-                        AdminDashboardScreen(session?.user?.name, session?.user?.role ?: "ADMIN", openAdmin)
+                        AdminDashboardScreen(session?.user?.name, session?.user?.role ?: Roles.ADMIN, openAdmin)
                     }
                     composable<AdminAcademicsTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Academics", AdminHubs.academics, openAdmin) }
                     composable<AdminFinanceTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Finance", AdminHubs.finance, openAdmin) }

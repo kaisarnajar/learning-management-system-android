@@ -77,13 +77,14 @@ import com.darsequran.academy.ui.common.SkeletonList
 import com.darsequran.academy.ui.common.StatusChip
 import com.darsequran.academy.ui.common.TabTopBar
 import com.darsequran.academy.ui.common.Tone
-import com.darsequran.academy.ui.common.feeFrequencySuffix
 import com.darsequran.academy.ui.common.rememberPlainText
 import com.darsequran.academy.ui.common.rupees
 import com.darsequran.academy.ui.common.statusLabel
 import com.darsequran.academy.ui.common.toLoad
 import com.darsequran.academy.ui.common.vmFactory
 import com.darsequran.academy.ui.theme.Brand
+import com.darsequran.academy.data.remote.EnrollmentStatus
+import com.darsequran.academy.ui.common.courseFeeText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -183,7 +184,7 @@ private fun MyCoursesList(
         } else LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxSize()) {
             items(mine.value, key = { it.id }) { e ->
                 val (label, tone) = statusLabel(e.status)
-                val open = e.status == "active" || e.status == "completed"
+                val open = EnrollmentStatus.opensLearn(e.status)
                 AppCard(Modifier.fillMaxWidth(), onClick = { if (open) onOpenLearn(e) else onOpenCourse(e.courseId) }) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         StatusChip(label, tone)
@@ -246,7 +247,7 @@ fun CourseCard(course: Course, onClick: () -> Unit) {
             Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.Bottom) {
                 FeeBlock("Enrollment", if (course.priceInrPaise > 0) rupees(course.priceInrPaise) else "Free", Modifier.weight(1f))
-                FeeBlock("Course fee", if (course.monthlyFeeInrPaise > 0) "${rupees(course.monthlyFeeInrPaise)} ${feeFrequencySuffix(course.feeFrequency)}" else "Free", Modifier.weight(1.4f))
+                FeeBlock("Course fee", courseFeeText(course), Modifier.weight(1.4f))
             }
         }
     }
@@ -368,7 +369,7 @@ fun CourseDetailScreen(
                             InfoRow(Icons.Rounded.Schedule, "Duration", course.duration.ifBlank { "—" })
                             InfoRow(Icons.Rounded.SignalCellularAlt, "Level", course.level.ifBlank { "All levels" })
                             InfoRow(Icons.Rounded.Payments, "Enrollment fee", if (course.priceInrPaise > 0) rupees(course.priceInrPaise) else "Free")
-                            InfoRow(Icons.Rounded.Payments, "Course fee", if (course.monthlyFeeInrPaise > 0) "${rupees(course.monthlyFeeInrPaise)} ${feeFrequencySuffix(course.feeFrequency)}" else "Free", last = true)
+                            InfoRow(Icons.Rounded.Payments, "Course fee", courseFeeText(course), last = true)
                         }
 
                         course.teacher?.let { t ->

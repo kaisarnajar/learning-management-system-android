@@ -2,6 +2,8 @@ package com.darsequran.academy.ui.common
 
 import com.darsequran.academy.data.remote.Enrollment
 import com.darsequran.academy.data.remote.PaymentSubmission
+import com.darsequran.academy.data.remote.EnrollmentStatus
+import com.darsequran.academy.data.remote.Course
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
@@ -19,7 +21,7 @@ fun monthlyFeeLabel(month: LocalDate): String = "Monthly fee — ${feePeriod(mon
  */
 fun monthlyFeeDue(enrollment: Enrollment, submissions: List<PaymentSubmission>, today: LocalDate = academyToday()): Boolean {
     val course = enrollment.course ?: return false
-    if (enrollment.status != "active" || course.monthlyFeeInrPaise <= 0 || (course.feeFrequency ?: "MONTHLY") != "MONTHLY") return false
+    if (enrollment.status != EnrollmentStatus.ACTIVE || course.monthlyFeeInrPaise <= 0 || (course.feeFrequency ?: "MONTHLY") != "MONTHLY") return false
     val label = monthlyFeeLabel(today)
     return submissions.none {
         it.courseId == enrollment.courseId && it.paymentType != "enrollment" &&
@@ -27,3 +29,7 @@ fun monthlyFeeDue(enrollment: Enrollment, submissions: List<PaymentSubmission>, 
             it.status != "rejected" && it.status != "declined"
     }
 }
+
+/** A course's fee as cards and the course page show it: "₹500 / month", "₹2,000 one time", or "Free". */
+fun courseFeeText(course: Course): String =
+    if (course.monthlyFeeInrPaise > 0) "${rupees(course.monthlyFeeInrPaise)} ${feeFrequencySuffix(course.feeFrequency)}" else "Free"

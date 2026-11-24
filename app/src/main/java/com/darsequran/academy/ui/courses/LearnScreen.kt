@@ -80,6 +80,7 @@ import com.darsequran.academy.ui.theme.Brand
 import com.darsequran.academy.data.remote.Enrollment
 import com.darsequran.academy.data.remote.PaymentSubmission
 import com.darsequran.academy.data.repo.orNull
+import com.darsequran.academy.data.remote.EnrollmentStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -269,7 +270,7 @@ private fun GradesTab(vm: LearnViewModel) {
  */
 internal fun canPayCourseFee(enrollment: Enrollment?, submissions: List<PaymentSubmission>): Boolean {
     val course = enrollment?.course ?: return false
-    if (enrollment.status != "active" || course.monthlyFeeInrPaise <= 0) return false
+    if (enrollment.status != EnrollmentStatus.ACTIVE || course.monthlyFeeInrPaise <= 0) return false
     if (course.feeFrequency != "ONE_TIME") return true
     return submissions.none { it.courseId == enrollment.courseId && it.paymentType != "enrollment" && it.status != "rejected" && it.status != "declined" }
 }

@@ -144,6 +144,7 @@ import com.darsequran.academy.ui.common.readImage
 import com.darsequran.academy.ui.theme.Brand
 import com.darsequran.academy.ui.theme.HeroUnderStatusBar
 import com.darsequran.academy.ui.common.rememberContainer
+import com.darsequran.academy.data.remote.Roles
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -239,7 +240,7 @@ fun AccountScreen(
         }
 
         // Admins and developers manage the academy rather than study in it, so their account has no learning items.
-        val admin = session?.user?.role == "ADMIN" || session?.user?.role == "DEVELOPER"
+        val admin = Roles.isAdmin(session?.user?.role)
         if (session != null && admin) {
             item { Group("Account") }
             item { Entry(Icons.Rounded.Notifications, "Notifications", onNotifications) }
@@ -859,8 +860,8 @@ fun AboutScreen(onBack: () -> Unit, onTeachers: () -> Unit) {
 }
 
 private fun roleLabel(role: String?): String? = when (role) {
-    "ADMIN" -> "Administrator"
-    "DEVELOPER" -> "Developer"
-    "TEACHER" -> "Teacher"
+    Roles.ADMIN -> "Administrator"
+    Roles.DEVELOPER -> "Developer"
+    Roles.TEACHER -> "Teacher"
     else -> null
 }

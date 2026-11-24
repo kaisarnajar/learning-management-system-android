@@ -45,6 +45,7 @@ import com.darsequran.academy.ui.manage.common.ManageScaffold
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.theme.Brand
 import com.darsequran.academy.ui.theme.HeroUnderStatusBar
+import com.darsequran.academy.data.remote.Roles
 import java.time.format.DateTimeFormatter
 
 // ------------------------------------------------------------------ API
@@ -66,7 +67,7 @@ fun AdminDashboardScreen(name: String?, role: String, onOpen: (String) -> Unit) 
                 HeroUnderStatusBar()
                 HeroBox(Modifier.fillMaxWidth()) {
                     Column(Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(20.dp).padding(top = 8.dp, bottom = 8.dp)) {
-                        Overline(if (role == "DEVELOPER") "Developer panel" else "Admin panel", Brand.goldSoft)
+                        Overline(if (role == Roles.DEVELOPER) "Developer panel" else "Admin panel", Brand.goldSoft)
                         Spacer(Modifier.height(6.dp))
                         Text("Assalamu alaikum${name?.let { ", " + it.substringBefore(' ') } ?: ""}", style = MaterialTheme.typography.headlineSmall, color = Brand.onHero)
                         Text(academyToday().format(DateTimeFormatter.ofPattern("EEEE, d MMMM")), style = MaterialTheme.typography.bodyMedium, color = Brand.onHero.copy(alpha = 0.8f))

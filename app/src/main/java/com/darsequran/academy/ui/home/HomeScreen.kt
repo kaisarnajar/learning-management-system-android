@@ -94,6 +94,7 @@ import com.darsequran.academy.ui.theme.Brand
 import com.darsequran.academy.ui.common.academyToday
 import com.darsequran.academy.ui.common.feePeriod
 import com.darsequran.academy.ui.common.monthlyFeeDue
+import com.darsequran.academy.data.remote.EnrollmentStatus
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -238,7 +239,7 @@ fun HomeScreen(
                 item { Spacer(Modifier.height(24.dp)); SectionHeader("My courses", action = "All", onAction = onSeeCourses) }
                 item {
                     LazyRow(contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(state.enrollments, key = { it.id }) { e -> MyCourseCard(e) { if (e.status == "active" || e.status == "completed") onOpenLearn(e) else onOpenCourse(e.courseId) } }
+                        items(state.enrollments, key = { it.id }) { e -> MyCourseCard(e) { if (EnrollmentStatus.opensLearn(e.status)) onOpenLearn(e) else onOpenCourse(e.courseId) } }
                     }
                 }
             } else if (state.session == null) {

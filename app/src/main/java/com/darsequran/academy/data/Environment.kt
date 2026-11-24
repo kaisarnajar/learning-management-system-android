@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.annotation.VisibleForTesting
 import com.darsequran.academy.BuildConfig
+import com.darsequran.academy.data.remote.Roles
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,7 +48,7 @@ private val Context.environmentDataStore by preferencesDataStore(name = "environ
  * Whether the environment switch is offered: always in debug builds; in release builds only while a developer is
  * signed in, so a phone a developer once used doesn't keep the switch for whoever uses it next.
  */
-fun canSwitchEnvironment(debugBuild: Boolean, role: String?): Boolean = debugBuild || role == "DEVELOPER"
+fun canSwitchEnvironment(debugBuild: Boolean, role: String?): Boolean = debugBuild || role == Roles.DEVELOPER
 
 /** Remembers the chosen environment. */
 class EnvironmentStore(private val context: Context) {
