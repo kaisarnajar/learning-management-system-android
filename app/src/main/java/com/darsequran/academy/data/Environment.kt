@@ -55,6 +55,14 @@ private val Context.environmentDataStore by preferencesDataStore(name = "environ
  */
 fun canSwitchEnvironment(debugBuild: Boolean, role: String?): Boolean = debugBuild || role == Roles.DEVELOPER
 
+/**
+ * Whether the app may stay on [env]. A release build keeps a server other than its default only while a developer is
+ * signed in: once they sign out, or the app starts without one (say the phone was handed on), it goes back to the
+ * default, because nobody else can switch it back.
+ */
+fun keepsEnvironment(debugBuild: Boolean, env: AppEnvironment, default: AppEnvironment, role: String?): Boolean =
+    debugBuild || env == default || role == Roles.DEVELOPER
+
 /** Remembers the chosen environment. */
 class EnvironmentStore(private val context: Context) {
     private val envKey = stringPreferencesKey("environment")

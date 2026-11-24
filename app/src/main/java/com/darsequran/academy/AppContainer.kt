@@ -1,5 +1,6 @@
 package com.darsequran.academy
 
+import com.darsequran.academy.data.keepsEnvironment
 import android.content.Context
 import android.os.SystemClock
 import com.darsequran.academy.data.AppEnvironment
@@ -51,6 +52,19 @@ class AppContainer(context: Context) {
             combine(environments.environment, sessionStore.session) { env, s -> s?.takeIf { it.env == env }?.user?.id?.let { env to it } }
                 .distinctUntilChanged()
                 .collect { owner -> if (owner == null) cart.clearLocal() else cart.refresh() }
+        }
+        // Release builds: only a signed-in developer keeps the app off its default server (production). Checked at
+        // start and whenever the session on the current server ends.
+        if (!BuildConfig.DEBUG) appScope.launch {
+            returnToDefaultUnlessKept(sessionStore.session.value?.user?.role)
+            sessionStore.signedOut.collect { returnToDefaultUnlessKept(role = null) }
+        }
+    }
+
+    private suspend fun returnToDefaultUnlessKept(role: String?) {
+        val env = environments.environment.value
+        if (!keepsEnvironment(BuildConfig.DEBUG, env, AppEnvironment.default, role)) {
+            switchEnvironment(AppEnvironment.default)
         }
     }
 

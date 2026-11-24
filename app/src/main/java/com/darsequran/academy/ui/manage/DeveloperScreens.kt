@@ -115,14 +115,15 @@ fun EnvironmentScreen(onBack: () -> Unit) {
 
 /**
  * A thin band above everything while the app is not on production, so test data is never mistaken for real.
- * Tapping it opens the environment screen.
+ * Tapping it opens the environment screen, when [onClick] is given (only for someone allowed to switch).
  */
 @Composable
-fun EnvironmentStrip(env: AppEnvironment, onClick: () -> Unit) {
+fun EnvironmentStrip(env: AppEnvironment, onClick: (() -> Unit)?) {
     if (env == AppEnvironment.PRODUCTION) return
     Row(
         Modifier.fillMaxWidth().background(Color(0xFFB45309)).windowInsetsPadding(WindowInsets.statusBars)
-            .clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 3.dp),
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 16.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {

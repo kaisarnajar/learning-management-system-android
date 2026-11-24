@@ -170,6 +170,8 @@ fun AppRoot() {
     val session by container.sessionStore.session.collectAsStateWithLifecycle()
     val env by container.environments.environment.collectAsStateWithLifecycle()
     val shell = Shell.of(session?.user?.role)
+    // The strip opens the server switch only for someone allowed to use it (see canSwitchEnvironment).
+    val canSwitch = canSwitchEnvironment(BuildConfig.DEBUG, session?.user?.role)
 
     // A new environment, role or user starts a fresh navigation graph: nothing from the previous one carries over.
     // The user matters even within one role: after a student signs out (or another signs in on the phone), the tab
@@ -178,7 +180,10 @@ fun AppRoot() {
         GraphScope("${env.key}-$shell-${session?.user?.id}") {
             val nav = rememberNavController()
             Column(Modifier.fillMaxSize()) {
-                if (env != AppEnvironment.PRODUCTION) { HeroUnderStatusBar(); EnvironmentStrip(env) { nav.navigate(EnvironmentRoute) } }
+                if (env != AppEnvironment.PRODUCTION) {
+                    HeroUnderStatusBar()
+                    EnvironmentStrip(env, if (canSwitch) ({ nav.navigate(EnvironmentRoute) }) else null)
+                }
                 Box(Modifier.weight(1f).then(if (env != AppEnvironment.PRODUCTION) Modifier.consumeWindowInsets(WindowInsets.statusBars) else Modifier)) {
                     AppContent(nav, shell)
                 }

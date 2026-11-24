@@ -33,6 +33,19 @@ class EnvironmentSwitchTest {
     }
 
     @Test
+    fun aReleaseBuildKeepsATestServerOnlyForASignedInDeveloper() {
+        val prod = AppEnvironment.PRODUCTION
+        val staging = AppEnvironment.STAGING
+        assertTrue(keepsEnvironment(debugBuild = false, staging, default = prod, role = "DEVELOPER"))
+        listOf(null, "USER", "TEACHER", "ADMIN").forEach {
+            assertFalse(keepsEnvironment(debugBuild = false, staging, prod, it))
+        }
+        assertTrue("its default server is always kept", keepsEnvironment(debugBuild = false, prod, prod, null))
+        assertTrue("a minified build's default is staging", keepsEnvironment(false, staging, staging, null))
+        assertTrue("debug builds keep any server", keepsEnvironment(debugBuild = true, prod, staging, null))
+    }
+
+    @Test
     fun aRememberedLocalEnvironmentFallsBackToTheDefault() {
         assertNull(AppEnvironment.fromKey("local"))
     }

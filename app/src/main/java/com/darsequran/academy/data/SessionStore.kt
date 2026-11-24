@@ -8,7 +8,10 @@ import com.darsequran.academy.data.remote.SessionUser
 import com.darsequran.academy.data.remote.TokenResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -59,6 +62,11 @@ class SessionStore(
     // refresh authenticator is visible to the very next request.
     private val _session = MutableStateFlow(runBlocking { readOnce(env) })
     override val session: StateFlow<Session?> = _session.asStateFlow()
+
+    private val _signedOut = MutableSharedFlow<AppEnvironment>(extraBufferCapacity = 1)
+
+    /** The current environment's session ended: signed out, account deleted, or the refresh token refused. */
+    val signedOut: SharedFlow<AppEnvironment> = _signedOut.asSharedFlow()
 
     /** Loads the session of [environment]; called before requests are pointed at it. */
     suspend fun useEnvironment(environment: AppEnvironment) {
@@ -117,7 +125,10 @@ class SessionStore(
     }
 
     private suspend fun remove(env: AppEnvironment) {
-        if (env == this.env) _session.value = null
+        if (env == this.env && _session.value != null) {
+            _session.value = null
+            _signedOut.tryEmit(env)
+        }
         val keys = Keys(env)
         context.sessionDataStore.edit { it.remove(keys.access); it.remove(keys.refresh); it.remove(keys.user) }
     }
