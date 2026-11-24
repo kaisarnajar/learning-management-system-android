@@ -70,6 +70,7 @@ interface AcademyApi {
     @GET("payments/history") suspend fun paymentHistory(): PaymentHistory
     @GET("waiver-requests") suspend fun waiverRequests(): WaiverRequestsResponse
     @POST("waiver-requests") suspend fun requestWaiver(@Body body: WaiverRequestBody): OkResponse
+    @GET("courses") suspend fun coursePage(@Query("page") page: Int, @Query("pageSize") pageSize: Int): Paged<Course>
     @GET("reviews") suspend fun myReviews(): ReviewsResponse
     @POST("reviews") suspend fun addReview(@Body body: ReviewRequest): OkResponse
 

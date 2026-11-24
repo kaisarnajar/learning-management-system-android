@@ -10,6 +10,7 @@ import com.darsequran.academy.data.remote.AskFatwaRequest
 import com.darsequran.academy.data.remote.CartLine
 import com.darsequran.academy.data.remote.CartReplace
 import com.darsequran.academy.data.remote.ContactRequest
+import com.darsequran.academy.data.remote.Course
 import com.darsequran.academy.data.remote.ContentRequest
 import com.darsequran.academy.data.remote.EnrollRequest
 import com.darsequran.academy.data.remote.HomeResponse
@@ -80,8 +81,19 @@ class AcademyRepository(private val api: AcademyApi) {
     suspend fun paymentHistory() = apiCall { api.paymentHistory() }
     // The body streams, so read it off the main thread.
     suspend fun waiverRequests() = apiCall { api.waiverRequests().data }
-    suspend fun requestWaiver(courseId: String, feeType: String, reason: String) =
-        apiCall { api.requestWaiver(WaiverRequestBody(courseId, feeType, reason)) }
+    suspend fun requestWaiver(body: WaiverRequestBody) = apiCall { api.requestWaiver(body) }
+
+    /** Every listed course (all pages), for pickers that need the whole catalogue. */
+    suspend fun allCourses(): ApiResult<List<Course>> = apiCall {
+        val all = mutableListOf<Course>()
+        var page = 1
+        do {
+            val batch = api.coursePage(page, ALL_COURSES_PAGE_SIZE)
+            all += batch.data
+            page++
+        } while (batch.data.isNotEmpty() && all.size < batch.totalCount && page <= ALL_COURSES_MAX_PAGES)
+        all
+    }
     suspend fun myReviews() = apiCall { api.myReviews().data }
     suspend fun addReview(body: ReviewRequest) = apiCall { api.addReview(body) }
 
@@ -114,6 +126,10 @@ class AcademyRepository(private val api: AcademyApi) {
     private fun filePart(name: String, bytes: ByteArray, mime: String) =
         MultipartBody.Part.createFormData(name, "$name.${if (mime.endsWith("png")) "png" else "jpg"}", bytes.toRequestBody(mime.toMediaType()))
 }
+
+/** The server's largest page size (PAGINATION.MAX_PAGE_SIZE). */
+private const val ALL_COURSES_PAGE_SIZE = 50
+private const val ALL_COURSES_MAX_PAGES = 20
 
 /** Unwraps or returns null; convenience for parallel loads where one failure is shown separately. */
 fun <T> ApiResult<T>.orNull(): T? = (this as? ApiResult.Ok)?.value

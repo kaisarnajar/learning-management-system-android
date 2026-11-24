@@ -531,7 +531,13 @@ data class WaiverRequest(
     val feeType: String? = null,
     val createdAt: String = "",
     val course: CourseTitle? = null,
+    /** The first issued coupon; [couponCodes] lists every code (two for a "both fees" waiver). */
+    val coupon: WaiverCoupon? = null,
+    val couponCodes: List<String> = emptyList(),
 )
+
+@Serializable
+data class WaiverCoupon(val code: String, val percentage: Int = 0)
 
 @Serializable
 data class CourseTitle(val title: String? = null)

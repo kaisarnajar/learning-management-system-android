@@ -104,7 +104,6 @@ import com.darsequran.academy.data.remote.Profile
 import com.darsequran.academy.data.remote.ProfileUpdate
 import com.darsequran.academy.data.remote.Review
 import com.darsequran.academy.data.remote.ReviewRequest
-import com.darsequran.academy.data.remote.WaiverRequest
 import com.darsequran.academy.data.repo.AcademyRepository
 import com.darsequran.academy.data.repo.AuthRepository
 import com.darsequran.academy.data.repo.orNull
@@ -490,90 +489,6 @@ private fun SubmissionCard(s: PaymentSubmission, titles: Map<String, String>) {
                                 }
                             }
                         }
-}
-
-// ================================================================ waivers
-
-class WaiversViewModel(private val repo: AcademyRepository) : ViewModel() {
-    val state = MutableStateFlow<Load<Pair<List<WaiverRequest>, List<Enrollment>>>>(Load.Loading)
-    val sending = MutableStateFlow(false)
-    val message = MutableStateFlow<Pair<String, Boolean>?>(null)
-    init { load() }
-    fun load() = viewModelScope.launch {
-        val e = async { repo.enrollments().orNull() ?: emptyList() }
-        state.value = when (val r = repo.waiverRequests()) { is ApiResult.Ok -> Load.Ready(r.value to e.await()); is ApiResult.Err -> Load.Failed(r.message) }
-    }
-    fun request(courseId: String, feeType: String, reason: String, onDone: () -> Unit) = viewModelScope.launch {
-        sending.value = true
-        when (val r = repo.requestWaiver(courseId, feeType, reason)) {
-            is ApiResult.Ok -> { message.value = "Request sent. The academy will review it." to true; onDone(); load() }
-            is ApiResult.Err -> message.value = r.message to false
-        }
-        sending.value = false
-    }
-}
-
-@Composable
-fun WaiversScreen(onBack: () -> Unit) {
-    val vm: WaiversViewModel = viewModel(factory = vmFactory { WaiversViewModel(it.repo) })
-    val state by vm.state.collectAsStateWithLifecycle()
-    val sending by vm.sending.collectAsStateWithLifecycle()
-    val message by vm.message.collectAsStateWithLifecycle()
-    var showForm by rememberSaveable { mutableStateOf(false) }
-    Scaffold(
-        topBar = { BackTopBar("Fee waivers", onBack) },
-        floatingActionButton = {
-            if (!showForm) ExtendedFloatingActionButton(onClick = { showForm = true }, icon = { Icon(Icons.Rounded.Edit, null) }, text = { Text("Request a waiver") })
-        },
-    ) { padding ->
-        Box(Modifier.padding(padding)) {
-            LoadContent(state, vm::load) { (requests, enrollments) ->
-                LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    message?.let { (text, ok) -> item { Banner(text, if (ok) Tone.Success else Tone.Danger) } }
-                    if (showForm) item { WaiverForm(enrollments, sending, { showForm = false }) { c, t, r -> vm.request(c, t, r) { showForm = false } } }
-                    if (requests.isEmpty() && !showForm) item { EmptyState("No waiver requests", "If paying the fee is difficult, you can ask the academy for a full or partial waiver.") }
-                    items(requests, key = { it.id }) { w ->
-                        val (label, tone) = statusLabel(w.status, StatusKind.Waiver)
-                        AppCard(Modifier.fillMaxWidth()) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(w.course?.title ?: "Course", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                                StatusChip(label, tone)
-                            }
-                            Text("${titleCase(w.feeType ?: "BOTH")} fee · ${formatDate(w.createdAt)}", style = MaterialTheme.typography.labelMedium, color = Brand.gold)
-                            Spacer(Modifier.height(6.dp))
-                            Text(w.reason, style = MaterialTheme.typography.bodyMedium)
-                            if (w.status == "APPROVED") { Spacer(Modifier.height(6.dp)); Text("Your waiver appears as an option when you pay this fee.", style = MaterialTheme.typography.bodySmall, color = Brand.success) }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun WaiverForm(enrollments: List<Enrollment>, sending: Boolean, onCancel: () -> Unit, onSend: (String, String, String) -> Unit) {
-    val courses = enrollments.mapNotNull { e -> e.course?.let { e.courseId to it.title } }
-    var course by rememberSaveable { mutableStateOf(courses.firstOrNull()?.first ?: "") }
-    var type by rememberSaveable { mutableStateOf("both") }
-    var reason by rememberSaveable { mutableStateOf("") }
-    AppCard(Modifier.fillMaxWidth()) {
-        Text("Request a waiver", style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(10.dp))
-        if (courses.isEmpty()) { Text("Apply for a course first; waivers are requested per course.", style = MaterialTheme.typography.bodyMedium); TextButton(onCancel) { Text("Close") }; return@AppCard }
-        Dropdown(courses.firstOrNull { it.first == course }?.second ?: "Select", courses.map { it.second }, Modifier.fillMaxWidth(), "Course") { course = courses[it].first }
-        Spacer(Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("enrollment" to "Enrollment", "course" to "Course fee", "both" to "Both").forEach { (v, l) -> ChoicePill(l, type == v, Modifier.weight(1f)) { type = v } }
-        }
-        Spacer(Modifier.height(10.dp))
-        OutlinedTextField(reason, { reason = it.take(1000) }, Modifier.fillMaxWidth().height(130.dp), label = { Text("Why do you need a waiver?") }, supportingText = { Text("${reason.length}/1000 · at least 10 characters") })
-        Spacer(Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            TextButton(onCancel, Modifier.weight(1f)) { Text("Cancel") }
-            PrimaryButton("Send", { onSend(course, type, reason.trim()) }, Modifier.weight(2f), enabled = reason.trim().length >= 10 && course.isNotBlank(), loading = sending)
-        }
-    }
 }
 
 // ================================================================ reviews
