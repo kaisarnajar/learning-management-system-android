@@ -27,6 +27,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.darsequran.academy.data.staff.PickedFile
+import com.darsequran.academy.data.staff.bookstore.AdminBook
+import com.darsequran.academy.data.staff.bookstore.AdminBookResponse
+import com.darsequran.academy.data.staff.bookstore.BookstoreAdminApi
 import com.darsequran.academy.data.staff.formOf
 import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.PriceLine
@@ -39,6 +42,7 @@ import com.darsequran.academy.ui.common.rupees
 import com.darsequran.academy.ui.manage.common.AddFab
 import com.darsequran.academy.ui.manage.common.ConfirmDialog
 import com.darsequran.academy.ui.manage.common.DetailCard
+import com.darsequran.academy.ui.manage.common.FeaturedSwitch
 import com.darsequran.academy.ui.manage.common.Field
 import com.darsequran.academy.ui.manage.common.FieldRow
 import com.darsequran.academy.ui.manage.common.FormDropdown
@@ -57,7 +61,6 @@ import com.darsequran.academy.ui.manage.common.paiseToRupeesText
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
-import com.darsequran.academy.ui.manage.common.FeaturedSwitch
 
 /*
  * The book catalogue: /admin/bookstore (list), /admin/bookstore/[bookId] (detail), /new and /[bookId]/edit (form).

@@ -38,7 +38,7 @@ import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.StatusChip
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.formatDate
-import com.darsequran.academy.ui.manage.bookstore.BookstoreAdminApi
+import com.darsequran.academy.data.staff.bookstore.BookstoreAdminApi
 import com.darsequran.academy.ui.manage.common.ActionRunner
 import com.darsequran.academy.ui.manage.common.ConfirmDialog
 import com.darsequran.academy.ui.manage.common.FilterChips
