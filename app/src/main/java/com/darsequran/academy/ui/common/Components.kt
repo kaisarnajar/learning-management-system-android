@@ -63,6 +63,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -153,7 +154,7 @@ fun Overline(text: String, color: Color = Brand.gold, modifier: Modifier = Modif
     Text(text.uppercase(), style = OverlineStyle, color = color, modifier = modifier)
 }
 
-/** Flat card: surface container with a hairline outline, as in the design spec. */
+/** Card: white surface, hairline outline and a soft shadow, like the website's card-elevated. */
 @Composable
 fun AppCard(
     modifier: Modifier = Modifier,
@@ -165,6 +166,7 @@ fun AppCard(
     val shape = MaterialTheme.shapes.large
     Column(
         modifier
+            .shadow(3.dp, shape, ambientColor = CardShadow, spotColor = CardShadow)
             .clip(shape)
             .background(color)
             .border(1.dp, Brand.outlineSoft, shape)
@@ -173,6 +175,8 @@ fun AppCard(
         content = content,
     )
 }
+
+private val CardShadow = Color.Black.copy(alpha = 0.12f)
 
 /** The deep-green hero with a faint geometric pattern, mirroring the website's page heroes. */
 @Composable

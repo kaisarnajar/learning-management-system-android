@@ -155,12 +155,16 @@ private val DarkScheme = darkColorScheme(
     inversePrimary = Color(0xFF0F3D2E),
 )
 
+/**
+ * Corners close to the website's: inputs and buttons 8dp (the website's rounded-md is 6px), cards 12dp (the website's
+ * cards are 8px with a soft shadow), sheets and dialogs 16dp.
+ */
 val AcademyShapes = Shapes(
-    extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(20.dp),
-    extraLarge = RoundedCornerShape(28.dp),
+    extraSmall = RoundedCornerShape(6.dp),
+    small = RoundedCornerShape(8.dp),
+    medium = RoundedCornerShape(8.dp),
+    large = RoundedCornerShape(12.dp),
+    extraLarge = RoundedCornerShape(16.dp),
 )
 
 val LocalBrand = staticCompositionLocalOf { LightBrand }
