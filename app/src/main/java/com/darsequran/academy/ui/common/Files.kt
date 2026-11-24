@@ -11,7 +11,6 @@ import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.FileProvider
-import com.darsequran.academy.AcademyApp
 import com.darsequran.academy.data.documentCacheDir
 import com.darsequran.academy.data.resolveUrl
 import kotlinx.coroutines.CancellationException
@@ -99,7 +98,7 @@ fun mimeFor(fileName: String, contentType: String?): String {
  */
 suspend fun downloadAndOpen(context: Context, path: String, fileName: String): String? {
     val url = resolveUrl(path) ?: return "This file is not available."
-    val client = (context.applicationContext as AcademyApp).container.network.client
+    val client = context.appContainer.network.client
     return try {
         val (file, mime) = withContext(Dispatchers.IO) {
             client.newCall(Request.Builder().url(url).build()).execute().use { response ->

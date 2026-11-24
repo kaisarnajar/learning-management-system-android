@@ -77,3 +77,13 @@ class LoaderViewModel<T>(private val fetch: suspend () -> ApiResult<T>) : androi
 
     fun load(): kotlinx.coroutines.Job = reload(showLoading = true)
 }
+
+/** The app's dependencies, from any context (outside composition). */
+val android.content.Context.appContainer: AppContainer get() = (applicationContext as AcademyApp).container
+
+/** The app's dependencies, for a composable. The one way screens reach it. */
+@androidx.compose.runtime.Composable
+fun rememberContainer(): AppContainer {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    return androidx.compose.runtime.remember { context.appContainer }
+}

@@ -81,7 +81,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.darsequran.academy.AcademyApp
 import com.darsequran.academy.data.remote.AppConfig
 import com.darsequran.academy.data.repo.orNull
 import com.darsequran.academy.ui.account.AboutScreen
@@ -125,6 +124,7 @@ import com.darsequran.academy.ui.common.LinkTarget
 import com.darsequran.academy.ui.common.LocalOpenLink
 import com.darsequran.academy.ui.common.linkTarget
 import com.darsequran.academy.ui.common.openWeb
+import com.darsequran.academy.ui.common.rememberContainer
 import kotlin.reflect.KClass
 import kotlinx.coroutines.delay
 
@@ -171,7 +171,7 @@ private fun NavHostController.switchTab(route: Any) = navigate(route) {
 @Composable
 fun AppRoot() {
     val context = LocalContext.current
-    val container = remember { (context.applicationContext as AcademyApp).container }
+    val container = rememberContainer()
     val session by container.sessionStore.session.collectAsStateWithLifecycle()
     val env by container.environments.environment.collectAsStateWithLifecycle()
     val shell = Shell.of(session?.user?.role)
@@ -195,7 +195,7 @@ fun AppRoot() {
 @Composable
 private fun AppContent(nav: NavHostController, shell: Shell) {
     val context = LocalContext.current
-    val container = remember { (context.applicationContext as AcademyApp).container }
+    val container = rememberContainer()
     val session by container.sessionStore.session.collectAsStateWithLifecycle()
     val canSwitch = canSwitchEnvironment(BuildConfig.DEBUG, session?.user?.role)
     val tabs = shell.tabs

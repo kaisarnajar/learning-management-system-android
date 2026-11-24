@@ -61,7 +61,7 @@ import com.darsequran.academy.ui.manage.common.ManageScaffold
 import com.darsequran.academy.ui.manage.common.RecordCard
 import com.darsequran.academy.ui.manage.common.dateOnly
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
-import com.darsequran.academy.ui.manage.common.rememberContainer
+import com.darsequran.academy.ui.common.rememberContainer
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
 import kotlinx.serialization.Serializable

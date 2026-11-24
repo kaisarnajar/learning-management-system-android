@@ -143,6 +143,7 @@ import com.darsequran.academy.ui.common.Dropdown
 import com.darsequran.academy.ui.common.readImage
 import com.darsequran.academy.ui.theme.Brand
 import com.darsequran.academy.ui.theme.HeroUnderStatusBar
+import com.darsequran.academy.ui.common.rememberContainer
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -433,7 +434,7 @@ private fun Field(value: String, label: String, keyboard: KeyboardType = Keyboar
 fun rememberReceiptOpener(): (String) -> Unit {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val repo = remember { (context.applicationContext as com.darsequran.academy.AcademyApp).container.repo }
+    val repo = rememberContainer().repo
     return { id ->
         android.widget.Toast.makeText(context, "Preparing your receipt…", android.widget.Toast.LENGTH_SHORT).show()
         scope.launch {
@@ -663,7 +664,7 @@ fun ReviewsScreen(onBack: () -> Unit) {
 @Composable
 fun NotificationsScreen(onBack: () -> Unit, onOpenHref: (String) -> Unit) {
     val vm: PagedViewModel<Notification> = viewModel(key = "notifications", factory = vmFactory { c -> PagedViewModel { p, _, f -> c.repo.notifications(p, f == "unread") } })
-    val container = (LocalContext.current.applicationContext as com.darsequran.academy.AcademyApp).container
+    val container = rememberContainer()
     val state by vm.state.collectAsStateWithLifecycle()
     // App scope: opening a notification leaves this screen, which must not cancel marking it read.
     Scaffold(topBar = { BackTopBar("Notifications", onBack, actions = { TextButton({ container.appScope.launch { container.repo.markAllRead(); vm.refresh() } }) { Text("Mark all read") } }) }) { padding ->
@@ -694,7 +695,7 @@ fun NotificationsScreen(onBack: () -> Unit, onOpenHref: (String) -> Unit) {
 @Composable
 fun ChangePasswordScreen(onBack: () -> Unit) {
     val context = LocalContext.current
-    val auth = remember { (context.applicationContext as com.darsequran.academy.AcademyApp).container.auth }
+    val auth = rememberContainer().auth
     val submitter = rememberSubmitter("change-password")
     var current by remember { mutableStateOf("") }
     var new by remember { mutableStateOf("") }
@@ -723,7 +724,7 @@ fun ChangePasswordScreen(onBack: () -> Unit) {
 @Composable
 fun DeleteAccountScreen(onBack: () -> Unit, onDeleted: () -> Unit) {
     val context = LocalContext.current
-    val container = remember { (context.applicationContext as com.darsequran.academy.AcademyApp).container }
+    val container = rememberContainer()
     val submitter = rememberSubmitter("delete-account")
     // Whether the account has a password decides what confirms the deletion; guessing "yes" when the profile didn't
     // load left a Google-only user with a password field they couldn't fill.
@@ -779,7 +780,7 @@ fun DeleteAccountScreen(onBack: () -> Unit, onDeleted: () -> Unit) {
 @Composable
 fun ContactScreen(onBack: () -> Unit) {
     val context = LocalContext.current
-    val container = remember { (context.applicationContext as com.darsequran.academy.AcademyApp).container }
+    val container = rememberContainer()
     val session by container.sessionStore.session.collectAsStateWithLifecycle()
     var config by remember { mutableStateOf<AppConfig?>(null) }
     LaunchedEffect(Unit) { config = container.repo.appConfig().orNull() }

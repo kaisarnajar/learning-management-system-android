@@ -48,7 +48,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,7 +56,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.darsequran.academy.AcademyApp
 import com.darsequran.academy.AppContainer
 import com.darsequran.academy.data.ApiResult
 import com.darsequran.academy.data.apiCall
@@ -100,11 +98,6 @@ fun <T> rememberLoader(key: String, fetch: suspend AppContainer.() -> T): Loader
 fun <T> rememberPaged(key: String, fetch: suspend AppContainer.(page: Int, query: String, filter: String?) -> Paged<T>): PagedViewModel<T> =
     viewModel(key = key, factory = vmFactory { c -> PagedViewModel { page, q, f -> apiCall { c.fetch(page, q, f) } } })
 
-@Composable
-fun rememberContainer(): AppContainer {
-    val context = LocalContext.current
-    return remember { (context.applicationContext as AcademyApp).container }
-}
 
 // ------------------------------------------------------------- actions
 

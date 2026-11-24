@@ -38,7 +38,7 @@ import com.darsequran.academy.ui.common.Banner
 import com.darsequran.academy.ui.common.StatusChip
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.manage.common.ManageScaffold
-import com.darsequran.academy.ui.manage.common.rememberContainer
+import com.darsequran.academy.ui.common.rememberContainer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
