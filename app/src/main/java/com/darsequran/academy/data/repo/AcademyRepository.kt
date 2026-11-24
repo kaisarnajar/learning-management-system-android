@@ -1,5 +1,7 @@
 package com.darsequran.academy.data.repo
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import com.darsequran.academy.data.ApiResult
 import com.darsequran.academy.data.apiCall
 import com.darsequran.academy.data.remote.AcademyApi
@@ -74,7 +76,8 @@ class AcademyRepository(private val api: AcademyApi) {
     suspend fun grades(courseId: String) = apiCall { api.grades(courseId).grades.firstOrNull() }
     suspend fun paymentQuote(courseId: String, type: String) = apiCall { api.paymentQuote(courseId, type) }
     suspend fun paymentHistory() = apiCall { api.paymentHistory() }
-    suspend fun receipt(recordId: String) = apiCall { api.receipt(recordId).bytes() }
+    // The body streams, so read it off the main thread.
+    suspend fun receipt(recordId: String) = apiCall { withContext(Dispatchers.IO) { api.receipt(recordId).use { it.bytes() } } }
     suspend fun waiverRequests() = apiCall { api.waiverRequests().data }
     suspend fun requestWaiver(courseId: String, feeType: String, reason: String) =
         apiCall { api.requestWaiver(WaiverRequestBody(courseId, feeType, reason)) }
