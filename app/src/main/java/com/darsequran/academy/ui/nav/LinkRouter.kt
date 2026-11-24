@@ -17,24 +17,42 @@ data class HrefDestination(val route: Any, val isTab: Boolean = false, val under
  */
 internal fun routeForHref(href: String, shell: Shell): HrefDestination? {
     val path = href.substringBefore('#').substringBefore('?')
-    val parts = path.trim('/').split('/')
-    fun go(route: Any) = HrefDestination(route)
-    return when {
-        parts.getOrNull(0) == "admin" -> when {
+    val parts = path.trim('/').split('/').filter { it.isNotEmpty() }
+    return when (parts.getOrNull(0)) {
+        "admin" -> when {
             !shell.adminPanel -> null
             parts.size == 1 -> HrefDestination(AdminDashboardTab, isTab = true)
             else -> routeForAdminHref(path)?.let { HrefDestination(it, underTab = AdminDashboardTab) }
         }
-        parts.getOrNull(0) == "teacher" -> if (shell == Shell.Teacher) HrefDestination(TeachTab, isTab = true) else null
-        parts.getOrNull(0) == "blog" && parts.size >= 2 -> go(BlogPostRoute(parts[1]))
-        parts.getOrNull(0) == "fatwa" && parts.size >= 2 -> go(FatwaDetailRoute(parts[1]))
-        parts.getOrNull(0) == "announcements" && parts.size >= 2 -> go(AnnouncementRoute(parts[1]))
-        parts.getOrNull(0) == "courses" && parts.size >= 2 -> go(CourseRoute(parts[1]))
-        parts.take(2) == listOf("profile", "courses") && parts.size >= 3 -> go(LearnRoute(parts[2], "Course"))
-        parts.take(2) == listOf("profile", "payments") -> go(PaymentsRoute)
-        parts.take(2) == listOf("profile", "cart") || parts.getOrNull(0) == "bookstore" -> go(OrdersRoute)
-        parts.take(2) == listOf("profile", "waiver-requests") -> go(WaiversRoute)
-        parts.getOrNull(0) == "profile" -> HrefDestination(CoursesTab, isTab = true)
+        "teacher" -> if (shell == Shell.Teacher) HrefDestination(TeachTab, isTab = true) else null
+        "profile" -> routeForProfileHref(parts.drop(1))
+        else -> routeForPublicHref(parts)?.let(::HrefDestination)
+    }
+}
+
+/** The website's public pages that have a screen in the app; "/fatwa/ask" is the form, not a fatwa called "ask". */
+private fun routeForPublicHref(parts: List<String>): Any? {
+    val id = parts.getOrNull(1) ?: return if (parts == listOf("bookstore")) BookstoreRoute else null
+    return when (parts[0]) {
+        "blog" -> BlogPostRoute(id)
+        "fatwa" -> if (id == "ask") AskFatwaRoute else FatwaDetailRoute(id)
+        "announcements" -> AnnouncementRoute(id)
+        "courses" -> CourseRoute(id)
+        "library" -> LibraryItemRoute(id)
+        "teachers" -> TeacherRoute(id)
+        "bookstore" -> if (id == "orders") OrdersRoute else BookRoute(id)
         else -> null
     }
+}
+
+/** The student's own pages ("/profile/..."); the profile itself is the Account tab. */
+private fun routeForProfileHref(rest: List<String>): HrefDestination = when (rest.getOrNull(0)) {
+    "courses" -> rest.getOrNull(1)?.let { HrefDestination(LearnRoute(it, "Course")) }
+        ?: HrefDestination(CoursesTab, isTab = true)
+    "payments" -> HrefDestination(PaymentsRoute)
+    "cart" -> HrefDestination(OrdersRoute)
+    "waiver-requests" -> HrefDestination(WaiversRoute)
+    "reviews" -> HrefDestination(ReviewsRoute)
+    "notifications" -> HrefDestination(NotificationsRoute)
+    else -> HrefDestination(AccountTab, isTab = true)
 }
