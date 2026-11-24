@@ -39,6 +39,9 @@ class AcademyRepository(private val api: AcademyApi) {
 
     private var homeCache: HomeResponse? = null
     fun cachedHome() = homeCache
+
+    /** Forgets what was cached from the previous environment. */
+    fun clearCaches() { config = null; homeCache = null }
     suspend fun home() = apiCall { api.home() }.also { if (it is ApiResult.Ok) homeCache = it.value }
 
     // ---- catalogue & content

@@ -22,17 +22,30 @@ private val Context.sessionDataStore by preferencesDataStore(name = "session")
 /** A signed-in session: the token pair and the user it belongs to. */
 data class Session(val accessToken: String, val refreshToken: String, val user: SessionUser)
 
-/** Persists the session. [session] is the single source of truth for "am I signed in?". */
+/**
+ * Persists the session. [session] is the single source of truth for "am I signed in?".
+ *
+ * Each environment (production, staging, local) keeps its own session, so a developer who switches keeps being
+ * signed in on each. Production uses the original key names, so sessions from before environments existed survive.
+ */
 class SessionStore(private val context: Context, scope: CoroutineScope, private val json: Json) {
-    private val accessKey = stringPreferencesKey("access_token")
-    private val refreshKey = stringPreferencesKey("refresh_token")
-    private val userKey = stringPreferencesKey("user")
+    private var env: AppEnvironment = CurrentEnvironment.value
+    private fun key(name: String) = stringPreferencesKey(if (env == AppEnvironment.PRODUCTION) name else "${env.key}_$name")
+    private val accessKey get() = key("access_token")
+    private val refreshKey get() = key("refresh_token")
+    private val userKey get() = key("user")
     private val themeKey = stringPreferencesKey("theme")
 
     // Held in memory first and persisted second, so a token saved by the
     // refresh authenticator is visible to the very next request.
     private val _session = MutableStateFlow(runBlocking { readOnce() })
     val session: StateFlow<Session?> = _session.asStateFlow()
+
+    /** Loads the session of [environment] (after the app switched to it). */
+    suspend fun useEnvironment(environment: AppEnvironment) {
+        env = environment
+        _session.value = readOnce()
+    }
 
     /** "system", "light" or "dark". */
     val theme: StateFlow<String> = context.sessionDataStore.data

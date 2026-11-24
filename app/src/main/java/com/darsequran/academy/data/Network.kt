@@ -10,6 +10,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import okhttp3.Authenticator
 import okhttp3.Interceptor
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -25,9 +26,12 @@ import java.util.concurrent.TimeUnit
 fun resolveUrl(path: String?): String? = when {
     path.isNullOrBlank() -> null
     path.startsWith("http://") || path.startsWith("https://") -> path
-    path.startsWith("/") -> BuildConfig.BASE_URL.trimEnd('/') + path
-    else -> BuildConfig.BASE_URL.trimEnd('/') + "/" + path
+    path.startsWith("/") -> CurrentEnvironment.baseUrl + path
+    else -> CurrentEnvironment.baseUrl + "/" + path
 }
+
+/** Retrofit needs a fixed base URL; requests are pointed at the current environment by [environmentHost]. */
+private const val PLACEHOLDER_BASE = "https://api.invalid/api/v1/"
 
 class Network(private val sessionStore: SessionStore, val json: Json) {
     private val refreshMutex = Mutex()
@@ -36,9 +40,19 @@ class Network(private val sessionStore: SessionStore, val json: Json) {
         level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE
     }
 
+    /** Sends API calls to the environment chosen now (production, staging or a local server). */
+    private val environmentHost = Interceptor { chain ->
+        val request = chain.request()
+        if (request.url.host != "api.invalid") return@Interceptor chain.proceed(request)
+        val base = CurrentEnvironment.baseUrl.toHttpUrl()
+        val url = request.url.newBuilder().scheme(base.scheme).host(base.host).port(base.port).build()
+        chain.proceed(request.newBuilder().url(url).build())
+    }
+
     private val baseClient = OkHttpClient.Builder()
         .connectTimeout(20, TimeUnit.SECONDS)
         .readTimeout(70, TimeUnit.SECONDS) // receipts are rendered on demand
+        .addInterceptor(environmentHost)
         .addInterceptor(logging)
         .build()
 
@@ -98,10 +112,15 @@ class Network(private val sessionStore: SessionStore, val json: Json) {
         .authenticator(refreshAuthenticator)
         .build()
 
-    val api: AcademyApi = retrofit(client).create(AcademyApi::class.java)
+    private val retrofit: Retrofit = retrofit(client)
+
+    val api: AcademyApi = retrofit.create(AcademyApi::class.java)
+
+    /** A Retrofit service for one part of the API (the admin and teacher areas each have their own). */
+    fun <T> create(service: Class<T>): T = retrofit.create(service)
 
     private fun retrofit(client: OkHttpClient): Retrofit = Retrofit.Builder()
-        .baseUrl(BuildConfig.BASE_URL.trimEnd('/') + "/api/v1/")
+        .baseUrl(PLACEHOLDER_BASE)
         .client(client)
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()
