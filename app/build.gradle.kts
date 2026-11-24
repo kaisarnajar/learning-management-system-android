@@ -192,5 +192,6 @@ kotlin {
 detekt {
     // Today's findings are frozen in the baseline; new ones fail the build.
     buildUponDefaultConfig = true
+    config.setFrom(file("detekt.yml"))
     baseline = file("detekt-baseline.xml")
 }
