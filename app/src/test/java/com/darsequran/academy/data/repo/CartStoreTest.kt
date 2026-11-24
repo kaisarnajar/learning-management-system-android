@@ -10,6 +10,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import com.darsequran.academy.data.remote.CartLine
 import com.darsequran.academy.data.remote.SessionUser
 import com.darsequran.academy.data.remote.TokenResponse
 import mockwebserver3.Dispatcher
@@ -32,6 +33,7 @@ class CartStoreTest {
     private val server = MockWebServer()
     private val sent = Collections.synchronizedList(mutableListOf<Int>())
     @Volatile private var failNext = false
+    @Volatile private var afterSignOut = false
 
     private fun items(quantity: Int) =
         if (quantity == 0) """{"items":[]}""" else """{"items":[{"bookId":"b1","title":"Riyad as-Salihin","quantity":$quantity}]}"""
@@ -39,9 +41,11 @@ class CartStoreTest {
     @Before fun setUp() {
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse = when (request.method) {
-                "GET" -> MockResponse(body = items(1))
+                "GET" -> MockResponse(body = if (afterSignOut) """{"items":[]}""" else items(1))
                 "PATCH" -> {
-                    val quantity = Regex("\"quantity\":(\\d+)").find(request.body!!.utf8())!!.groupValues[1].toInt()
+                    val body = request.body!!.utf8()
+                    val quantity = Regex("\"quantity\":(\\d+)").find(body)!!.groupValues[1].toInt()
+                    if ("\"b2\"" in body) { sent += quantity; return MockResponse(code = 409, body = """{"error":"Only 0 in stock."}""") }
                     sent += quantity
                     if (failNext) { failNext = false; MockResponse(code = 409, body = """{"error":"Only 2 in stock."}""") }
                     else MockResponse.Builder().body(items(quantity)).headersDelay(80, TimeUnit.MILLISECONDS).build()
@@ -87,6 +91,33 @@ class CartStoreTest {
     fun goingToZeroRemovesTheLine() = runBlocking {
         cart.change("b1", -1)
         assertEquals(0, cart.quantityOf("b1"))
+        assertEquals(emptyList<Any>(), cart.items.value)
+    }
+
+    @Test
+    fun twoTapsOnAddToCartAddOneCopy() = runBlocking {
+        cart.change("b1", -1) // start without the book
+        sent.clear()
+        listOf(async(Dispatchers.Default) { cart.add("b1") }, async(Dispatchers.Default) { cart.add("b1") }).awaitAll()
+        assertEquals(listOf(1), sent.toList())
+        assertEquals(1, cart.quantityOf("b1"))
+    }
+
+    @Test
+    fun booksThatCouldNotBePutBackAfterAnOrderAreCounted() = runBlocking {
+        val failed = cart.afterOrder(listOf(CartLine("b1", 2), CartLine("b2", 1)))
+        assertEquals(1, failed)
+    }
+
+    @Test
+    fun signingOutDuringAChangeDoesNotBringTheOldCartBack() = runBlocking {
+        val change = async(Dispatchers.Default) { cart.change("b1", +1) } // answered after 80 ms
+        delay(20)
+        afterSignOut = true
+        app.container.sessionStore.clear()
+        withTimeout(5_000) { while (cart.items.value.isNotEmpty()) delay(10) }
+        change.await()
+        delay(100)
         assertEquals(emptyList<Any>(), cart.items.value)
     }
 }

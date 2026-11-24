@@ -136,6 +136,7 @@ class CartViewModel(val cart: CartStore, private val auth: AuthRepository) : Vie
     // elsewhere (e.g. on the website).
     init { if (auth.session.value != null) viewModelScope.launch { cart.refresh() } }
     fun change(bookId: String, delta: Int) = viewModelScope.launch { message.value = cart.change(bookId, delta) }
+    fun add(bookId: String) = viewModelScope.launch { message.value = cart.add(bookId) }
 
     /** Whether the account's e-mail is verified (null until known): the website's cart blocks checkout without. */
     val emailVerified = MutableStateFlow<Boolean?>(null)
@@ -203,7 +204,7 @@ fun BookScreen(id: String, onBack: () -> Unit, onCart: () -> Unit, onSignIn: () 
                         )
                         session == null -> PrimaryButton("Sign in to buy", onSignIn, Modifier.width(180.dp))
                         inCart > 0 -> CartStepper(book.title, inCart, { cartVm.change(id, it) }, Modifier.width(180.dp))
-                        else -> PrimaryButton("Add to cart", { cartVm.change(id, 1) }, Modifier.width(180.dp))
+                        else -> PrimaryButton("Add to cart", { cartVm.add(id) }, Modifier.width(180.dp))
                     }
                 }
             }
@@ -265,6 +266,8 @@ data class CheckoutState(
     val submitting: Boolean = false,
     val error: String? = null,
     val done: Boolean = false,
+    /** Books left out of the order that couldn't be put back in the cart afterwards. */
+    val notRestored: Int = 0,
 )
 
 class CheckoutViewModel(private val repo: AcademyRepository, private val cart: CartStore) : ViewModel() {
@@ -337,7 +340,10 @@ class CheckoutViewModel(private val repo: AcademyRepository, private val cart: C
             "expectedTotalPaise" to quotedTotal.toString(),
         )
         when (val r = repo.placeOrder(fields, screenshot)) {
-            is ApiResult.Ok -> { cart.afterOrder(left); _state.update { it.copy(submitting = false, done = true) } }
+            is ApiResult.Ok -> {
+                val notRestored = cart.afterOrder(left)
+                _state.update { it.copy(submitting = false, done = true, notRestored = notRestored) }
+            }
             is ApiResult.Err -> _state.update { it.copy(submitting = false, error = r.message) }
         }
     }
@@ -360,7 +366,8 @@ fun CheckoutScreen(onBack: () -> Unit, onDone: () -> Unit) {
             if (state.done) {
                 MessageState(
                     Icons.Rounded.CheckCircle, "Order submitted",
-                    "The academy will verify your payment and ship the books. Track it under Account → Orders.",
+                    "The academy will verify your payment and ship the books. Track it under Account → Orders." +
+                        notRestoredNote(state.notRestored),
                     "Done", onDone,
                 )
                 return@Box
@@ -504,4 +511,11 @@ fun OrderScreen(id: String, onBack: () -> Unit) {
             }
         }
     }
+}
+
+/** Said after an order when some of the books left out of it couldn't be put back in the cart. */
+fun notRestoredNote(count: Int): String = when (count) {
+    0 -> ""
+    1 -> "\n\nOne book you left out of this order couldn't be put back in your cart. Please add it again."
+    else -> "\n\n$count books you left out of this order couldn't be put back in your cart. Please add them again."
 }
