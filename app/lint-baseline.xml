@@ -8,19 +8,8 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="32"
+            line="49"
             column="9"/>
-    </issue>
-
-    <issue
-        id="CredentialManagerMisuse"
-        message="Call to `CredentialManager.getCredential` without use of `NoCredentialException`"
-        errorLine1="    val result = CredentialManager.create(context).getCredential(context, GetCredentialRequest(listOf(option)))"
-        errorLine2="                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/darsequran/academy/ui/auth/AuthScreens.kt"
-            line="140"
-            column="18"/>
     </issue>
 
     <issue
@@ -30,7 +19,7 @@
         errorLine2="                                                      ~~~~~~~~">
         <location
             file="src/main/java/com/darsequran/academy/ui/common/Components.kt"
-            line="143"
+            line="152"
             column="55"/>
     </issue>
 
@@ -41,7 +30,7 @@
         errorLine2="               ~~~~~~~~">
         <location
             file="src/main/java/com/darsequran/academy/ui/common/Components.kt"
-            line="234"
+            line="243"
             column="16"/>
     </issue>
 
@@ -52,7 +41,7 @@
         errorLine2="    ~~~~~~~~">
         <location
             file="src/main/java/com/darsequran/academy/ui/common/Components.kt"
-            line="245"
+            line="254"
             column="5"/>
     </issue>
 
@@ -63,7 +52,7 @@
         errorLine2="                                                 ~~~~~~~~">
         <location
             file="src/main/java/com/darsequran/academy/ui/common/Components.kt"
-            line="406"
+            line="448"
             column="50"/>
     </issue>
 
@@ -74,7 +63,7 @@
         errorLine2="                         ~~~~~~~~">
         <location
             file="src/main/java/com/darsequran/academy/ui/home/HomeScreen.kt"
-            line="482"
+            line="493"
             column="26"/>
     </issue>
 
@@ -85,7 +74,7 @@
         errorLine2="                                      ~~~~~~~~">
         <location
             file="src/main/java/com/darsequran/academy/ui/manage/common/ManageKit.kt"
-            line="315"
+            line="293"
             column="39"/>
     </issue>
 
@@ -96,7 +85,7 @@
         errorLine2="                             ~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="26"
+            line="43"
             column="30"/>
     </issue>
 
@@ -107,7 +96,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/darsequran/academy/ui/account/AccountScreens.kt"
-            line="610"
+            line="621"
             column="38"/>
     </issue>
 
@@ -240,7 +229,7 @@
         errorLine2="                                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/darsequran/academy/ui/account/AccountScreens.kt"
-            line="787"
+            line="801"
             column="88"/>
     </issue>
 
@@ -251,7 +240,7 @@
         errorLine2="                                                                                                                                                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/darsequran/academy/ui/account/AccountScreens.kt"
-            line="789"
+            line="803"
             column="166"/>
     </issue>
 
@@ -262,7 +251,7 @@
         errorLine2="                                                                                                                                                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/darsequran/academy/ui/account/AccountScreens.kt"
-            line="790"
+            line="804"
             column="167"/>
     </issue>
 
@@ -273,7 +262,7 @@
         errorLine2="                                                                                 ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/darsequran/academy/ui/common/Files.kt"
-            line="24"
+            line="27"
             column="82"/>
     </issue>
 
@@ -284,19 +273,8 @@
         errorLine2="                                                                       ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/darsequran/academy/ui/common/Files.kt"
-            line="26"
+            line="29"
             column="72"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `Bitmap.scale` instead?"
-        errorLine1="        val scaled = if (scale &lt; 1f) Bitmap.createScaledBitmap(bitmap, (bitmap.width * scale).toInt(), (bitmap.height * scale).toInt(), true) else bitmap"
-        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/darsequran/academy/ui/pay/PayScreen.kt"
-            line="176"
-            column="38"/>
     </issue>
 
 </issues>
