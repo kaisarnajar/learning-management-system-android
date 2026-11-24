@@ -67,6 +67,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -120,6 +121,10 @@ import com.darsequran.academy.ui.explore.TeacherScreen
 import com.darsequran.academy.ui.explore.TeachersScreen
 import com.darsequran.academy.ui.home.HomeScreen
 import com.darsequran.academy.ui.pay.PayScreen
+import com.darsequran.academy.ui.common.LinkTarget
+import com.darsequran.academy.ui.common.LocalOpenLink
+import com.darsequran.academy.ui.common.linkTarget
+import com.darsequran.academy.ui.common.openWeb
 import kotlin.reflect.KClass
 import kotlinx.coroutines.delay
 
@@ -213,10 +218,11 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
     fun signedIn(block: () -> Unit) { if (container.sessionStore.session.value != null) block() else nav.navigate(SignInRoute) }
 
     /** Website links from notifications → app screens. */
-    fun openHref(href: String) {
+    /** Website links (notifications, article links) → app screens; false when the app has no screen for it. */
+    fun openHref(href: String): Boolean {
         val path = href.substringBefore('#').substringBefore('?')
         val parts = path.trim('/').split('/')
-        if (parts.getOrNull(0) == "admin" || parts.getOrNull(0) == "teacher") { staffLinkTarget(path, shell)?.let { nav.navigate(it) }; return }
+        if (parts.getOrNull(0) == "admin" || parts.getOrNull(0) == "teacher") return staffLinkTarget(path, shell)?.let { nav.navigate(it) } != null
         when {
             parts.getOrNull(0) == "blog" && parts.size >= 2 -> nav.navigate(BlogPostRoute(parts[1]))
             parts.getOrNull(0) == "fatwa" && parts.size >= 2 -> nav.navigate(FatwaDetailRoute(parts[1]))
@@ -227,160 +233,171 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
             parts.take(2) == listOf("profile", "cart") || parts.getOrNull(0) == "bookstore" -> nav.navigate(OrdersRoute)
             parts.take(2) == listOf("profile", "waiver-requests") -> nav.navigate(WaiversRoute)
             parts.getOrNull(0) == "profile" -> nav.switchTab(CoursesTab)
-            else -> Unit
+            else -> return false
+        }
+        return true
+    }
+
+    /** Links inside articles, fatwas and announcements: academy pages open here, anything else in the browser. */
+    val openLink: (String) -> Unit = { href ->
+        when (val target = linkTarget(href)) {
+            is LinkTarget.InApp -> if (!openHref(target.path)) openWeb(context, target.path)
+            is LinkTarget.Outside -> openWeb(context, target.url)
         }
     }
 
-    Scaffold(
-        bottomBar = {
-            AnimatedVisibility(showBar, enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut()) {
-                NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest) {
-                    tabs.forEach { tab ->
-                        val selected = destination?.hierarchy?.any { it.hasRoute(tab.type) } == true
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = { nav.switchTab(tab.route) },
-                            icon = { Icon(if (selected) tab.selectedIcon else tab.icon, null) },
-                            label = { Text(tab.label) },
-                            colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.secondaryContainer),
-                        )
+    CompositionLocalProvider(LocalOpenLink provides openLink) {
+        Scaffold(
+            bottomBar = {
+                AnimatedVisibility(showBar, enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut()) {
+                    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest) {
+                        tabs.forEach { tab ->
+                            val selected = destination?.hierarchy?.any { it.hasRoute(tab.type) } == true
+                            NavigationBarItem(
+                                selected = selected,
+                                onClick = { nav.switchTab(tab.route) },
+                                icon = { Icon(if (selected) tab.selectedIcon else tab.icon, null) },
+                                label = { Text(tab.label) },
+                                colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.secondaryContainer),
+                            )
+                        }
                     }
                 }
-            }
-        },
-    ) { padding ->
-        NavHost(
-            nav,
-            startDestination = shell.start,
-            modifier = Modifier.fillMaxSize().padding(bottom = if (showBar) padding.calculateBottomPadding() else androidx.compose.ui.unit.Dp(0f)),
-            enterTransition = { slideInHorizontally { it / 3 } + fadeIn() },
-            exitTransition = { fadeOut() },
-            popEnterTransition = { fadeIn() },
-            popExitTransition = { slideOutHorizontally { it / 3 } + fadeOut() },
-        ) {
-            // ---- tabs
-            composable<HomeTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
-                HomeScreen(
-                    onOpenCourse = { nav.navigate(CourseRoute(it)) },
-                    onOpenLearn = { nav.navigate(LearnRoute(it.courseId, it.course?.title ?: "Course")) },
-                    onPay = { id, type, title -> nav.navigate(PayRoute(id, type, title)) },
-                    onOpenNotifications = { nav.navigate(NotificationsRoute) },
-                    onOpenBlogPost = { nav.navigate(BlogPostRoute(it)) },
-                    onOpenFatwa = { nav.navigate(FatwaDetailRoute(it)) },
-                    onOpenBook = { nav.navigate(BookRoute(it)) },
-                    onOpenAnnouncement = { nav.navigate(AnnouncementRoute(it)) },
-                    onSeeCourses = { nav.switchTab(CoursesTab) },
-                    onSeeExplore = { nav.switchTab(ExploreTab) },
-                    onSeeBookstore = { nav.navigate(BookstoreRoute) },
-                    onSignIn = { nav.navigate(SignInRoute) },
-                    onEditProfile = { nav.navigate(EditProfileRoute) },
-                    onPayments = { nav.navigate(PaymentsRoute) },
-                )
-            }
-            composable<CoursesTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
-                CoursesScreen(
-                    onOpenCourse = { nav.navigate(CourseRoute(it)) },
-                    onOpenLearn = { nav.navigate(LearnRoute(it.courseId, it.course?.title ?: "Course")) },
-                    onSignIn = { nav.navigate(SignInRoute) },
-                )
-            }
-            composable<ExploreTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
-                ExploreScreen(
-                    onBlog = { nav.navigate(BlogRoute) }, onFatwa = { nav.navigate(FatwaRoute) }, onLibrary = { nav.navigate(LibraryRoute) },
-                    onAnnouncements = { nav.navigate(AnnouncementsRoute) }, onTeachers = { nav.navigate(TeachersRoute) }, onBookstore = { nav.navigate(BookstoreRoute) },
-                )
-            }
-            composable<AccountTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
-                AccountScreen(
-                    onSignIn = { nav.navigate(SignInRoute) }, onRegister = { nav.navigate(RegisterRoute) },
-                    onEditProfile = { nav.navigate(EditProfileRoute) }, onPayments = { nav.navigate(PaymentsRoute) },
-                    onWaivers = { nav.navigate(WaiversRoute) }, onReviews = { nav.navigate(ReviewsRoute) }, onOrders = { nav.navigate(OrdersRoute) },
-                    onNotifications = { nav.navigate(NotificationsRoute) }, onChangePassword = { nav.navigate(ChangePasswordRoute) },
-                    onDeleteAccount = { nav.navigate(DeleteAccountRoute) }, onContact = { nav.navigate(ContactRoute) }, onAbout = { nav.navigate(AboutRoute) },
-                    onEnvironment = if (canSwitch) ({ nav.navigate(EnvironmentRoute) }) else null,
-                )
-            }
-
-            // ---- admin (admins and developers) and teacher tabs: registered only for those roles, so no route or
-            // link can open a staff screen in a student's app (the server checks roles as well)
-            if (shell == Shell.Admin) {
-                val openAdmin: (String) -> Unit = { href -> routeForAdminHref(href)?.let { nav.navigate(it) } ?: notAvailable(context) }
-                composable<AdminDashboardTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
-                    AdminDashboardScreen(session?.user?.name, session?.user?.role ?: "ADMIN", openAdmin)
+            },
+        ) { padding ->
+            NavHost(
+                nav,
+                startDestination = shell.start,
+                modifier = Modifier.fillMaxSize().padding(bottom = if (showBar) padding.calculateBottomPadding() else androidx.compose.ui.unit.Dp(0f)),
+                enterTransition = { slideInHorizontally { it / 3 } + fadeIn() },
+                exitTransition = { fadeOut() },
+                popEnterTransition = { fadeIn() },
+                popExitTransition = { slideOutHorizontally { it / 3 } + fadeOut() },
+            ) {
+                // ---- tabs
+                composable<HomeTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
+                    HomeScreen(
+                        onOpenCourse = { nav.navigate(CourseRoute(it)) },
+                        onOpenLearn = { nav.navigate(LearnRoute(it.courseId, it.course?.title ?: "Course")) },
+                        onPay = { id, type, title -> nav.navigate(PayRoute(id, type, title)) },
+                        onOpenNotifications = { nav.navigate(NotificationsRoute) },
+                        onOpenBlogPost = { nav.navigate(BlogPostRoute(it)) },
+                        onOpenFatwa = { nav.navigate(FatwaDetailRoute(it)) },
+                        onOpenBook = { nav.navigate(BookRoute(it)) },
+                        onOpenAnnouncement = { nav.navigate(AnnouncementRoute(it)) },
+                        onSeeCourses = { nav.switchTab(CoursesTab) },
+                        onSeeExplore = { nav.switchTab(ExploreTab) },
+                        onSeeBookstore = { nav.navigate(BookstoreRoute) },
+                        onSignIn = { nav.navigate(SignInRoute) },
+                        onEditProfile = { nav.navigate(EditProfileRoute) },
+                        onPayments = { nav.navigate(PaymentsRoute) },
+                    )
                 }
-                composable<AdminAcademicsTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Academics", AdminHubs.academics, openAdmin) }
-                composable<AdminFinanceTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Finance", AdminHubs.finance, openAdmin) }
-                composable<AdminContentTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Content", AdminHubs.content, openAdmin) }
-            }
-            if (shell == Shell.Teacher) {
-                composable<TeachTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { TeachHomeScreen(nav) }
-            }
-            composable<EnvironmentRoute> { EnvironmentScreen(nav::popBackStack) }
-            if (shell != Shell.Student) manageGraph(nav)
+                composable<CoursesTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
+                    CoursesScreen(
+                        onOpenCourse = { nav.navigate(CourseRoute(it)) },
+                        onOpenLearn = { nav.navigate(LearnRoute(it.courseId, it.course?.title ?: "Course")) },
+                        onSignIn = { nav.navigate(SignInRoute) },
+                    )
+                }
+                composable<ExploreTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
+                    ExploreScreen(
+                        onBlog = { nav.navigate(BlogRoute) }, onFatwa = { nav.navigate(FatwaRoute) }, onLibrary = { nav.navigate(LibraryRoute) },
+                        onAnnouncements = { nav.navigate(AnnouncementsRoute) }, onTeachers = { nav.navigate(TeachersRoute) }, onBookstore = { nav.navigate(BookstoreRoute) },
+                    )
+                }
+                composable<AccountTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
+                    AccountScreen(
+                        onSignIn = { nav.navigate(SignInRoute) }, onRegister = { nav.navigate(RegisterRoute) },
+                        onEditProfile = { nav.navigate(EditProfileRoute) }, onPayments = { nav.navigate(PaymentsRoute) },
+                        onWaivers = { nav.navigate(WaiversRoute) }, onReviews = { nav.navigate(ReviewsRoute) }, onOrders = { nav.navigate(OrdersRoute) },
+                        onNotifications = { nav.navigate(NotificationsRoute) }, onChangePassword = { nav.navigate(ChangePasswordRoute) },
+                        onDeleteAccount = { nav.navigate(DeleteAccountRoute) }, onContact = { nav.navigate(ContactRoute) }, onAbout = { nav.navigate(AboutRoute) },
+                        onEnvironment = if (canSwitch) ({ nav.navigate(EnvironmentRoute) }) else null,
+                    )
+                }
 
-            // ---- courses
-            composable<CourseRoute> { entry ->
-                val r = entry.toRoute<CourseRoute>()
-                CourseDetailScreen(
-                    courseId = r.id,
-                    onBack = nav::popBackStack,
-                    onSignIn = { nav.navigate(SignInRoute) },
-                    onPay = { type, title -> nav.navigate(PayRoute(r.id, type, title)) },
-                    onOpenLearn = { title -> nav.navigate(LearnRoute(r.id, title)) },
-                    onOpenTeacher = { nav.navigate(TeacherRoute(it)) },
-                    onCompleteProfile = { nav.navigate(EditProfileRoute) },
-                )
-            }
-            composable<LearnRoute> { entry ->
-                val r = entry.toRoute<LearnRoute>()
-                LearnScreen(r.courseId, r.title, nav::popBackStack, onPayFee = { nav.navigate(PayRoute(r.courseId, "course", r.title)) }, onCourseInfo = { nav.navigate(CourseRoute(r.courseId)) }, onReceipt = openReceipt)
-            }
-            composable<PayRoute> { entry ->
-                val r = entry.toRoute<PayRoute>()
-                PayScreen(r.courseId, r.type, r.title, nav::popBackStack, onDone = { nav.popBackStack() })
-            }
-            composable<TeachersRoute> { TeachersScreen(nav::popBackStack) { nav.navigate(TeacherRoute(it)) } }
-            composable<TeacherRoute> { TeacherScreen(it.toRoute<TeacherRoute>().id, nav::popBackStack) { id -> nav.navigate(CourseRoute(id)) } }
+                // ---- admin (admins and developers) and teacher tabs: registered only for those roles, so no route or
+                // link can open a staff screen in a student's app (the server checks roles as well)
+                if (shell == Shell.Admin) {
+                    val openAdmin: (String) -> Unit = { href -> routeForAdminHref(href)?.let { nav.navigate(it) } ?: notAvailable(context) }
+                    composable<AdminDashboardTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
+                        AdminDashboardScreen(session?.user?.name, session?.user?.role ?: "ADMIN", openAdmin)
+                    }
+                    composable<AdminAcademicsTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Academics", AdminHubs.academics, openAdmin) }
+                    composable<AdminFinanceTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Finance", AdminHubs.finance, openAdmin) }
+                    composable<AdminContentTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Content", AdminHubs.content, openAdmin) }
+                }
+                if (shell == Shell.Teacher) {
+                    composable<TeachTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { TeachHomeScreen(nav) }
+                }
+                composable<EnvironmentRoute> { EnvironmentScreen(nav::popBackStack) }
+                if (shell != Shell.Student) manageGraph(nav)
 
-            // ---- explore
-            composable<BlogRoute> { BlogListScreen(nav::popBackStack) { nav.navigate(BlogPostRoute(it)) } }
-            composable<BlogPostRoute> { BlogPostScreen(it.toRoute<BlogPostRoute>().id, nav::popBackStack) { nav.navigate(SignInRoute) } }
-            composable<FatwaRoute> { FatwaListScreen(nav::popBackStack, { nav.navigate(FatwaDetailRoute(it)) }, { nav.navigate(AskFatwaRoute) }, config?.lookups?.fatwaCategories.orEmpty()) }
-            composable<FatwaDetailRoute> { FatwaDetailScreen(it.toRoute<FatwaDetailRoute>().id, nav::popBackStack) }
-            composable<AskFatwaRoute> { AskFatwaScreen(nav::popBackStack, session?.user?.name, session?.user?.email, config?.lookups?.fatwaCategories.orEmpty()) }
-            composable<LibraryRoute> { LibraryListScreen(nav::popBackStack) { nav.navigate(LibraryItemRoute(it)) } }
-            composable<LibraryItemRoute> { LibraryItemScreen(it.toRoute<LibraryItemRoute>().id, nav::popBackStack) }
-            composable<AnnouncementsRoute> { AnnouncementsScreen(nav::popBackStack) { nav.navigate(AnnouncementRoute(it)) } }
-            composable<AnnouncementRoute> { AnnouncementScreen(it.toRoute<AnnouncementRoute>().id, nav::popBackStack) }
+                // ---- courses
+                composable<CourseRoute> { entry ->
+                    val r = entry.toRoute<CourseRoute>()
+                    CourseDetailScreen(
+                        courseId = r.id,
+                        onBack = nav::popBackStack,
+                        onSignIn = { nav.navigate(SignInRoute) },
+                        onPay = { type, title -> nav.navigate(PayRoute(r.id, type, title)) },
+                        onOpenLearn = { title -> nav.navigate(LearnRoute(r.id, title)) },
+                        onOpenTeacher = { nav.navigate(TeacherRoute(it)) },
+                        onCompleteProfile = { nav.navigate(EditProfileRoute) },
+                    )
+                }
+                composable<LearnRoute> { entry ->
+                    val r = entry.toRoute<LearnRoute>()
+                    LearnScreen(r.courseId, r.title, nav::popBackStack, onPayFee = { nav.navigate(PayRoute(r.courseId, "course", r.title)) }, onCourseInfo = { nav.navigate(CourseRoute(r.courseId)) }, onReceipt = openReceipt)
+                }
+                composable<PayRoute> { entry ->
+                    val r = entry.toRoute<PayRoute>()
+                    PayScreen(r.courseId, r.type, r.title, nav::popBackStack, onDone = { nav.popBackStack() })
+                }
+                composable<TeachersRoute> { TeachersScreen(nav::popBackStack) { nav.navigate(TeacherRoute(it)) } }
+                composable<TeacherRoute> { TeacherScreen(it.toRoute<TeacherRoute>().id, nav::popBackStack) { id -> nav.navigate(CourseRoute(id)) } }
 
-            // ---- bookstore
-            composable<BookstoreRoute> { BookstoreScreen(nav::popBackStack, { nav.navigate(BookRoute(it)) }, { signedIn { nav.navigate(CartRoute) } }) }
-            composable<BookRoute> { BookScreen(it.toRoute<BookRoute>().id, nav::popBackStack, { signedIn { nav.navigate(CartRoute) } }, { nav.navigate(SignInRoute) }) }
-            composable<CartRoute> { CartScreen(nav::popBackStack, { nav.navigate(CheckoutRoute) }, { nav.popBackStack() }) }
-            composable<CheckoutRoute> { CheckoutScreen(nav::popBackStack) { nav.popBackStack(BookstoreRoute, inclusive = false); nav.navigate(OrdersRoute) } }
-            composable<OrdersRoute> { OrdersScreen(nav::popBackStack) { nav.navigate(OrderRoute(it)) } }
-            composable<OrderRoute> { OrderScreen(it.toRoute<OrderRoute>().id, nav::popBackStack, openReceipt) }
+                // ---- explore
+                composable<BlogRoute> { BlogListScreen(nav::popBackStack) { nav.navigate(BlogPostRoute(it)) } }
+                composable<BlogPostRoute> { BlogPostScreen(it.toRoute<BlogPostRoute>().id, nav::popBackStack) { nav.navigate(SignInRoute) } }
+                composable<FatwaRoute> { FatwaListScreen(nav::popBackStack, { nav.navigate(FatwaDetailRoute(it)) }, { nav.navigate(AskFatwaRoute) }, config?.lookups?.fatwaCategories.orEmpty()) }
+                composable<FatwaDetailRoute> { FatwaDetailScreen(it.toRoute<FatwaDetailRoute>().id, nav::popBackStack) }
+                composable<AskFatwaRoute> { AskFatwaScreen(nav::popBackStack, session?.user?.name, session?.user?.email, config?.lookups?.fatwaCategories.orEmpty()) }
+                composable<LibraryRoute> { LibraryListScreen(nav::popBackStack) { nav.navigate(LibraryItemRoute(it)) } }
+                composable<LibraryItemRoute> { LibraryItemScreen(it.toRoute<LibraryItemRoute>().id, nav::popBackStack) }
+                composable<AnnouncementsRoute> { AnnouncementsScreen(nav::popBackStack) { nav.navigate(AnnouncementRoute(it)) } }
+                composable<AnnouncementRoute> { AnnouncementScreen(it.toRoute<AnnouncementRoute>().id, nav::popBackStack) }
 
-            // ---- account
-            composable<SignInRoute> {
-                SignInScreen(
-                    nav::popBackStack, onDone = { nav.popBackStack() }, onRegister = { nav.navigate(RegisterRoute) { popUpTo(SignInRoute) { inclusive = true } } }, onForgot = { nav.navigate(ForgotPasswordRoute) },
-                    onEnvironment = if (canSwitch) ({ nav.navigate(EnvironmentRoute) }) else null,
-                )
+                // ---- bookstore
+                composable<BookstoreRoute> { BookstoreScreen(nav::popBackStack, { nav.navigate(BookRoute(it)) }, { signedIn { nav.navigate(CartRoute) } }) }
+                composable<BookRoute> { BookScreen(it.toRoute<BookRoute>().id, nav::popBackStack, { signedIn { nav.navigate(CartRoute) } }, { nav.navigate(SignInRoute) }) }
+                composable<CartRoute> { CartScreen(nav::popBackStack, { nav.navigate(CheckoutRoute) }, { nav.popBackStack() }) }
+                composable<CheckoutRoute> { CheckoutScreen(nav::popBackStack) { nav.popBackStack(BookstoreRoute, inclusive = false); nav.navigate(OrdersRoute) } }
+                composable<OrdersRoute> { OrdersScreen(nav::popBackStack) { nav.navigate(OrderRoute(it)) } }
+                composable<OrderRoute> { OrderScreen(it.toRoute<OrderRoute>().id, nav::popBackStack, openReceipt) }
+
+                // ---- account
+                composable<SignInRoute> {
+                    SignInScreen(
+                        nav::popBackStack, onDone = { nav.popBackStack() }, onRegister = { nav.navigate(RegisterRoute) { popUpTo(SignInRoute) { inclusive = true } } }, onForgot = { nav.navigate(ForgotPasswordRoute) },
+                        onEnvironment = if (canSwitch) ({ nav.navigate(EnvironmentRoute) }) else null,
+                    )
+                }
+                composable<RegisterRoute> {
+                    RegisterScreen(nav::popBackStack, onDone = { nav.popBackStack() }, privacyUrl = config?.policies?.privacyPolicyUrl ?: "/privacy-policy", termsUrl = config?.policies?.termsUrl ?: "/terms-and-conditions")
+                }
+                composable<ForgotPasswordRoute> { ForgotPasswordScreen(nav::popBackStack) }
+                composable<NotificationsRoute> { NotificationsScreen(nav::popBackStack) { href -> openHref(href) } }
+                composable<EditProfileRoute> { EditProfileScreen(nav::popBackStack) }
+                composable<PaymentsRoute> { PaymentsScreen(nav::popBackStack) }
+                composable<WaiversRoute> { WaiversScreen(nav::popBackStack) }
+                composable<ReviewsRoute> { ReviewsScreen(nav::popBackStack) }
+                composable<ChangePasswordRoute> { ChangePasswordScreen(nav::popBackStack) }
+                composable<DeleteAccountRoute> { DeleteAccountScreen(nav::popBackStack) { nav.switchTab(HomeTab) } }
+                composable<ContactRoute> { ContactScreen(nav::popBackStack) }
+                composable<AboutRoute> { AboutScreen(nav::popBackStack) { nav.navigate(TeachersRoute) } }
             }
-            composable<RegisterRoute> {
-                RegisterScreen(nav::popBackStack, onDone = { nav.popBackStack() }, privacyUrl = config?.policies?.privacyPolicyUrl ?: "/privacy-policy", termsUrl = config?.policies?.termsUrl ?: "/terms-and-conditions")
-            }
-            composable<ForgotPasswordRoute> { ForgotPasswordScreen(nav::popBackStack) }
-            composable<NotificationsRoute> { NotificationsScreen(nav::popBackStack, ::openHref) }
-            composable<EditProfileRoute> { EditProfileScreen(nav::popBackStack) }
-            composable<PaymentsRoute> { PaymentsScreen(nav::popBackStack) }
-            composable<WaiversRoute> { WaiversScreen(nav::popBackStack) }
-            composable<ReviewsRoute> { ReviewsScreen(nav::popBackStack) }
-            composable<ChangePasswordRoute> { ChangePasswordScreen(nav::popBackStack) }
-            composable<DeleteAccountRoute> { DeleteAccountScreen(nav::popBackStack) { nav.switchTab(HomeTab) } }
-            composable<ContactRoute> { ContactScreen(nav::popBackStack) }
-            composable<AboutRoute> { AboutScreen(nav::popBackStack) { nav.navigate(TeachersRoute) } }
         }
     }
 }

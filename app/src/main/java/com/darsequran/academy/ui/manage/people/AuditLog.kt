@@ -16,6 +16,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -100,8 +101,8 @@ private fun AuditEntryCard(e: AuditEntry) {
         Text(e.entity, style = MaterialTheme.typography.bodyMedium)
         e.entityId?.let { Text(it, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         Text("Reason: " + (e.reason?.ifBlank { null } ?: "—"), style = MaterialTheme.typography.bodySmall)
-        val before = jsonText(e.before)
-        val after = jsonText(e.after)
+        val before = remember(e.before) { jsonText(e.before) }
+        val after = remember(e.after) { jsonText(e.after) }
         if (before.isNotEmpty() || after.isNotEmpty()) {
             TextButton(onClick = { open = !open }) { Text(if (open) "Hide before → after" else "Show before → after") }
             if (open) Text(

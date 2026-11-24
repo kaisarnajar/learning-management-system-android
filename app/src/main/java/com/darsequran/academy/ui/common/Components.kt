@@ -1,5 +1,10 @@
 package com.darsequran.academy.ui.common
 
+import android.view.View
+import android.text.style.URLSpan
+import android.text.style.ImageSpan
+import android.text.style.ClickableSpan
+import android.text.SpannableStringBuilder
 import android.graphics.Typeface
 import android.text.method.LinkMovementMethod
 import android.widget.TextView
@@ -49,6 +54,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -331,10 +340,15 @@ fun Avatar(name: String?, image: String?, size: Dp = 44.dp) {
 fun HtmlText(html: String, modifier: Modifier = Modifier, serif: Boolean = false) {
     val color = MaterialTheme.colorScheme.onSurface.toArgb()
     val link = MaterialTheme.colorScheme.primary.toArgb()
+    val context = LocalContext.current
+    val openLink = LocalOpenLink.current ?: { href: String -> openWeb(context, href) }
+    val currentOpen by rememberUpdatedState(openLink)
+    // Parsed once per text, not on every recomposition (a like or a new comment redrew the whole article).
+    val text = remember(html) { renderHtml(html) { href -> currentOpen(href) } }
     AndroidView(
         modifier = modifier,
-        factory = { context ->
-            TextView(context).apply {
+        factory = { ctx ->
+            TextView(ctx).apply {
                 movementMethod = LinkMovementMethod.getInstance()
                 textSize = 16f
                 setLineSpacing(0f, 1.35f)
@@ -344,14 +358,42 @@ fun HtmlText(html: String, modifier: Modifier = Modifier, serif: Boolean = false
         update = {
             it.setTextColor(color)
             it.setLinkTextColor(link)
-            it.text = HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_COMPACT).trimEnd()
+            if (it.text !== text) it.text = text
         },
     )
 }
 
+/**
+ * Server HTML as styled text. Links call [onLink] with their href, so the app decides where they go (a relative
+ * "/blog/x" did nothing as a plain URLSpan, and links to the academy's own pages left the app). Inline images,
+ * which a TextView can't show, are left out rather than drawn as an empty box.
+ */
+fun renderHtml(html: String, onLink: (String) -> Unit): CharSequence {
+    val text = SpannableStringBuilder(HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_COMPACT))
+    text.getSpans(0, text.length, ImageSpan::class.java).sortedByDescending { text.getSpanStart(it) }.forEach { span ->
+        val start = text.getSpanStart(span)
+        val end = text.getSpanEnd(span)
+        text.removeSpan(span)
+        text.delete(start, end)
+    }
+    text.getSpans(0, text.length, URLSpan::class.java).forEach { span ->
+        val start = text.getSpanStart(span)
+        val end = text.getSpanEnd(span)
+        val flags = text.getSpanFlags(span)
+        val href = span.url
+        text.removeSpan(span)
+        text.setSpan(object : ClickableSpan() { override fun onClick(widget: View) = onLink(href) }, start, end, flags)
+    }
+    return text.trimEnd()
+}
+
 /** Plain text from HTML, for previews in cards. */
 fun plainText(html: String?): String =
-    HtmlCompat.fromHtml(html ?: "", HtmlCompat.FROM_HTML_MODE_COMPACT).toString().replace(Regex("\\s+"), " ").trim()
+    HtmlCompat.fromHtml(html ?: "", HtmlCompat.FROM_HTML_MODE_COMPACT).toString().replace('\uFFFC', ' ').replace(Regex("\\s+"), " ").trim()
+
+/** [plainText], worked out once per text rather than on every recomposition of a card. */
+@Composable
+fun rememberPlainText(html: String?): String = remember(html) { plainText(html) }
 
 /** Arabic text set in Amiri, right to left. */
 @Composable

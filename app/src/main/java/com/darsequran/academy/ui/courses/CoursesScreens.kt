@@ -84,7 +84,7 @@ import com.darsequran.academy.ui.common.StatusChip
 import com.darsequran.academy.ui.common.TabTopBar
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.feeFrequencySuffix
-import com.darsequran.academy.ui.common.plainText
+import com.darsequran.academy.ui.common.rememberPlainText
 import com.darsequran.academy.ui.common.rupees
 import com.darsequran.academy.ui.common.statusLabel
 import com.darsequran.academy.ui.common.toLoad
@@ -254,7 +254,7 @@ fun CourseCard(course: Course, onClick: () -> Unit) {
         Column(Modifier.padding(16.dp)) {
             Text(course.title, style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(6.dp))
-            Text(plainText(course.description), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(rememberPlainText(course.description), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
             course.teacher?.let {
                 Spacer(Modifier.height(12.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -412,7 +412,7 @@ fun CourseDetailScreen(
                         Column {
                             Text("About this course", style = MaterialTheme.typography.titleLarge)
                             Spacer(Modifier.height(8.dp))
-                            Text(plainText(course.description).ifBlank { "Details will be shared by the academy." }, style = MaterialTheme.typography.bodyLarge)
+                            Text(rememberPlainText(course.description).ifBlank { "Details will be shared by the academy." }, style = MaterialTheme.typography.bodyLarge)
                         }
                     }
                 }

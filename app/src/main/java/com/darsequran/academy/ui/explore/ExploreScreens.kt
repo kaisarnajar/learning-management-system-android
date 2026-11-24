@@ -99,7 +99,7 @@ import com.darsequran.academy.ui.common.TabTopBar
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.formatDate
 import com.darsequran.academy.ui.common.openWeb
-import com.darsequran.academy.ui.common.plainText
+import com.darsequran.academy.ui.common.rememberPlainText
 import com.darsequran.academy.ui.common.relativeTime
 import com.darsequran.academy.ui.common.toLoad
 import com.darsequran.academy.ui.common.vmFactory
@@ -257,7 +257,7 @@ fun BlogPostScreen(id: String, onBack: () -> Unit, onSignIn: () -> Unit) {
                     item {
                         Column(Modifier.padding(20.dp)) {
                             post.excerpt?.takeIf { it.isNotBlank() }?.let {
-                                Text(plainText(it), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(rememberPlainText(it), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Spacer(Modifier.height(12.dp))
                             }
                             HtmlText(post.body, serif = true)
@@ -494,7 +494,7 @@ fun AnnouncementsScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
                     Spacer(Modifier.height(4.dp))
                     Text(a.title, style = MaterialTheme.typography.titleLarge)
                     Spacer(Modifier.height(4.dp))
-                    Text(plainText(a.body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                    Text(rememberPlainText(a.body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
                 }
             }
         }

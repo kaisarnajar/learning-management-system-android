@@ -85,7 +85,7 @@ import com.darsequran.academy.ui.common.SkeletonList
 import com.darsequran.academy.ui.common.StatusChip
 import com.darsequran.academy.ui.common.feeFrequencySuffix
 import com.darsequran.academy.ui.common.formatDate
-import com.darsequran.academy.ui.common.plainText
+import com.darsequran.academy.ui.common.rememberPlainText
 import com.darsequran.academy.ui.common.relativeTime
 import com.darsequran.academy.ui.common.rupees
 import com.darsequran.academy.ui.common.statusLabel
@@ -430,7 +430,7 @@ private fun AnnouncementCard(item: SiteAnnouncement, onClick: () -> Unit) {
             Spacer(Modifier.height(4.dp))
             Text(item.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(4.dp))
-            Text(plainText(item.body), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(rememberPlainText(item.body), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -470,7 +470,7 @@ fun BlogRow(post: BlogPost, modifier: Modifier = Modifier, onClick: () -> Unit) 
             Column(Modifier.weight(1f)) {
                 Text(post.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Spacer(Modifier.height(4.dp))
-                Text(plainText(post.excerpt ?: post.body), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(rememberPlainText(post.excerpt ?: post.body), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Spacer(Modifier.height(4.dp))
                 Text(listOfNotNull(post.createdBy?.name, formatDate(post.createdAt)).joinToString(" · "), style = MaterialTheme.typography.labelSmall, color = Brand.gold)
             }
@@ -485,7 +485,7 @@ fun FatwaRow(fatwa: Fatwa, modifier: Modifier = Modifier, onClick: () -> Unit) {
         Spacer(Modifier.height(4.dp))
         Text(fatwa.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.height(4.dp))
-        Text(plainText(fatwa.answer), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(rememberPlainText(fatwa.answer), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
 
