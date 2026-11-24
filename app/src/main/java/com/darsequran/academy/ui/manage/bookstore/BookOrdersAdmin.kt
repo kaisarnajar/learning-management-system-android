@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -30,18 +29,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.darsequran.academy.data.staff.formOf
 import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.ReloadOnReturn
-import com.darsequran.academy.ui.common.RemoteImage
 import com.darsequran.academy.ui.common.StatusChip
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.formatDate
@@ -61,6 +56,7 @@ import com.darsequran.academy.ui.manage.common.TextInputDialog
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
+import com.darsequran.academy.ui.manage.money.ScreenshotThumb
 
 /*
  * Book orders: /admin/bookstore/orders (pending, approved and completed tabs) and /admin/bookstore/orders/[id].
@@ -153,7 +149,7 @@ private fun BookOrderCard(order: BookOrderRow, runner: ActionRunner, onOpen: () 
         }
         Spacer(Modifier.height(8.dp))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            order.paymentScreenshotPath?.let { ScreenshotButton(it) }
+            order.paymentScreenshotPath?.let { PaymentProof(it) }
             BookOrderActions(order.id, order.status, runner, onChanged)
         }
     }
@@ -167,23 +163,14 @@ fun paymentMethodLabel(method: String?): String = when (method?.lowercase()) {
     else -> method.replace('_', ' ').replaceFirstChar { it.uppercase() }
 }
 
-/** "View screenshot": the payment proof, full size. */
+/**
+ * The order's payment proof: a screenshot, or a PDF (which an image view showed as broken). The website tells them
+ * apart by the file name, so this does too.
+ */
 @Composable
-fun ScreenshotButton(path: String) {
-    var open by remember { mutableStateOf(false) }
-    TextButton(onClick = { open = true }) { Text("View screenshot") }
-    if (open) {
-        Dialog(onDismissRequest = { open = false }) {
-            AppCard(Modifier.fillMaxWidth(), onClick = { open = false }, contentPadding = androidx.compose.foundation.layout.PaddingValues(8.dp)) {
-                RemoteImage(
-                    path, "Payment screenshot",
-                    Modifier.fillMaxWidth().heightIn(min = 200.dp, max = 600.dp).clip(MaterialTheme.shapes.medium),
-                    contentScale = ContentScale.Fit,
-                )
-            }
-        }
-    }
-}
+private fun PaymentProof(path: String) = ScreenshotThumb(path, isPdf = isPdfProof(path))
+
+internal fun isPdfProof(path: String) = path.substringBefore('?').endsWith(".pdf", ignoreCase = true)
 
 /** The status changes the website offers for an order in [status]. */
 @Composable
@@ -312,7 +299,7 @@ fun BookOrderDetailScreen(id: String, onBack: () -> Unit) {
                     Field("UTR / reference", o.upiTransactionId)
                     Column {
                         Text("Proof", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        if (o.paymentScreenshotPath != null) ScreenshotButton(o.paymentScreenshotPath)
+                        if (o.paymentScreenshotPath != null) PaymentProof(o.paymentScreenshotPath)
                         else Text("No screenshot uploaded", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     if (o.courierServiceName != null) {
