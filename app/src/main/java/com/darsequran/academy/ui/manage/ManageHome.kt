@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.darsequran.academy.data.staff.dashboard.DashboardApi
+import com.darsequran.academy.data.staff.dashboard.DashboardLayout
 import com.darsequran.academy.data.staff.dashboard.DashboardLink
 import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.HeroBox
@@ -76,11 +77,20 @@ fun AdminDashboardScreen(name: String?, role: String, onOpen: (String) -> Unit) 
             when (val s = state) {
                 is Load.Ready -> {
                     val data = s.value
+                    val actionRequired = DashboardLayout.actionRequired(data)
                     item { Spacer(Modifier.height(20.dp)) }
-                    if (data.actionRequired.isNotEmpty()) {
-                        item { SectionHeader("Needs your attention") }
-                        item { Spacer(Modifier.height(12.dp)) }
-                        tiles(data.actionRequired, onOpen)
+                    if (actionRequired.isNotEmpty()) {
+                        item { SectionHeader("Action Required") }
+                        item {
+                            Text(
+                                "Items that need your immediate attention.",
+                                Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        item { Spacer(Modifier.height(8.dp)) }
+                        tiles(actionRequired, onOpen)
                     } else {
                         item {
                             AppCard(Modifier.padding(horizontal = 20.dp).fillMaxWidth(), color = Brand.successContainer) {
@@ -89,7 +99,7 @@ fun AdminDashboardScreen(name: String?, role: String, onOpen: (String) -> Unit) 
                             }
                         }
                     }
-                    data.groups.forEach { group ->
+                    DashboardLayout.groups(data).forEach { group ->
                         item { Spacer(Modifier.height(24.dp)); SectionHeader(group.title); Spacer(Modifier.height(12.dp)) }
                         tiles(group.links, onOpen)
                     }
@@ -122,11 +132,11 @@ private fun SectionTile(link: DashboardLink, modifier: Modifier, onClick: () -> 
         val accent = if (link.highlight) Brand.warning else MaterialTheme.colorScheme.onSurfaceVariant
         Text(link.label, style = MaterialTheme.typography.labelLarge, color = accent, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.weight(1f))
-        if (link.count != null) {
+        if (link.count != null && !DashboardLayout.isQuickLink(link)) {
             Text(link.count.toString(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = if (link.highlight) Brand.warning else MaterialTheme.colorScheme.onSurface)
         } else {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Open", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                Text("Manage", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.padding(start = 4.dp))
                 Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.height(16.dp))
             }
