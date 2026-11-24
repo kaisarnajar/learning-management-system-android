@@ -23,11 +23,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.darsequran.academy.data.staff.formOf
+import com.darsequran.academy.data.staff.money.FinanceOptions
+import com.darsequran.academy.data.staff.money.MoneyApi
 import com.darsequran.academy.ui.common.Banner
 import com.darsequran.academy.ui.common.ErrorState
 import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.PrimaryButton
 import com.darsequran.academy.ui.common.Tone
+import com.darsequran.academy.ui.manage.common.AccountAnswer
 import com.darsequran.academy.ui.manage.common.ActionRunner
 import com.darsequran.academy.ui.manage.common.FilterChips
 import com.darsequran.academy.ui.manage.common.FilterOption
@@ -36,10 +39,9 @@ import com.darsequran.academy.ui.manage.common.FormDropdown
 import com.darsequran.academy.ui.manage.common.FormMoneyField
 import com.darsequran.academy.ui.manage.common.FormTextField
 import com.darsequran.academy.ui.manage.common.ManageScaffold
+import com.darsequran.academy.ui.manage.common.rememberAccountCheck
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
-import com.darsequran.academy.ui.manage.common.AccountAnswer
-import com.darsequran.academy.ui.manage.common.rememberAccountCheck
 import kotlinx.coroutines.delay
 
 /** /admin/transactions: record a payment received outside the app, or an expense. [expense] picks the tab. */

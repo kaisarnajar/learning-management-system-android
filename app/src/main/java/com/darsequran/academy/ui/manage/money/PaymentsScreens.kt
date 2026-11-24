@@ -30,12 +30,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.darsequran.academy.data.remote.Paged
+import com.darsequran.academy.data.staff.money.MoneyApi
+import com.darsequran.academy.data.staff.money.MoneyRow
 import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.PagedListBody
 import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.StatusChip
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.formatDate
+import com.darsequran.academy.ui.manage.bookstore.BookstoreAdminApi
 import com.darsequran.academy.ui.manage.common.ActionRunner
 import com.darsequran.academy.ui.manage.common.ConfirmDialog
 import com.darsequran.academy.ui.manage.common.FilterChips
@@ -233,7 +236,7 @@ fun BookOrderPaymentCard(row: MoneyRow, runner: ActionRunner, onOpenReceipt: (St
         "Void this order?", "Reason for voiding", "Void",
         message = "It stays on record for auditing but disappears from order lists and finance.",
         required = true, destructive = true,
-        onConfirm = { reason -> runner.run({ service<MoneyApi>().voidBookOrder(row.id, reasonForm(reason)) }, success = "Order voided.") { onChanged() } },
+        onConfirm = { reason -> runner.run({ service<BookstoreAdminApi>().orderAction(row.id, "void", reasonForm(reason)) }, success = "Order voided.") { onChanged() } },
         onDismiss = { voiding = false },
     )
 }

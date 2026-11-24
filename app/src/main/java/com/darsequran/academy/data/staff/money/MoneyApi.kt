@@ -1,4 +1,4 @@
-package com.darsequran.academy.ui.manage.money
+package com.darsequran.academy.data.staff.money
 
 import com.darsequran.academy.data.remote.Paged
 import com.darsequran.academy.data.staff.ActionResponse
@@ -16,11 +16,6 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.QueryMap
 import retrofit2.http.Streaming
-
-/*
- * The money part of the admin API (/api/v1/admin): fee approvals, completed payments, receipts, finance,
- * manual transactions, payment settings, shipping charges and fee waivers. Amounts are in paise.
- */
 
 @Serializable data class Option(val value: String, val label: String)
 @Serializable data class IdTitle(val id: String, val title: String = "")
@@ -346,9 +341,6 @@ interface MoneyApi {
 
     @Multipart @POST("admin/payment-records/{id}/void")
     suspend fun voidRecord(@Path("id") id: String, @Part parts: List<MultipartBody.Part>): ActionResponse
-
-    @Multipart @POST("admin/payments/book-orders/{id}/void")
-    suspend fun voidBookOrder(@Path("id") id: String, @Part parts: List<MultipartBody.Part>): ActionResponse
 
     @DELETE("admin/expenses/{id}") suspend fun deleteExpense(@Path("id") id: String): ActionResponse
 
