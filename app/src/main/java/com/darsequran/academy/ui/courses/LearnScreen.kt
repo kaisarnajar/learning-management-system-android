@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AttachFile
 import androidx.compose.material.icons.rounded.Lock
@@ -310,6 +309,3 @@ fun ProgressRing(fraction: Float, label: String, size: Int = 76) {
         Text(label, style = MaterialTheme.typography.titleMedium)
     }
 }
-
-@Suppress("unused")
-private val circle = CircleShape
