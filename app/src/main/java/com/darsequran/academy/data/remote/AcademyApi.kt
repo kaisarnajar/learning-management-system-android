@@ -50,7 +50,11 @@ interface AcademyApi {
     @GET("fatwa") suspend fun fatwas(@Query("page") page: Int, @Query("search") search: String?, @Query("category") category: String?): Paged<Fatwa>
     @GET("fatwa/{id}") suspend fun fatwa(@Path("id") id: String): FatwaResponse
     @POST("fatwa") suspend fun askFatwa(@Body body: AskFatwaRequest): OkResponse
-    @GET("library") suspend fun library(@Query("page") page: Int, @Query("search") search: String?): Paged<LibraryItem>
+    @GET("library") suspend fun library(
+        @Query("page") page: Int,
+        @Query("search") search: String?,
+        @Query("topic") topic: String? = null,
+    ): Paged<LibraryItem>
     @GET("library/{id}") suspend fun libraryItem(@Path("id") id: String): LibraryItemResponse
     @GET("bookstore") suspend fun books(@Query("page") page: Int, @Query("search") search: String?): Paged<Book>
     @GET("bookstore/{id}") suspend fun book(@Path("id") id: String): BookResponse

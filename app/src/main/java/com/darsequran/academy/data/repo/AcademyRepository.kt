@@ -59,7 +59,8 @@ class AcademyRepository(private val api: AcademyApi) {
     suspend fun fatwas(page: Int, search: String?, category: String?) = apiCall { api.fatwas(page, search?.ifBlank { null }, category) }
     suspend fun fatwa(id: String) = apiCall { api.fatwa(id).fatwa }
     suspend fun askFatwa(body: AskFatwaRequest) = apiCall { api.askFatwa(body) }
-    suspend fun library(page: Int, search: String?) = apiCall { api.library(page, search?.ifBlank { null }) }
+    suspend fun library(page: Int, search: String?, topic: String? = null) =
+        apiCall { api.library(page, search?.ifBlank { null }, topic) }
     suspend fun libraryItem(id: String) = apiCall { api.libraryItem(id).item }
     suspend fun books(page: Int, search: String?) = apiCall { api.books(page, search?.ifBlank { null }) }
     suspend fun book(id: String) = apiCall { api.book(id).book }

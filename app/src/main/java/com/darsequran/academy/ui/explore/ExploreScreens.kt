@@ -531,9 +531,26 @@ private fun FormField(
 
 @Composable
 fun LibraryListScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
-    val vm: PagedViewModel<LibraryItem> = viewModel(key = "library", factory = vmFactory { c -> PagedViewModel { p, q, _ -> c.repo.library(p, q) } })
-    Scaffold(topBar = { BackTopBar("Digital library", onBack) }) { padding ->
-        PagedListBody(vm, "Search books", "The library is empty", { it.id }, Modifier.padding(padding)) { item ->
+    val vm: PagedViewModel<LibraryItem> = viewModel(
+        key = "library",
+        factory = vmFactory { c -> PagedViewModel { p, q, topic -> c.repo.library(p, q, topic) } },
+    )
+    val state by vm.state.collectAsStateWithLifecycle()
+    Scaffold(topBar = { BackTopBar("Digital Library", onBack) }) { padding ->
+        PagedListBody(
+            vm, "Search books and materials...", libraryEmptyText(state.filter), { it.id }, Modifier.padding(padding),
+            header = {
+                item {
+                    Row(
+                        Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        FilterChip(state.filter == null, { vm.filter(null) }, { Text("All") })
+                        LIBRARY_TOPICS.forEach { t -> FilterChip(state.filter == t, { vm.filter(t) }, { Text(t) }) }
+                    }
+                }
+            },
+        ) { item ->
             AppCard(Modifier.fillMaxWidth(), onClick = { onOpen(item.id) }, contentPadding = PaddingValues(12.dp)) {
                 Row {
                     RemoteImage(item.imagePath, item.title, Modifier.size(width = 64.dp, height = 88.dp).clip(MaterialTheme.shapes.small))
@@ -571,13 +588,24 @@ fun LibraryItemScreen(id: String, onBack: () -> Unit) {
                         DetailLine("Level", item.level); DetailLine("Language", item.language)
                     }
                     Spacer(Modifier.height(20.dp))
-                    if (item.pdfUrl != null) PrimaryButton("Read the PDF", { openWeb(context, item.pdfUrl) })
-                    else Banner("This book is available at the academy's library.", Tone.Info, icon = Icons.Rounded.LibraryBooks)
+                    if (item.pdfUrl != null) PrimaryButton("View / download PDF", { openWeb(context, item.pdfUrl) })
+                    else Banner(
+                        "The PDF for this item is not available yet.", Tone.Info, icon = Icons.Rounded.LibraryBooks,
+                    )
                 }
             }
         }
     }
 }
+
+/** The website's topics (services/library-options.ts LIBRARY_TOPICS), the filter the library page offers. */
+internal val LIBRARY_TOPICS = listOf(
+    "Islam", "Quran", "Hadith", "Fiqh", "Tajweed", "Seerah", "Arabic Language", "Atheism", "Fatwa", "Qiraat", "Other",
+)
+
+/** The website's empty-library line, which names the picked topic. */
+internal fun libraryEmptyText(topic: String?): String =
+    if (topic != null) "No materials in \u201c$topic\u201d yet." else "No library items available yet."
 
 @Composable
 private fun DetailLine(label: String, value: String) {
