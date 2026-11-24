@@ -22,6 +22,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.darsequran.academy.AppContainer
+import com.darsequran.academy.data.ApiResult
+import com.darsequran.academy.data.apiCall
 import com.darsequran.academy.ui.common.Banner
 import com.darsequran.academy.ui.common.PrimaryButton
 import com.darsequran.academy.ui.common.ReloadOnReturn
@@ -142,9 +145,26 @@ fun ReceiptDetailScreen(recordId: String, onBack: () -> Unit) {
         "regenerate" -> ConfirmDialog(
             "Regenerate this receipt?", "The current receipt is deleted and a new one is issued with the current settings and a new receipt number.", "Regenerate",
             onConfirm = {
-                runner.run({ service<MoneyApi>().deleteReceipt(recordId); service<MoneyApi>().generateReceipt(recordId) }, success = "Receipt regenerated.") { loader.reload() }
+                // Two calls, so the second can fail after the first deleted the receipt: always show what is there now.
+                runner.run({ regenerateReceipt(recordId) }) { failure ->
+                    loader.reload()
+                    runner.message(
+                        if (failure == null) "Receipt regenerated."
+                        else "The old receipt was deleted, but a new one couldn't be issued ($failure). Tap \"Generate receipt\" to try again.",
+                    )
+                }
             },
             onDismiss = { confirm = null },
         )
     }
+}
+
+/**
+ * Deletes the receipt and issues a new one. Returns null when both worked, or why generating failed after the delete
+ * (a failed delete throws as usual: nothing changed).
+ */
+internal suspend fun AppContainer.regenerateReceipt(recordId: String): String? {
+    val api = service<MoneyApi>()
+    api.deleteReceipt(recordId)
+    return (apiCall { api.generateReceipt(recordId) } as? ApiResult.Err)?.message
 }
