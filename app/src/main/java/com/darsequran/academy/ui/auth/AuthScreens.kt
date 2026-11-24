@@ -39,6 +39,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -148,7 +149,7 @@ fun SignInScreen(
     vm: AuthViewModel = viewModel(key = "signin", factory = vmFactory { AuthViewModel(it.auth) }),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
-    if (state.done) { onDone(); return }
+    LaunchedEffect(state.done) { if (state.done) onDone() }
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
 
