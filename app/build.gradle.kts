@@ -16,6 +16,14 @@ val googleWebClientId: String = localProperties.getProperty("GOOGLE_WEB_CLIENT_I
     ?: System.getenv("GOOGLE_WEB_CLIENT_ID")
     ?: ""
 
+/** A build setting from local.properties, or else from the environment (CI). */
+fun setting(name: String): String? = localProperties.getProperty(name) ?: System.getenv(name)
+
+/** The upload key that signs release builds. Never committed: see README "Release builds". */
+val releaseSigning = listOf("RELEASE_STORE_FILE", "RELEASE_STORE_PASSWORD", "RELEASE_KEY_ALIAS", "RELEASE_KEY_PASSWORD")
+    .associateWith { setting(it) }
+val hasReleaseSigning = releaseSigning.values.all { !it.isNullOrBlank() }
+
 /** The "Local" environment of debug builds; the emulator reaches the Mac's localhost at 10.0.2.2. */
 val debugBaseUrl: String = localProperties.getProperty("DEBUG_BASE_URL") ?: "http://10.0.2.2:3000"
 
@@ -31,6 +39,15 @@ android {
         versionName = "2.0.0"
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        if (hasReleaseSigning) create("release") {
+            storeFile = rootProject.file(releaseSigning.getValue("RELEASE_STORE_FILE")!!)
+            storePassword = releaseSigning.getValue("RELEASE_STORE_PASSWORD")
+            keyAlias = releaseSigning.getValue("RELEASE_KEY_ALIAS")
+            keyPassword = releaseSigning.getValue("RELEASE_KEY_PASSWORD")
+        }
     }
 
     buildTypes {
@@ -49,8 +66,8 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Signed with the debug key until a release keystore exists.
-            signingConfig = signingConfigs.getByName("debug")
+            // Never signed with the debug key; checkReleaseSigning stops a release build without the upload key.
+            signingConfig = if (hasReleaseSigning) signingConfigs.getByName("release") else null
         }
     }
 
@@ -122,6 +139,17 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
+
+val checkReleaseSigning by tasks.registering {
+    val configured = hasReleaseSigning
+    doLast {
+        if (!configured) throw GradleException(
+            "Release signing is not configured. Set RELEASE_STORE_FILE, RELEASE_STORE_PASSWORD, RELEASE_KEY_ALIAS and " +
+                "RELEASE_KEY_PASSWORD in local.properties or the environment (see README, \"Release builds\").",
+        )
+    }
+}
+tasks.matching { it.name == "packageRelease" || it.name == "bundleRelease" }.configureEach { dependsOn(checkReleaseSigning) }
 
 kotlin {
     compilerOptions {

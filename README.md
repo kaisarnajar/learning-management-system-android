@@ -85,3 +85,19 @@ Release builds always use `https://darsequranacademy.com`. Debug builds install 
 
 The website's demo seed (`ALLOW_DEMO_SEED`) gives you students, courses, payments and content to try the app with.
 To try paying, set a UPI ID in the website's admin payment settings; for checkout, books need stock.
+
+### Release builds
+
+Release builds are signed with the upload key, which is never committed. Put its details in `local.properties` (or
+the environment, for CI):
+
+```properties
+RELEASE_STORE_FILE=/absolute/path/to/upload.jks   # or a path relative to the project
+RELEASE_STORE_PASSWORD=...
+RELEASE_KEY_ALIAS=upload
+RELEASE_KEY_PASSWORD=...
+```
+
+Without them `./gradlew :app:assembleRelease` stops with a message instead of signing with the debug key.
+Create the key once with Android Studio (**Build → Generate Signed App Bundle / APK → Create new**) or `keytool`,
+and keep it and its passwords somewhere safe: Play Store updates must be signed with the same key.
