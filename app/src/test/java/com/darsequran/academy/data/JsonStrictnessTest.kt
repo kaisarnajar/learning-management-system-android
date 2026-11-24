@@ -3,6 +3,7 @@ package com.darsequran.academy.data
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.darsequran.academy.AcademyApp
+import com.darsequran.academy.data.remote.ErrorBody
 import com.darsequran.academy.data.remote.OkResponse
 import kotlinx.serialization.SerializationException
 import org.junit.Assert.assertEquals
@@ -16,8 +17,8 @@ class JsonStrictnessTest {
     private val json = ApplicationProvider.getApplicationContext<AcademyApp>().container.json
 
     @Test
-    fun aQuotedBooleanIsReportedInDebugBuilds() {
-        val failure = runCatching { json.decodeFromString(OkResponse.serializer(), """{"success":"true"}""") }.exceptionOrNull()
+    fun anUnquotedStringIsReportedInDebugBuilds() {
+        val failure = runCatching { json.decodeFromString(ErrorBody.serializer(), """{"error":Unauthorized}""") }.exceptionOrNull()
         assertTrue("$failure", failure is SerializationException)
     }
 

@@ -25,7 +25,7 @@ import kotlinx.serialization.json.Json
 class AppContainer(context: Context) {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     // encodeDefaults sends fields like acceptPolicies = true; explicitNulls = false still leaves nulls out.
-    // Lenient parsing (quoted booleans, unquoted strings) only in release: a debug build fails on such an answer, so
+    // Lenient parsing (unquoted strings and keys) only in release: a debug build fails on such an answer, so
     // drift in the website's API shows up while developing instead of being quietly accepted.
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; explicitNulls = false; coerceInputValues = true; isLenient = !BuildConfig.DEBUG }
     // Decides which environment (and so which saved session) the app starts on.
