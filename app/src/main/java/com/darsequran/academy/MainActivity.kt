@@ -23,4 +23,9 @@ class MainActivity : ComponentActivity() {
             AcademyTheme(theme) { AppRoot() }
         }
     }
+
+    override fun onStart() {
+        super.onStart()
+        (application as AcademyApp).container.refreshUserIfStale()
+    }
 }

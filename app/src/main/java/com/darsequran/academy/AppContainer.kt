@@ -1,6 +1,7 @@
 package com.darsequran.academy
 
 import android.content.Context
+import android.os.SystemClock
 import com.darsequran.academy.data.AppEnvironment
 import com.darsequran.academy.data.EnvironmentStore
 import com.darsequran.academy.data.Network
@@ -51,6 +52,19 @@ class AppContainer(context: Context) {
         }
     }
 
+    @Volatile private var lastUserCheck = 0L
+
+    /**
+     * Re-reads the signed-in user (role, name) when the app comes to the front, at most every 10 minutes: a role
+     * changed on the website (an admin demoted, a student made a teacher) then reaches the app without a sign-out.
+     */
+    fun refreshUserIfStale(now: Long = SystemClock.elapsedRealtime()) {
+        if (sessionStore.session.value == null) return
+        if (lastUserCheck != 0L && now - lastUserCheck < USER_CHECK_INTERVAL_MS) return
+        lastUserCheck = now
+        appScope.launch { auth.profile() }
+    }
+
     /** A Retrofit service for one part of the API, e.g. `container.service<StudentsAdminApi>()`. */
     inline fun <reified T> service(): T = network.create(T::class.java)
 
@@ -62,5 +76,9 @@ class AppContainer(context: Context) {
         environments.select(env)
         repo.clearCaches()
         environments.publish(env)
+    }
+
+    private companion object {
+        const val USER_CHECK_INTERVAL_MS = 10 * 60_000L
     }
 }
