@@ -28,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.darsequran.academy.data.staff.PickedFile
 import com.darsequran.academy.data.staff.formOf
 import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.Load
@@ -50,6 +49,7 @@ import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
 import com.darsequran.academy.ui.theme.Brand
+import com.darsequran.academy.ui.manage.common.rememberFormFiles
 import kotlinx.coroutines.launch
 import androidx.compose.material3.SnackbarHostState
 
@@ -207,7 +207,7 @@ fun AnnouncementFormScreen(
     var title by rememberSaveable { mutableStateOf("") }
     var body by rememberSaveable { mutableStateOf("") }
     var removeAttachment by rememberSaveable { mutableStateOf(false) }
-    var file by remember { mutableStateOf<PickedFile?>(null) }
+    var file by rememberFormFiles("course-announcement-files-${portal.path}-$courseId-${announcementId ?: enrollmentId ?: "new"}")::single
     LaunchedEffect(existing) {
         if (existing != null && !loaded) { category = existing.category; title = existing.title; body = existing.body; loaded = true }
     }

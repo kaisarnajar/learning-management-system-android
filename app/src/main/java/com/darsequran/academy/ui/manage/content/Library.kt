@@ -30,7 +30,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.darsequran.academy.data.staff.PickedFile
 import com.darsequran.academy.data.staff.formOf
 import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.ReloadOnReturn
@@ -56,6 +55,7 @@ import com.darsequran.academy.ui.manage.common.RecordCard
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
+import com.darsequran.academy.ui.manage.common.rememberFormFiles
 
 // Website: /admin/library (list, delete), /[id] (view, delete), /new and /[id]/edit (cover image upload).
 
@@ -196,7 +196,7 @@ fun LibraryFormScreen(id: String?, onBack: () -> Unit) {
     var published by rememberSaveable { mutableStateOf(true) }
     var featured by rememberSaveable { mutableStateOf(false) }
     var removeCover by rememberSaveable { mutableStateOf(false) }
-    var cover by remember { mutableStateOf<PickedFile?>(null) }
+    var cover by rememberFormFiles("library-files-${id ?: "new"}")::single
     LaunchedEffect(item) {
         if (item != null && !loaded) {
             title = item.title; author = item.author; topic = item.topic; level = item.level; language = item.language

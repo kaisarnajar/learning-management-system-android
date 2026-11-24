@@ -86,6 +86,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.darsequran.academy.data.staff.PickedFile
 import com.darsequran.academy.data.staff.readPicked
@@ -479,3 +481,18 @@ private fun ToolButton(icon: androidx.compose.ui.graphics.vector.ImageVector, la
 
 /** Padding for content placed directly in a form column. */
 val FormPadding = PaddingValues(20.dp)
+
+/**
+ * A form's chosen files and removal marks, kept in a ViewModel: they hold the files' bytes, and in `remember` a
+ * rotation dropped them silently while the typed fields (saveable) stayed. Forms delegate to it, e.g.
+ * `var picked by files::picked`.
+ */
+class FormFiles : ViewModel() {
+    var picked by mutableStateOf(emptyList<PickedFile>())
+    var single by mutableStateOf<PickedFile?>(null)
+    var removed by mutableStateOf(emptySet<String>())
+}
+
+/** The [FormFiles] of one form; [key] must differ per form and record. */
+@Composable
+fun rememberFormFiles(key: String): FormFiles = viewModel(key = key) { FormFiles() }

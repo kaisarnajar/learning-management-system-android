@@ -13,7 +13,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.darsequran.academy.data.staff.PickedFile
 import com.darsequran.academy.data.staff.formOf
 import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.ReloadOnReturn
@@ -32,6 +31,7 @@ import com.darsequran.academy.ui.manage.common.RowIcon
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
+import com.darsequran.academy.ui.manage.common.rememberFormFiles
 
 // Website: /admin/announcements (list, homepage toggle, delete), /new and /[id]/edit.
 
@@ -119,8 +119,9 @@ fun AnnouncementFormScreen(id: String?, onBack: () -> Unit) {
     var location by rememberSaveable { mutableStateOf("") }
     var published by rememberSaveable { mutableStateOf(true) }
     var homepage by rememberSaveable { mutableStateOf(false) }
-    var removed by remember { mutableStateOf(emptySet<String>()) }
-    var picked by remember { mutableStateOf(emptyList<PickedFile>()) }
+    val files = rememberFormFiles("announcement-files-${id ?: "new"}")
+    var removed by files::removed
+    var picked by files::picked
     LaunchedEffect(data) {
         val a = data?.announcement ?: return@LaunchedEffect
         if (!loaded && id != null) {

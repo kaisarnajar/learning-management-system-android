@@ -29,7 +29,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.darsequran.academy.data.staff.PickedFile
 import com.darsequran.academy.data.staff.formOf
 import com.darsequran.academy.ui.common.Banner
 import com.darsequran.academy.ui.common.HtmlText
@@ -57,6 +56,7 @@ import com.darsequran.academy.ui.manage.common.RowIcon
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
+import com.darsequran.academy.ui.manage.common.rememberFormFiles
 
 // Website: /admin/blogs (+ new, [id]/edit), /admin/blog-approvals (+ [id]), /teacher/blogs (+ new, [id]/edit).
 
@@ -211,8 +211,9 @@ fun BlogEditorScreen(mode: BlogEditorMode, id: String?, onBack: () -> Unit) {
     var body by rememberSaveable { mutableStateOf("") }
     var published by rememberSaveable { mutableStateOf(false) }
     var featured by rememberSaveable { mutableStateOf(false) }
-    var removed by remember { mutableStateOf(emptySet<String>()) }
-    var picked by remember { mutableStateOf(emptyList<PickedFile>()) }
+    val files = rememberFormFiles("blog-files-$mode-${id ?: "new"}")
+    var removed by files::removed
+    var picked by files::picked
     var confirmDelete by remember { mutableStateOf(false) }
     LaunchedEffect(post) {
         if (post != null && !loaded) {
