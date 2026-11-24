@@ -605,8 +605,8 @@ fun ReviewsScreen(onBack: () -> Unit) {
                             OutlinedTextField(quote, { quote = it.take(600) }, Modifier.fillMaxWidth().height(120.dp), label = { Text("Your review") })
                             Spacer(Modifier.height(8.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                OutlinedTextField(course, { course = it.take(100) }, Modifier.weight(1f), label = { Text("Course (optional)") }, singleLine = true)
-                                OutlinedTextField(location, { location = it.take(100) }, Modifier.weight(1f), label = { Text("City (optional)") }, singleLine = true)
+                                OutlinedTextField(course, { course = it.take(100) }, Modifier.weight(1f), label = { Text("Course") }, singleLine = true)
+                                OutlinedTextField(location, { location = it.take(100) }, Modifier.weight(1f), label = { Text("City") }, singleLine = true)
                             }
                             Spacer(Modifier.height(10.dp))
                             message?.let { (t, ok) -> Banner(t, if (ok) Tone.Success else Tone.Danger); Spacer(Modifier.height(8.dp)) }
