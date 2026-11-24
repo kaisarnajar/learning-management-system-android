@@ -121,6 +121,7 @@ import com.darsequran.academy.ui.explore.TeachersScreen
 import com.darsequran.academy.ui.home.HomeScreen
 import com.darsequran.academy.ui.pay.PayScreen
 import kotlin.reflect.KClass
+import kotlinx.coroutines.delay
 
 private data class TabItem(val route: Any, val type: KClass<*>, val label: String, val icon: ImageVector, val selectedIcon: ImageVector)
 
@@ -190,7 +191,14 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
     val canSwitch = canSwitchEnvironment(BuildConfig.DEBUG, session?.user?.role)
     val tabs = shell.tabs
     var config by remember { mutableStateOf<AppConfig?>(null) }
-    LaunchedEffect(Unit) { config = container.repo.appConfig().orNull() }
+    // Branding, lookups (e.g. fatwa categories) and policy links: keep trying until it loads, e.g. after starting offline.
+    LaunchedEffect(Unit) {
+        var wait = 5_000L
+        while (true) {
+            config = container.repo.appConfig().orNull() ?: run { delay(wait); wait = (wait * 2).coerceAtMost(60_000L); null }
+            if (config != null) break
+        }
+    }
     val openReceipt = rememberReceiptOpener()
 
     val backStack by nav.currentBackStackEntryAsState()

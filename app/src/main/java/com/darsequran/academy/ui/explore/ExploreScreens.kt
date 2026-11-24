@@ -50,6 +50,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -373,7 +374,10 @@ fun AskFatwaScreen(onBack: () -> Unit, defaultName: String?, defaultEmail: Strin
     val done by vm.done.collectAsStateWithLifecycle()
     var title by rememberSaveable { mutableStateOf("") }
     var question by rememberSaveable { mutableStateOf("") }
-    var category by rememberSaveable { mutableStateOf(categories.firstOrNull() ?: "General") }
+    // Shown and picked from the same list: indexing the (possibly empty) server list crashed when it hadn't loaded.
+    val options = categories.ifEmpty { listOf("General") }
+    var category by rememberSaveable { mutableStateOf(options.first()) }
+    LaunchedEffect(options) { if (category !in options) category = options.first() } // the real list arrived late
     var name by rememberSaveable { mutableStateOf(defaultName ?: "") }
     var email by rememberSaveable { mutableStateOf(defaultEmail ?: "") }
 
@@ -386,7 +390,7 @@ fun AskFatwaScreen(onBack: () -> Unit, defaultName: String?, defaultEmail: Strin
             Text("Your question is answered by the academy's scholars and may be published without your e-mail. Choose \"Anonymous\" as your name to hide it too.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             error?.let { Banner(it, Tone.Danger) }
             OutlinedTextField(title, { title = it.take(200) }, Modifier.fillMaxWidth(), label = { Text("Short title") }, singleLine = true)
-            com.darsequran.academy.ui.pay.Dropdown(category, categories.ifEmpty { listOf("General") }, Modifier.fillMaxWidth(), label = "Category") { category = categories[it] }
+            com.darsequran.academy.ui.pay.Dropdown(category, options, Modifier.fillMaxWidth(), label = "Category") { category = options[it] }
             OutlinedTextField(question, { question = it.take(5000) }, Modifier.fillMaxWidth().height(180.dp), label = { Text("Your question") })
             OutlinedTextField(name, { name = it.take(100) }, Modifier.fillMaxWidth(), label = { Text("Your name") }, singleLine = true)
             OutlinedTextField(email, { email = it.trim() }, Modifier.fillMaxWidth(), label = { Text("Your e-mail (not published)") }, singleLine = true)
