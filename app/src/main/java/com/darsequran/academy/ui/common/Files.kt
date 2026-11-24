@@ -1,6 +1,9 @@
 package com.darsequran.academy.ui.common
 
 import android.content.ActivityNotFoundException
+import android.content.ContentValues
+import android.os.Build
+import android.provider.MediaStore
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -24,18 +27,45 @@ fun openWeb(context: Context, url: String?) {
     }
 }
 
-/** Saves [bytes] to the cache and opens it with the system viewer for [mime]. */
+/**
+ * Saves [bytes] to the cache and opens it with the system viewer for [mime]. When the phone has no app for that
+ * type (no PDF viewer, say), the file goes to Downloads instead so it is not lost.
+ */
 fun openBytes(context: Context, bytes: ByteArray, fileName: String, mime: String) {
+    val safeName = fileName.replace(Regex("[^A-Za-z0-9._-]"), "_")
     val dir = File(context.cacheDir, "documents").apply { mkdirs() }
-    val file = File(dir, fileName.replace(Regex("[^A-Za-z0-9._-]"), "_"))
+    val file = File(dir, safeName)
     file.writeBytes(bytes)
     val uri = FileProvider.getUriForFile(context, context.packageName + ".files", file)
     val intent = Intent(Intent.ACTION_VIEW).setDataAndType(uri, mime).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    try {
-        context.startActivity(Intent.createChooser(intent, "Open with"))
-    } catch (e: ActivityNotFoundException) {
-        Toast.makeText(context, "No app on this phone can open this file.", Toast.LENGTH_LONG).show()
+    if (intent.resolveActivity(context.packageManager) != null) {
+        try {
+            context.startActivity(Intent.createChooser(intent, "Open with"))
+            return
+        } catch (e: ActivityNotFoundException) {
+            // fall through to saving it
+        }
     }
+    val saved = saveToDownloads(context, bytes, safeName, mime)
+    Toast.makeText(
+        context,
+        if (saved) "No app here opens this file, so it was saved to Downloads as $safeName." else "No app on this phone can open this file.",
+        Toast.LENGTH_LONG,
+    ).show()
+}
+
+private fun saveToDownloads(context: Context, bytes: ByteArray, name: String, mime: String): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return false // needs a storage permission before Android 10
+    val values = ContentValues().apply {
+        put(MediaStore.Downloads.DISPLAY_NAME, name)
+        put(MediaStore.Downloads.MIME_TYPE, mime)
+    }
+    return runCatching {
+        val resolver = context.contentResolver
+        val target = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values) ?: return false
+        resolver.openOutputStream(target)?.use { it.write(bytes) } ?: return false
+        true
+    }.getOrDefault(false)
 }
 
 /**
