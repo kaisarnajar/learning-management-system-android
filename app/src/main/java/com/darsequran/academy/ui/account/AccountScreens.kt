@@ -2,6 +2,7 @@ package com.darsequran.academy.ui.account
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -603,7 +604,7 @@ fun DeleteAccountScreen(onBack: () -> Unit, onDeleted: () -> Unit) {
     val done = submitter.result?.ok == true
     Scaffold(topBar = { BackTopBar("Delete account", onBack) }) { padding ->
         Column(Modifier.padding(padding).verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            if (done) { MessageState(Icons.Rounded.CheckCircle, "Account deleted", "Your account has been deleted. JazakAllahu khairan for learning with us.", "Close", onDeleted); return@Column }
+            if (done) { MessageState(Icons.Rounded.CheckCircle, "Account deleted", ACCOUNT_DELETED, "Close", onDeleted); return@Column }
             Banner("This permanently deletes your account. It cannot be undone.", Tone.Danger, icon = Icons.Rounded.DeleteForever)
             Text("What happens", style = MaterialTheme.typography.titleLarge)
             listOf(
@@ -623,8 +624,11 @@ fun DeleteAccountScreen(onBack: () -> Unit, onDeleted: () -> Unit) {
                 onClick = {
                     val (pass, typed) = password.ifBlank { null } to confirm.ifBlank { null }
                     submitter.submit {
-                        when (val r = container.auth.deleteAccount(pass, typed)) {
-                            is ApiResult.Ok -> { container.cart.clearLocal(); SubmitResult("Account deleted.", ok = true) }
+                        // Said before the session is cleared: that replaces the whole navigation graph, this screen
+                        // (and any message it could show) included. The cart empties itself on sign-out.
+                        val said = { Toast.makeText(context.applicationContext, ACCOUNT_DELETED, Toast.LENGTH_LONG).show() }
+                        when (val r = container.auth.deleteAccount(pass, typed, beforeSignOut = said)) {
+                            is ApiResult.Ok -> SubmitResult(ACCOUNT_DELETED, ok = true)
                             is ApiResult.Err -> SubmitResult(r.message, ok = false)
                         }
                     }
@@ -707,3 +711,5 @@ private fun roleLabel(role: String?): String? = when (role) {
     Roles.TEACHER -> "Teacher"
     else -> null
 }
+
+private const val ACCOUNT_DELETED = "Your account has been deleted. JazakAllahu khairan for learning with us."

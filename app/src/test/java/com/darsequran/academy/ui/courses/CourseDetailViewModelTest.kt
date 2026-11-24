@@ -44,7 +44,7 @@ class CourseDetailViewModelTest {
                     )
                     "/api/v1/enrollments" -> {
                         enrolls.incrementAndGet()
-                        MockResponse.Builder().body("""{"success":true}""").headersDelay(200, TimeUnit.MILLISECONDS).build()
+                        MockResponse.Builder().body("""{"success":true,"requiresEnrollmentFee":true}""").headersDelay(200, TimeUnit.MILLISECONDS).build()
                     }
                     else -> MockResponse(code = 404)
                 }
@@ -76,9 +76,19 @@ class CourseDetailViewModelTest {
     fun aDoubleTapAppliesOnce() = runBlocking {
         val vm = CourseDetailViewModel(app.container.repo, app.container.auth, "c1")
         withTimeout(5_000) { vm.state.first { it is Load.Ready } }
-        vm.apply({}, {}); vm.apply({}, {})
+        vm.apply(); vm.apply()
         withTimeout(5_000) { vm.busy.first { !it } }
         delay(300)
         assertEquals(1, enrolls.get())
+    }
+
+    @Test
+    fun aPaidCourseSendsTheStudentOnToPayThroughState() = runBlocking {
+        val vm = CourseDetailViewModel(app.container.repo, app.container.auth, "c1")
+        withTimeout(5_000) { vm.state.first { it is Load.Ready } }
+        vm.apply()
+        assertEquals(CourseDetailViewModel.AfterApply.PAY, withTimeout(5_000) { vm.next.first { it != null } })
+        vm.consumeNext()
+        assertEquals(null, vm.next.value)
     }
 }

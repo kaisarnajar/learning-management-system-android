@@ -368,7 +368,9 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                 composable<BookstoreRoute> { BookstoreScreen(nav::popBackStack, { nav.navigate(BookRoute(it)) }, { signedIn { nav.navigate(CartRoute) } }) }
                 composable<BookRoute> { BookScreen(it.toRoute<BookRoute>().id, nav::popBackStack, { signedIn { nav.navigate(CartRoute) } }, { nav.navigate(SignInRoute) }) }
                 composable<CartRoute> { CartScreen(nav::popBackStack, { nav.navigate(CheckoutRoute) }, { nav.popBackStack() }) }
-                composable<CheckoutRoute> { CheckoutScreen(nav::popBackStack) { nav.popBackStack(BookstoreRoute, inclusive = false); nav.navigate(OrdersRoute) } }
+                // Orders replaces the cart and the finished checkout, wherever the cart was opened from (the bookstore, a book
+                // on Home, a link): Back must not return to "Order submitted".
+                composable<CheckoutRoute> { CheckoutScreen(nav::popBackStack) { nav.navigate(OrdersRoute) { popUpTo<CartRoute> { inclusive = true } } } }
                 composable<OrdersRoute> { OrdersScreen(nav::popBackStack) { nav.navigate(OrderRoute(it)) } }
                 composable<OrderRoute> { OrderScreen(it.toRoute<OrderRoute>().id, nav::popBackStack) }
 

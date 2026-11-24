@@ -42,6 +42,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -312,24 +313,40 @@ class CourseDetailViewModel(private val repo: AcademyRepository, private val aut
         }
     }
 
-    /** Applies; free courses wait for approval, paid ones continue to the enrollment-fee payment. */
-    /** One application per tap: a second tap (even in the same frame) is ignored while the first is sent. */
-    fun apply(onPayNext: () -> Unit, onCompleteProfile: () -> Unit) {
+    /** Where the screen goes after an application, once it has been answered. */
+    enum class AfterApply { PAY, COMPLETE_PROFILE }
+
+    private val _next = MutableStateFlow<AfterApply?>(null)
+
+    /**
+     * Set when the answer to an application sends the student on; the screen goes there and calls [consumeNext].
+     * State rather than a callback: the phone may have rotated while the application was sent, and the screen that
+     * asked (and its navigation) is gone by then.
+     */
+    val next: StateFlow<AfterApply?> = _next.asStateFlow()
+
+    fun consumeNext() { _next.value = null }
+
+    /**
+     * Applies; free courses wait for approval, paid ones continue to the enrollment-fee payment.
+     * One application per tap: a second tap (even in the same frame) is ignored while the first is sent.
+     */
+    fun apply() {
         if (_busy.value) return
         _busy.value = true
         _message.value = null
-        viewModelScope.launch { try { sendApplication(onPayNext, onCompleteProfile) } finally { _busy.value = false } }
+        viewModelScope.launch { try { sendApplication() } finally { _busy.value = false } }
     }
 
-    private suspend fun sendApplication(onPayNext: () -> Unit, onCompleteProfile: () -> Unit) {
+    private suspend fun sendApplication() {
         when (val r = repo.enroll(courseId)) {
             is ApiResult.Ok -> {
                 load()
-                if (r.value.requiresEnrollmentFee == true) onPayNext()
+                if (r.value.requiresEnrollmentFee == true) _next.value = AfterApply.PAY
                 else _message.value = ENROLL_REQUESTED
             }
             is ApiResult.Err -> {
-                if (r.message.contains("complete your profile", ignoreCase = true)) onCompleteProfile()
+                if (r.message.contains("complete your profile", ignoreCase = true)) _next.value = AfterApply.COMPLETE_PROFILE
                 _message.value = r.message
             }
         }
@@ -355,6 +372,16 @@ fun CourseDetailScreen(
     // Back from paying the enrollment fee (or anything else): the enrollment may have moved on, e.g. to "under review",
     // and the page must not keep offering the payment just made.
     ReloadOnReturn(vm::load)
+    val next by vm.next.collectAsStateWithLifecycle()
+    LaunchedEffect(next, state) {
+        val title = (state as? Load.Ready)?.value?.course?.title ?: return@LaunchedEffect
+        when (next) {
+            CourseDetailViewModel.AfterApply.PAY -> onPay("enrollment", title)
+            CourseDetailViewModel.AfterApply.COMPLETE_PROFILE -> onCompleteProfile()
+            null -> return@LaunchedEffect
+        }
+        vm.consumeNext()
+    }
 
     when (val s = state) {
         Load.Loading -> Column { HeaderBack(onBack); LoadingBox() }
@@ -368,9 +395,7 @@ fun CourseDetailScreen(
                         detail, enrollGate(session != null, profile), busy,
                         EnrollActions(
                             signIn = onSignIn,
-                            apply = {
-                                vm.apply(onPayNext = { onPay("enrollment", course.title) }, onCompleteProfile = onCompleteProfile)
-                            },
+                            apply = vm::apply,
                             pay = { onPay("enrollment", course.title) },
                             open = { onOpenLearn(course.title) },
                             completeProfile = onCompleteProfile,

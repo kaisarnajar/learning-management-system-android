@@ -70,9 +70,10 @@ class AuthRepository(private val api: AcademyApi, private val sessionStore: Sess
     suspend fun changePassword(current: String, new: String) =
         apiCall { api.changePassword(ChangePasswordRequest(current, new)) }
 
-    suspend fun deleteAccount(password: String?, confirm: String?): ApiResult<Unit> =
+    /** Deletes the account; [beforeSignOut] runs once the server has deleted it, before the session here is cleared. */
+    suspend fun deleteAccount(password: String?, confirm: String?, beforeSignOut: () -> Unit = {}): ApiResult<Unit> =
         when (val r = apiCall { api.deleteAccount(DeleteAccountRequest(password, confirm)) }) {
-            is ApiResult.Ok -> { sessionStore.clear(); ApiResult.Ok(Unit) }
+            is ApiResult.Ok -> { beforeSignOut(); sessionStore.clear(); ApiResult.Ok(Unit) }
             is ApiResult.Err -> r
         }
 
