@@ -33,6 +33,7 @@ import com.darsequran.academy.ui.manage.common.ManageScaffold
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
+import com.darsequran.academy.data.staff.EmailOutcome
 
 private fun inquiryChip(i: ContactInquiry) = (i.statusLabel.ifBlank { if (i.reply != null) "Replied" else "Pending" }) to (if (i.reply != null) Tone.Success else Tone.Warning)
 
@@ -40,13 +41,10 @@ private fun repliedLine(i: ContactInquiry) =
     i.repliedAt?.let { formatDate(it) + (i.repliedBy?.name?.let { n -> " by $n" } ?: "") }
 
 /** What the website's toast says after a reply, by whether the e-mail went out. */
-private fun replySavedMessage(r: ActionResponse): String {
-    val email = r.redirect?.substringAfter("email=", "")?.substringBefore('&').orEmpty()
-    return "Reply saved." + when (email) {
-        "failed" -> " The notification email could not be sent — check SMTP settings in your environment."
-        "skipped" -> " SMTP is not configured, so no email was sent."
-        else -> " The visitor has been notified by email. If they don't see it, ask them to check their Spam/Junk folder."
-    }
+private fun replySavedMessage(r: ActionResponse): String = "Reply saved." + when (r.emailOutcome()) {
+    EmailOutcome.Failed, EmailOutcome.Anonymous -> " The notification email could not be sent — check SMTP settings in your environment."
+    EmailOutcome.NotConfigured -> " SMTP is not configured, so no email was sent."
+    EmailOutcome.Sent -> " The visitor has been notified by email. If they don't see it, ask them to check their Spam/Junk folder."
 }
 
 @Composable

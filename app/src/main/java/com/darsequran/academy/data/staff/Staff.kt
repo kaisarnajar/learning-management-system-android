@@ -37,10 +37,24 @@ data class ActionResponse(
     fun stringResult(key: String): String? =
         (result as? JsonObject)?.get(key)?.let { runCatching { it.jsonPrimitive.contentOrNull }.getOrNull() }
 
+    /**
+     * Whether the notification e-mail went out. The website adds `email=anonymous|skipped|failed` to [redirect] when
+     * it didn't (fatwa answers, inquiry replies); no such parameter means it was sent.
+     */
+    fun emailOutcome(): EmailOutcome = when (redirect?.let { Regex("[?&]email=([^&#]+)").find(it)?.groupValues?.get(1) }) {
+        null -> EmailOutcome.Sent
+        "anonymous" -> EmailOutcome.Anonymous
+        "skipped" -> EmailOutcome.NotConfigured
+        else -> EmailOutcome.Failed
+    }
+
     /** The id segment after [prefix] in [redirect], e.g. "/admin/courses/" → the new course's id. */
     fun idAfter(prefix: String): String? =
         redirect?.substringAfter(prefix, "")?.substringBefore('/')?.substringBefore('?')?.takeIf { it.isNotBlank() }
 }
+
+/** What happened to the notification e-mail of a write; see [ActionResponse.emailOutcome]. */
+enum class EmailOutcome { Sent, Anonymous, NotConfigured, Failed }
 
 /** `{ success, data, totalCount, page, pageSize }` lists are read with the app's existing `Paged<T>`. */
 

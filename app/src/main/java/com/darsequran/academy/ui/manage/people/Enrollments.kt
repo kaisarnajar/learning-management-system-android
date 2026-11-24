@@ -97,7 +97,7 @@ fun EnrollmentsScreen(onBack: () -> Unit, onStudent: (String) -> Unit, onEnroll:
                 onConfirm = {
                     runner.run(
                         { service<EnrollmentsAdminApi>().approve(ask.e.id, formOf { text("courseId", ask.e.courseId) }) },
-                        success = "Enrollment approved. The student has been notified by email — if they don't see it, ask them to check their Spam/Junk folder.",
+                        success = "Enrollment approved. The student will be notified.",
                     ) { done() }
                 },
                 onDismiss = { asking = null },
@@ -107,7 +107,7 @@ fun EnrollmentsScreen(onBack: () -> Unit, onStudent: (String) -> Unit, onEnroll:
                 onConfirm = {
                     runner.run(
                         { service<EnrollmentsAdminApi>().reject(ask.e.id, formOf { text("courseId", ask.e.courseId) }) },
-                        success = "Enrollment rejected. The student has been notified by email — if they don't see it, ask them to check their Spam/Junk folder.",
+                        success = "Enrollment rejected. The student will be notified.",
                     ) { done() }
                 },
                 onDismiss = { asking = null },

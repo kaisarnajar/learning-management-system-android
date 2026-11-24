@@ -250,8 +250,8 @@ fun AnnouncementFormScreen(
                 },
                 success = when {
                     announcementId != null -> if (personal) "Message updated." else "Announcement updated."
-                    personal -> "Message sent to ${studentName ?: "the student"}. They have been notified by email."
-                    else -> "Announcement posted. Enrolled students have been notified by email."
+                    personal -> "Message sent to ${studentName ?: "the student"}. They will be notified."
+                    else -> "Announcement posted. Enrolled students will be notified."
                 },
             ) { onBack() }
         },

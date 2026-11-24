@@ -46,6 +46,7 @@ import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
 import com.darsequran.academy.ui.manage.common.FeaturedSwitch
+import com.darsequran.academy.data.staff.EmailOutcome
 
 // Website: /admin/fatwa (+ [id]) for admins, /teacher/fatwa (+ [id]) for teachers. Both answer with the same editor.
 
@@ -118,14 +119,11 @@ private fun DeleteFatwaDialog(title: String, onDismiss: () -> Unit, onConfirm: (
     ConfirmDialog("Delete this question?", "\"$title\" and its answer are removed for good.", "Delete", onConfirm, onDismiss, destructive = true)
 
 /** What the website's toast says after an admin publishes an answer (`email=` on its redirect). */
-private fun answerPublishedMessage(response: ActionResponse): String {
-    val email = response.redirect?.substringAfter("email=", "")?.substringBefore('&').orEmpty()
-    return "Answer published. " + when (email) {
-        "anonymous" -> "No notification e-mail is sent for an anonymous question."
-        "failed" -> "The notification e-mail could not be sent. Check the SMTP settings."
-        "skipped" -> "SMTP is not configured, so no e-mail was sent."
-        else -> "The asker has been notified by e-mail (ask them to check Spam if it does not arrive)."
-    }
+private fun answerPublishedMessage(response: ActionResponse): String = "Answer published. " + when (response.emailOutcome()) {
+    EmailOutcome.Anonymous -> "No notification e-mail is sent for an anonymous question."
+    EmailOutcome.Failed -> "The notification e-mail could not be sent. Check the SMTP settings."
+    EmailOutcome.NotConfigured -> "SMTP is not configured, so no e-mail was sent."
+    EmailOutcome.Sent -> "The asker has been notified by e-mail (ask them to check Spam if it does not arrive)."
 }
 
 /**
