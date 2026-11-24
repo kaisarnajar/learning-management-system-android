@@ -46,13 +46,10 @@ import com.darsequran.academy.ui.manage.common.ManageScaffold
 import com.darsequran.academy.ui.manage.common.Notice
 import com.darsequran.academy.ui.manage.common.RecordCard
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
-import com.darsequran.academy.ui.manage.common.rememberContainer
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
-import com.darsequran.academy.data.apiCall
-import com.darsequran.academy.data.ApiResult
-import kotlinx.coroutines.launch
-import androidx.compose.runtime.rememberCoroutineScope
+import com.darsequran.academy.ui.manage.common.AccountAnswer
+import com.darsequran.academy.ui.manage.common.rememberAccountCheck
 
 private fun publishedChip(published: Boolean) = if (published) "Published" to Tone.Success else "Draft" to Tone.Neutral
 
@@ -169,18 +166,12 @@ private fun courseTone(status: String) = when (status) {
 @Composable
 fun TeacherFormScreen(id: String?, onBack: () -> Unit) {
     val runner = rememberActionRunner()
-    val container = rememberContainer()
-    val scope = rememberCoroutineScope()
     val loader = if (id != null) rememberLoader("admin-teacher-$id") { service<TeachersAdminApi>().get(id).teacher } else null
     val loadState = loader?.state?.collectAsStateWithLifecycle()?.value
     val existing = (loadState as? Load.Ready)?.value
 
     var loaded by rememberSaveable { mutableStateOf(id == null) }
-    var email by rememberSaveable { mutableStateOf("") }
-    var linkedName by rememberSaveable { mutableStateOf("") }
-    var lookupError by rememberSaveable { mutableStateOf<String?>(null) }
-    var checking by remember { mutableStateOf(false) }
-    var checkedEmail by rememberSaveable { mutableStateOf("") }
+    val account = rememberAccountCheck { e -> service<TeachersAdminApi>().lookup(e, id).lookup.let { AccountAnswer(it.name?.takeIf { _ -> it.ok }, it.error.takeIf { _ -> !it.ok }) } }
     var specialization by rememberSaveable { mutableStateOf("") }
     var bio by rememberSaveable { mutableStateOf("") }
     var initials by rememberSaveable { mutableStateOf("") }
@@ -188,29 +179,14 @@ fun TeacherFormScreen(id: String?, onBack: () -> Unit) {
     var error by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(existing) {
         if (existing != null && !loaded) {
-            email = existing.email.orEmpty(); linkedName = existing.name; checkedEmail = email
+            account.restore(existing.email.orEmpty(), existing.name)
             specialization = existing.specialization; bio = existing.bio; initials = existing.initials; published = existing.published
             loaded = true
         }
     }
 
-    fun verify() {
-        val target = email.trim()
-        if (target.isEmpty()) { linkedName = ""; lookupError = null; return }
-        checking = true
-        scope.launch {
-            when (val r = apiCall { container.service<TeachersAdminApi>().lookup(target, id).lookup }) {
-                is ApiResult.Ok -> if (r.value.ok) {
-                    linkedName = r.value.name.orEmpty(); lookupError = null; checkedEmail = target
-                    if (initials.isBlank() || id == null) initials = initialsOf(linkedName)
-                } else { linkedName = ""; lookupError = r.value.error ?: "This e-mail cannot be used." }
-                is ApiResult.Err -> { linkedName = ""; lookupError = r.message }
-            }
-            checking = false
-        }
-    }
-
-    val verified = linkedName.isNotBlank() && lookupError == null && checkedEmail.equals(email.trim(), ignoreCase = true)
+    // Initials the admin typed are kept; blank ones are filled from the account name.
+    fun verify() = account.verify { name -> if (initials.isBlank()) initials = initialsOf(name) }
 
     FormScreen(
         title = if (id == null) "Add teacher" else "Edit teacher",
@@ -224,14 +200,14 @@ fun TeacherFormScreen(id: String?, onBack: () -> Unit) {
         onRetry = { loader?.reload(true) },
         onSave = {
             error = when {
-                !verified -> "Verify the account e-mail first."
+                !account.verified -> "Verify the account e-mail first."
                 specialization.isBlank() -> "Enter a specialization."
                 bio.isBlank() -> "Enter a bio."
                 else -> null
             }
             if (error == null) {
                 val form = formOf {
-                    text("email", email.trim()); text("specialization", specialization.trim()); text("bio", bio.trim())
+                    text("email", account.email.trim()); text("specialization", specialization.trim()); text("bio", bio.trim())
                     text("initials", initials.trim()); check("published", published)
                 }
                 runner.run(
@@ -247,13 +223,13 @@ fun TeacherFormScreen(id: String?, onBack: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         FormTextField(
-            "Registered account email", email, { email = it; if (!it.trim().equals(checkedEmail, true)) linkedName = "" },
+            "Registered account email", account.email, account::edit,
             keyboardType = KeyboardType.Email,
             supporting = "The teacher must already have signed up on the site. We use their account name automatically.",
         )
-        OutlinedButton(onClick = ::verify, enabled = !checking && email.isNotBlank()) { Text(if (checking) "Checking…" else "Verify account") }
-        Notice(lookupError, Tone.Warning)
-        Field("Name (from account)", linkedName.ifBlank { "Verify the email above to load the account name." })
+        OutlinedButton(onClick = ::verify, enabled = !account.checking && account.email.isNotBlank()) { Text(if (account.checking) "Checking…" else "Verify account") }
+        Notice(account.error, Tone.Warning)
+        Field("Name (from account)", account.name.ifBlank { "Verify the email above to load the account name." })
         FormTextField("Specialization", specialization, { specialization = it }, supporting = "e.g. Quran & Tajweed")
         FormTextField("Bio", bio, { bio = it }, singleLine = false, minLines = 4)
         FormTextField(

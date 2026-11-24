@@ -22,8 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.darsequran.academy.data.ApiResult
-import com.darsequran.academy.data.apiCall
 import com.darsequran.academy.data.staff.formOf
 import com.darsequran.academy.ui.common.Banner
 import com.darsequran.academy.ui.common.ErrorState
@@ -39,8 +37,9 @@ import com.darsequran.academy.ui.manage.common.FormMoneyField
 import com.darsequran.academy.ui.manage.common.FormTextField
 import com.darsequran.academy.ui.manage.common.ManageScaffold
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
-import com.darsequran.academy.ui.manage.common.rememberContainer
 import com.darsequran.academy.ui.manage.common.rememberLoader
+import com.darsequran.academy.ui.manage.common.AccountAnswer
+import com.darsequran.academy.ui.manage.common.rememberAccountCheck
 import kotlinx.coroutines.delay
 
 /** /admin/transactions: record a payment received outside the app, or an expense. [expense] picks the tab. */
@@ -72,38 +71,27 @@ fun TransactionsScreen(expense: Boolean, onBack: () -> Unit) {
 
 @Composable
 private fun RecordPaymentForm(opts: FinanceOptions, runner: ActionRunner) {
-    val container = rememberContainer()
-    var email by rememberSaveable { mutableStateOf("") }
-    var linkedName by rememberSaveable { mutableStateOf("") }
-    var lookupError by rememberSaveable { mutableStateOf("") }
-    var checking by rememberSaveable { mutableStateOf(false) }
+    val account = rememberAccountCheck { e -> AccountAnswer(service<MoneyApi>().lookupStudent(e).student.name) }
     var amount by rememberSaveable { mutableStateOf("") }
     var paidAt by rememberSaveable { mutableStateOf(opts.today) }
     var type by rememberSaveable { mutableStateOf("monthly") }
     var courseId by rememberSaveable { mutableStateOf("") }
 
     // The website looks the account up when the e-mail field loses focus; here, shortly after typing stops.
-    LaunchedEffect(email) {
-        val trimmed = email.trim()
-        linkedName = ""; lookupError = ""
-        if (trimmed.isEmpty()) return@LaunchedEffect
+    LaunchedEffect(account.email) {
+        if (account.email.isBlank() || account.verified) return@LaunchedEffect
         delay(700)
-        checking = true
-        when (val r = apiCall { container.service<MoneyApi>().lookupStudent(trimmed) }) {
-            is ApiResult.Ok -> linkedName = r.value.student.name
-            is ApiResult.Err -> lookupError = r.message
-        }
-        checking = false
+        account.verify()
     }
-    val canSubmit = lookupError.isEmpty() && (email.isBlank() || linkedName.isNotEmpty())
+    val canSubmit = account.error == null && (account.email.isBlank() || account.verified)
 
-    FormTextField("Registered account email", email, { email = it }, keyboardType = KeyboardType.Email, supporting = "student@example.com")
-    if (lookupError.isNotEmpty()) Banner(lookupError, Tone.Warning)
+    FormTextField("Registered account email", account.email, account::edit, keyboardType = KeyboardType.Email, supporting = "student@example.com")
+    account.error?.let { Banner(it, Tone.Warning) }
     FormTextField(
         "Name (from account)",
         when {
-            checking -> "Checking account…"
-            linkedName.isNotEmpty() -> linkedName
+            account.checking -> "Checking account…"
+            account.name.isNotEmpty() -> account.name
             else -> "Enter an email above to load the account name."
         },
         {}, enabled = false,
@@ -115,12 +103,12 @@ private fun RecordPaymentForm(opts: FinanceOptions, runner: ActionRunner) {
     PrimaryButton("Add payment", {
         runner.run({
             service<MoneyApi>().recordPayment(formOf {
-                text("email", email.trim()); text("amountInr", amount); text("paidAt", paidAt); text("paymentType", type); text("courseId", courseId)
+                text("email", account.email.trim()); text("amountInr", amount); text("paidAt", paidAt); text("paymentType", type); text("courseId", courseId)
             })
         }, success = "Transaction recorded successfully.") {
-            email = ""; amount = ""; courseId = ""; type = "monthly"; paidAt = opts.today
+            account.reset(); amount = ""; courseId = ""; type = "monthly"; paidAt = opts.today
         }
-    }, enabled = canSubmit && email.isNotBlank(), loading = runner.busy)
+    }, enabled = canSubmit && account.email.isNotBlank(), loading = runner.busy)
 }
 
 @Composable

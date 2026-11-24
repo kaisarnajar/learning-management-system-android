@@ -7,13 +7,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.darsequran.academy.data.ApiResult
-import com.darsequran.academy.data.apiCall
 import com.darsequran.academy.data.staff.formOf
 import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.ReloadOnReturn
@@ -29,10 +26,10 @@ import com.darsequran.academy.ui.manage.common.FormTextField
 import com.darsequran.academy.ui.manage.common.ManageListScreen
 import com.darsequran.academy.ui.manage.common.Notice
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
-import com.darsequran.academy.ui.manage.common.rememberContainer
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
-import kotlinx.coroutines.launch
+import com.darsequran.academy.ui.manage.common.AccountAnswer
+import com.darsequran.academy.ui.manage.common.rememberAccountCheck
 
 private const val PAID = "paid_awaiting"
 
@@ -123,34 +120,14 @@ fun EnrollmentsScreen(onBack: () -> Unit, onStudent: (String) -> Unit, onEnroll:
 @Composable
 fun EnrollStudentScreen(onBack: () -> Unit) {
     val runner = rememberActionRunner()
-    val container = rememberContainer()
-    val scope = rememberCoroutineScope()
     val summary = rememberLoader("admin-enrollments-summary") { service<EnrollmentsAdminApi>().summary() }
     val courses = (summary.state.collectAsStateWithLifecycle().value as? Load.Ready)?.value?.enrollableCourses.orEmpty()
 
-    var email by rememberSaveable { mutableStateOf("") }
-    var linkedName by rememberSaveable { mutableStateOf("") }
-    var checkedEmail by rememberSaveable { mutableStateOf("") }
-    var lookupError by rememberSaveable { mutableStateOf<String?>(null) }
-    var checking by remember { mutableStateOf(false) }
+    val account = rememberAccountCheck { e -> service<EnrollmentsAdminApi>().lookup(e).lookup.let { AccountAnswer(it.name?.takeIf { _ -> it.ok }, it.error.takeIf { _ -> !it.ok }) } }
     var courseId by rememberSaveable { mutableStateOf("") }
     var error by rememberSaveable { mutableStateOf<String?>(null) }
     var done by rememberSaveable { mutableStateOf<String?>(null) }
 
-    fun verify() {
-        val target = email.trim()
-        if (target.isEmpty()) { linkedName = ""; lookupError = null; return }
-        checking = true
-        scope.launch {
-            when (val r = apiCall { container.service<EnrollmentsAdminApi>().lookup(target).lookup }) {
-                is ApiResult.Ok -> if (r.value.ok) { linkedName = r.value.name.orEmpty(); lookupError = null; checkedEmail = target }
-                    else { linkedName = ""; lookupError = r.value.error ?: "This e-mail cannot be used." }
-                is ApiResult.Err -> { linkedName = ""; lookupError = r.message }
-            }
-            checking = false
-        }
-    }
-    val verified = linkedName.isNotBlank() && checkedEmail.equals(email.trim(), ignoreCase = true)
 
     FormScreen(
         title = "Enrol a student",
@@ -161,16 +138,18 @@ fun EnrollStudentScreen(onBack: () -> Unit) {
         error = error,
         onSave = {
             error = when {
-                email.isBlank() -> "Enter the student's e-mail."
-                lookupError != null -> lookupError
+                account.email.isBlank() -> "Enter the student's e-mail."
+                account.error != null -> account.error
+                !account.verified -> "Check the account e-mail first."
                 courseId.isBlank() -> "Select a course."
                 else -> null
             }
+            val email = account.email.trim()
             if (error == null) runner.run({
-                service<EnrollmentsAdminApi>().enroll(formOf { text("email", email.trim()); text("courseId", courseId) })
+                service<EnrollmentsAdminApi>().enroll(formOf { text("email", email); text("courseId", courseId) })
             }) { r ->
                 done = r.stringResult("success") ?: "Enrollment added."
-                email = ""; linkedName = ""; checkedEmail = ""; courseId = ""
+                account.reset(); courseId = ""
                 summary.reload()
             }
         },
@@ -180,13 +159,10 @@ fun EnrollStudentScreen(onBack: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Notice(done, Tone.Success)
-        FormTextField(
-            "Registered account email", email, { email = it; done = null; if (!it.trim().equals(checkedEmail, true)) { linkedName = ""; lookupError = null } },
-            keyboardType = KeyboardType.Email,
-        )
-        OutlinedButton(onClick = ::verify, enabled = !checking && email.isNotBlank()) { Text(if (checking) "Checking…" else "Check account") }
-        Notice(lookupError, Tone.Warning)
-        Field("Name (from account)", if (checking) "Checking account…" else linkedName.ifBlank { if (verified) "" else "Check the e-mail above to load the account name." })
+        FormTextField("Registered account email", account.email, { account.edit(it); done = null }, keyboardType = KeyboardType.Email)
+        OutlinedButton(onClick = { account.verify() }, enabled = !account.checking && account.email.isNotBlank()) { Text(if (account.checking) "Checking…" else "Check account") }
+        Notice(account.error, Tone.Warning)
+        Field("Name (from account)", if (account.checking) "Checking account…" else account.name.ifBlank { "Check the e-mail above to load the account name." })
         FormDropdown("Course", courses.map { it.id to it.title }, courseId, { courseId = it }, placeholder = "Select a course")
     }
 }
