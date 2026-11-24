@@ -17,6 +17,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Rule
+import com.darsequran.academy.testing.waitUntilSettled
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.Collections
@@ -54,7 +55,7 @@ class AttendanceOverwriteTest {
 
     private fun saveNewDay(onEdit: (String) -> Unit = {}) {
         compose.setContent { AttendanceTakeScreen(Portal.Teacher, "c1", date = null, onBack = {}, onEditExisting = onEdit) }
-        compose.waitUntil(5_000) { compose.onAllNodes(hasText("Amina")).fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntilSettled { compose.onAllNodes(hasText("Amina")).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("Save attendance (1 of 1 present)").performClick()
     }
 
@@ -62,7 +63,7 @@ class AttendanceOverwriteTest {
     fun anAlreadyMarkedDayAsksInsteadOfReplacingIt() {
         var edited: String? = null
         saveNewDay { edited = it }
-        compose.waitUntil(5_000) { compose.onAllNodes(hasText("Attendance already marked")).fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntilSettled { compose.onAllNodes(hasText("Attendance already marked")).fetchSemanticsNodes().isNotEmpty() }
         assertFalse("nothing was saved", "PUT" in methods)
 
         compose.onNodeWithText("Open that day").performClick()
@@ -74,6 +75,6 @@ class AttendanceOverwriteTest {
     fun aNewDayIsSavedStraightAway() {
         todayMarked = false
         saveNewDay()
-        compose.waitUntil(5_000) { "PUT" in methods }
+        compose.waitUntilSettled { "PUT" in methods }
     }
 }

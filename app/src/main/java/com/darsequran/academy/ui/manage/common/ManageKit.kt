@@ -40,10 +40,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.currentCompositeKeyHash
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,7 +75,6 @@ import com.darsequran.academy.ui.common.openBytes
 import com.darsequran.academy.ui.common.toLoad
 import com.darsequran.academy.ui.common.vmFactory
 import com.darsequran.academy.ui.theme.Brand
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -127,29 +126,30 @@ fun rememberContainer(): AppContainer {
 /**
  * Runs writes from a screen: one at a time ([busy]), errors and confirmations as snackbars.
  * `runner.run({ service<XApi>().delete(id) }, success = "Deleted.") { onBack() }`
+ *
+ * A ViewModel, so a write keeps running, and its message still shows, when the phone rotates or the screen is
+ * recreated (it used to be cancelled, leaving the admin unsure whether it happened). [busy] is set before the write
+ * is launched, so a second tap in the same frame is ignored rather than sending the write twice.
  */
-class ActionRunner(
-    val snackbar: SnackbarHostState,
-    private val scope: CoroutineScope,
-    private val container: AppContainer,
-) {
+class ActionRunner(private val container: AppContainer) : ViewModel() {
+    val snackbar = SnackbarHostState()
+
     var busy by mutableStateOf(false)
         private set
 
     fun <T> run(block: suspend AppContainer.() -> T, success: String? = null, onSuccess: (T) -> Unit = {}) {
         if (busy) return
-        scope.launch {
-            busy = true
-            val result = apiCall { container.block() }
-            busy = false
+        busy = true
+        viewModelScope.launch {
+            val result = try { apiCall { container.block() } } finally { busy = false }
             when (result) {
-                is ApiResult.Ok -> { onSuccess(result.value); success?.let { launch { snackbar.showSnackbar(it) } } }
-                is ApiResult.Err -> snackbar.showSnackbar(result.message)
+                is ApiResult.Ok -> { onSuccess(result.value); success?.let { message(it) } }
+                is ApiResult.Err -> message(result.message)
             }
         }
     }
 
-    fun message(text: String) { scope.launch { snackbar.showSnackbar(text) } }
+    fun message(text: String) { viewModelScope.launch { snackbar.showSnackbar(text) } }
 
     /** Downloads a PDF (or other file) and opens it in the phone's viewer. */
     fun openFile(fileName: String, mime: String = "application/pdf", fetch: suspend AppContainer.() -> ResponseBody, context: android.content.Context) {
@@ -157,11 +157,11 @@ class ActionRunner(
     }
 }
 
+/** This call site's [ActionRunner], kept per back-stack entry (several on one screen stay separate). */
 @Composable
-fun rememberActionRunner(snackbar: SnackbarHostState = remember { SnackbarHostState() }): ActionRunner {
-    val scope = rememberCoroutineScope()
-    val container = rememberContainer()
-    return remember(snackbar) { ActionRunner(snackbar, scope, container) }
+fun rememberActionRunner(): ActionRunner {
+    val key = currentCompositeKeyHash
+    return viewModel(key = "action-runner-$key", factory = vmFactory { c -> ActionRunner(c) })
 }
 
 // -------------------------------------------------------------- layout

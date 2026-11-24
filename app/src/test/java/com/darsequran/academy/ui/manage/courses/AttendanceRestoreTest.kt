@@ -16,6 +16,7 @@ import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
+import com.darsequran.academy.testing.waitUntilSettled
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.concurrent.TimeUnit
@@ -49,16 +50,17 @@ class AttendanceRestoreTest {
     fun marksSurviveRecreationAndAreSaved() {
         val restore = StateRestorationTester(compose)
         restore.setContent { AttendanceTakeScreen(Portal.Teacher, "c1", date = null, onBack = {}) }
-        compose.waitUntil(5_000) { compose.onAllNodes(hasText("Amina")).fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntilSettled { compose.onAllNodes(hasText("Amina")).fetchSemanticsNodes().isNotEmpty() }
 
         compose.onNodeWithText("Amina").performClick() // present → absent
         compose.onNodeWithText("Save attendance (1 of 2 present)").assertExists()
 
         restore.emulateSavedInstanceStateRestore()
 
-        compose.waitUntil(5_000) { compose.onAllNodes(hasText("Amina")).fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntilSettled { compose.onAllNodes(hasText("Amina")).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("Save attendance (1 of 2 present)").assertExists().performClick()
 
+        compose.waitUntilSettled { server.requestCount >= 3 } // students, the day check, then the save
         val put = generateSequence { server.takeRequest(5, TimeUnit.SECONDS) }.first { it.method == "PUT" }
         val body = put.body!!.utf8()
         assertTrue(body, body.contains(""""enrollmentId":"e1","isPresent":false"""))
