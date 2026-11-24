@@ -49,8 +49,12 @@ val AcademyTypography = Typography(
     displaySmall = base.displaySmall.copy(fontFamily = SerifFamily, fontWeight = FontWeight.SemiBold),
     headlineLarge = base.headlineLarge.copy(fontFamily = SerifFamily, fontWeight = FontWeight.SemiBold),
     headlineMedium = base.headlineMedium.copy(fontFamily = SerifFamily, fontWeight = FontWeight.SemiBold, fontSize = 26.sp),
-    headlineSmall = base.headlineSmall.copy(fontFamily = SerifFamily, fontWeight = FontWeight.SemiBold, fontSize = 22.sp),
-    titleLarge = base.titleLarge.copy(fontFamily = SerifFamily, fontWeight = FontWeight.SemiBold, fontSize = 20.sp),
+    // Below the page title the website's headings are Poppins bold (its font-serif maps to Poppins); Source Serif is
+    // kept for the hero and page titles, as on the website's PageHero.
+    headlineSmall = base.headlineSmall.copy(
+        fontFamily = SansFamily, fontWeight = FontWeight.SemiBold, fontSize = 22.sp,
+    ),
+    titleLarge = base.titleLarge.copy(fontFamily = SansFamily, fontWeight = FontWeight.SemiBold, fontSize = 19.sp),
     titleMedium = base.titleMedium.copy(fontFamily = SansFamily, fontWeight = FontWeight.SemiBold, fontSize = 15.sp),
     titleSmall = base.titleSmall.copy(fontFamily = SansFamily, fontWeight = FontWeight.SemiBold, fontSize = 13.sp),
     bodyLarge = base.bodyLarge.copy(fontFamily = SansFamily, fontSize = 15.sp, lineHeight = 24.sp),
@@ -59,6 +63,15 @@ val AcademyTypography = Typography(
     labelLarge = base.labelLarge.copy(fontFamily = SansFamily, fontWeight = FontWeight.SemiBold, fontSize = 14.sp),
     labelMedium = base.labelMedium.copy(fontFamily = SansFamily, fontWeight = FontWeight.Medium, fontSize = 12.sp),
     labelSmall = base.labelSmall.copy(fontFamily = SansFamily, fontWeight = FontWeight.Medium, fontSize = 11.sp),
+)
+
+/** The website's split section title (SplitSectionTitle): bold, uppercase, slightly spaced. */
+val SectionTitleStyle = TextStyle(
+    fontFamily = SansFamily,
+    fontWeight = FontWeight.SemiBold,
+    fontSize = 18.sp,
+    lineHeight = 24.sp,
+    letterSpacing = 0.06.em,
 )
 
 /** Small-caps style label used above sections and on the inspiration card. */

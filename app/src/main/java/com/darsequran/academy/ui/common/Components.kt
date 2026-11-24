@@ -1,5 +1,10 @@
 package com.darsequran.academy.ui.common
 
+import com.darsequran.academy.ui.theme.SectionTitleStyle
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.AnnotatedString
 import android.view.View
 import android.text.style.URLSpan
 import android.text.style.ImageSpan
@@ -129,11 +134,10 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier, action: String? 
         modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
-            Spacer(Modifier.height(6.dp))
-            GoldRule()
-        }
+        Text(
+            splitTitle(title, Brand.gold), Modifier.weight(1f),
+            style = SectionTitleStyle, color = MaterialTheme.colorScheme.onBackground,
+        )
         if (action != null && onAction != null) {
             TextButton(onClick = onAction) {
                 Text(action, style = MaterialTheme.typography.labelLarge)
@@ -141,6 +145,19 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier, action: String? 
                 Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, Modifier.size(16.dp))
             }
         }
+    }
+}
+
+/**
+ * The website's SplitSectionTitle: uppercase, the last word in gold ("FEATURED **COURSES**"), the rest in the text
+ * colour.
+ */
+fun splitTitle(title: String, accent: Color): AnnotatedString {
+    val words = title.trim().uppercase()
+    val cut = words.lastIndexOf(' ')
+    return buildAnnotatedString {
+        if (cut > 0) append(words.substring(0, cut + 1))
+        withStyle(SpanStyle(color = accent)) { append(words.substring(cut + 1)) }
     }
 }
 
