@@ -161,6 +161,13 @@ class AccountViewModel(private val auth: AuthRepository, private val repo: Acade
     }
 
     fun refresh() = viewModelScope.launch { _profile.value = auth.profile().orNull() ?: _profile.value }
+
+    val resend = MutableStateFlow(ResendState())
+    fun resendVerification() = viewModelScope.launch {
+        val email = _profile.value?.email ?: auth.session.value?.user?.email ?: return@launch
+        resend.value = ResendState(sending = true)
+        resend.value = resendOutcome(auth.resendVerification(email))
+    }
     fun signOut() = viewModelScope.launch { auth.logout() }
     fun setTheme(value: String) = viewModelScope.launch { sessionStore.setTheme(value) }
 }
@@ -186,6 +193,7 @@ fun AccountScreen(
     val profile by vm.profile.collectAsStateWithLifecycle()
     val theme by vm.theme.collectAsStateWithLifecycle()
     val config by vm.config.collectAsStateWithLifecycle()
+    val resend by vm.resend.collectAsStateWithLifecycle()
     ReloadOnReturn { vm.refresh() }
     val context = LocalContext.current
     var themeDialog by remember { mutableStateOf(false) }
@@ -233,6 +241,13 @@ fun AccountScreen(
             }
         }
 
+        // As on the website's profile pages, an unverified e-mail is flagged with a way to resend the link.
+        if (session != null && profile?.let { it.emailVerified == null } == true) {
+            item {
+                val inset = Modifier.padding(horizontal = 20.dp).padding(top = 16.dp)
+                VerificationBanner(resend, { vm.resendVerification() }, inset)
+            }
+        }
         // Everyone signed in has the same profile pages, as on the website (admins and teachers included).
         val admin = Roles.isAdmin(session?.user?.role)
         if (session != null) {
