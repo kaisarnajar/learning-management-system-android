@@ -8,9 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Grading
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.EventAvailable
-import androidx.compose.material.icons.automirrored.rounded.Grading
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Mail
 import androidx.compose.material.icons.rounded.QuestionAnswer
@@ -20,20 +20,23 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import com.darsequran.academy.data.remote.Paged
+import com.darsequran.academy.data.staff.courses.Portal
+import com.darsequran.academy.data.staff.teach.TeachApi
+import com.darsequran.academy.data.staff.teach.TeacherHome
 import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.StatusChip
@@ -51,17 +54,11 @@ import com.darsequran.academy.ui.manage.common.StatTile
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
 import com.darsequran.academy.ui.manage.courses.CourseAnnouncementsRoute
-import com.darsequran.academy.data.staff.courses.CourseHeader
 import com.darsequran.academy.ui.manage.courses.CourseHubRoute
-import com.darsequran.academy.data.staff.courses.Portal
-import com.darsequran.academy.data.staff.courses.RosterRow
 import com.darsequran.academy.ui.manage.courses.StudentAttendanceRoute
 import com.darsequran.academy.ui.manage.courses.StudentGradesRoute
 import com.darsequran.academy.ui.manage.courses.courseStatusTone
 import kotlinx.serialization.Serializable
-import retrofit2.http.GET
-import retrofit2.http.Path
-import retrofit2.http.Query
 
 /*
  * The teacher portal (website: /teacher, /teacher/courses/[id], …/students/[enrollmentId]). A course's attendance,
@@ -69,65 +66,6 @@ import retrofit2.http.Query
  */
 
 // ------------------------------------------------------------------ API (/api/v1/teacher)
-
-@Serializable
-data class TeacherCourseRow(
-    val id: String,
-    val title: String = "",
-    val status: String = "",
-    val statusLabel: String = "",
-    val level: String = "",
-    val category: String = "",
-    val startDate: String? = null,
-    val duration: String? = null,
-    val description: String = "",
-    val studentCount: Int = 0,
-)
-
-@Serializable data class TeacherProfile(val name: String = "", val specialization: String = "", val email: String = "")
-@Serializable data class TeacherStats(val totalCourses: Int = 0, val totalStudents: Int = 0)
-
-@Serializable
-data class TeacherHome(
-    val data: List<TeacherCourseRow> = emptyList(),
-    val totalCount: Int = 0,
-    val teacher: TeacherProfile = TeacherProfile(),
-    val stats: TeacherStats = TeacherStats(),
-)
-
-@Serializable
-data class TeacherEnrollment(
-    val id: String,
-    val status: String = "",
-    val statusLabel: String = "",
-    val rollNumberLabel: String = "—",
-    val createdAt: String? = null,
-    val completedAt: String? = null,
-)
-
-@Serializable
-data class TeacherStudentProfile(
-    val id: String,
-    val name: String = "",
-    val email: String = "",
-    val fatherName: String? = null,
-    val dateOfBirthDisplay: String? = null,
-    val occupationLabel: String? = null,
-    val address: String? = null,
-    val whatsapp: String? = null,
-    val createdAt: String? = null,
-)
-
-@Serializable data class TeacherStudentResponse(val course: CourseHeader, val enrollment: TeacherEnrollment, val student: TeacherStudentProfile)
-
-interface TeachApi {
-    @GET("teacher/courses") suspend fun home(@Query("page") page: Int = 1): TeacherHome
-    @GET("teacher/courses") suspend fun courses(@Query("page") page: Int): Paged<TeacherCourseRow>
-    @GET("teacher/courses/{id}/students") suspend fun students(@Path("id") id: String, @Query("page") page: Int): Paged<RosterRow>
-    @GET("teacher/courses/{id}/students/{enrollmentId}") suspend fun student(@Path("id") id: String, @Path("enrollmentId") enrollmentId: String): TeacherStudentResponse
-}
-
-// ------------------------------------------------------------------ routes
 
 @Serializable data class TeacherStudentsRoute(val courseId: String)
 @Serializable data class TeacherStudentRoute(val courseId: String, val enrollmentId: String)

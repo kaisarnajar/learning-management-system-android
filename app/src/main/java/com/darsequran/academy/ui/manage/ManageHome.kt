@@ -18,15 +18,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,6 +31,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.darsequran.academy.data.staff.dashboard.DashboardApi
+import com.darsequran.academy.data.staff.dashboard.DashboardLink
 import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.HeroBox
 import com.darsequran.academy.ui.common.Load
@@ -41,28 +40,14 @@ import com.darsequran.academy.ui.common.LoadContent
 import com.darsequran.academy.ui.common.Overline
 import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.SectionHeader
+import com.darsequran.academy.ui.common.academyToday
 import com.darsequran.academy.ui.manage.common.ManageScaffold
-import com.darsequran.academy.ui.manage.common.rememberContainer
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.theme.Brand
 import com.darsequran.academy.ui.theme.HeroUnderStatusBar
-import com.darsequran.academy.ui.common.academyToday
-import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
-import retrofit2.http.GET
 import java.time.format.DateTimeFormatter
 
 // ------------------------------------------------------------------ API
-
-@Serializable data class DashboardLink(val href: String, val label: String, val count: Int? = null, val highlight: Boolean = false)
-@Serializable data class DashboardGroup(val title: String, val links: List<DashboardLink> = emptyList())
-@Serializable data class DashboardResponse(val groups: List<DashboardGroup> = emptyList(), val actionRequired: List<DashboardLink> = emptyList())
-
-interface DashboardApi {
-    @GET("admin/dashboard") suspend fun dashboard(): DashboardResponse
-}
-
-// --------------------------------------------------------------- screens
 
 /**
  * The admin's first tab: what needs action now, then every section of the website's admin panel with its count.
