@@ -7,16 +7,19 @@ import android.provider.MediaStore
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.FileProvider
 import com.darsequran.academy.AcademyApp
 import com.darsequran.academy.data.documentCacheDir
 import com.darsequran.academy.data.resolveUrl
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Request
 import java.io.File
+import java.io.InputStream
 
 /** Opens a web page in a Custom Tab (falls back to any browser). */
 fun openWeb(context: Context, url: String?) {
@@ -28,15 +31,24 @@ fun openWeb(context: Context, url: String?) {
     }
 }
 
+/** Where an opened document is kept: the document cache, under a name safe for a file system. */
+private fun cacheFile(context: Context, fileName: String): File =
+    File(documentCacheDir(context).apply { mkdirs() }, fileName.replace(Regex("[^A-Za-z0-9._-]"), "_"))
+
+/** Streams [source] into the document cache as [fileName], off the main thread, and returns the file. */
+suspend fun cacheDocument(context: Context, fileName: String, source: InputStream): File = withContext(Dispatchers.IO) {
+    cacheFile(context, fileName).also { file -> source.use { input -> file.outputStream().use { input.copyTo(it) } } }
+}
+
+/** Saves [bytes] (a receipt rendered by the server) to the cache and opens it; see [openDocument]. */
+suspend fun openBytes(context: Context, bytes: ByteArray, fileName: String, mime: String) =
+    openDocument(context, cacheDocument(context, fileName, bytes.inputStream()), mime)
+
 /**
- * Saves [bytes] to the cache and opens it with the system viewer for [mime]. When the phone has no app for that
- * type (no PDF viewer, say), the file goes to Downloads instead so it is not lost.
+ * Opens a cached document with the system viewer for [mime]. When the phone has no app for that type (no PDF viewer,
+ * say), the file goes to Downloads instead so it is not lost. Call on the main thread.
  */
-fun openBytes(context: Context, bytes: ByteArray, fileName: String, mime: String) {
-    val safeName = fileName.replace(Regex("[^A-Za-z0-9._-]"), "_")
-    val dir = documentCacheDir(context).apply { mkdirs() }
-    val file = File(dir, safeName)
-    file.writeBytes(bytes)
+fun openDocument(context: Context, file: File, mime: String) {
     val uri = FileProvider.getUriForFile(context, context.packageName + ".files", file)
     val intent = Intent(Intent.ACTION_VIEW).setDataAndType(uri, mime).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     if (intent.resolveActivity(context.packageManager) != null) {
@@ -47,46 +59,59 @@ fun openBytes(context: Context, bytes: ByteArray, fileName: String, mime: String
             // fall through to saving it
         }
     }
-    val saved = saveToDownloads(context, bytes, safeName, mime)
+    val saved = saveToDownloads(context, file, mime)
     Toast.makeText(
         context,
-        if (saved) "No app here opens this file, so it was saved to Downloads as $safeName." else "No app on this phone can open this file.",
+        if (saved) "No app here opens this file, so it was saved to Downloads as ${file.name}." else "No app on this phone can open this file.",
         Toast.LENGTH_LONG,
     ).show()
 }
 
-private fun saveToDownloads(context: Context, bytes: ByteArray, name: String, mime: String): Boolean {
+private fun saveToDownloads(context: Context, file: File, mime: String): Boolean {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return false // needs a storage permission before Android 10
     val values = ContentValues().apply {
-        put(MediaStore.Downloads.DISPLAY_NAME, name)
+        put(MediaStore.Downloads.DISPLAY_NAME, file.name)
         put(MediaStore.Downloads.MIME_TYPE, mime)
     }
     return runCatching {
         val resolver = context.contentResolver
         val target = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values) ?: return false
-        resolver.openOutputStream(target)?.use { it.write(bytes) } ?: return false
+        resolver.openOutputStream(target)?.use { out -> file.inputStream().use { it.copyTo(out) } } ?: return false
         true
     }.getOrDefault(false)
 }
 
 /**
- * Downloads a file the API protects (course attachments under /api/files/…)
- * with the signed-in session, following the redirect to the short-lived
- * storage URL, and opens it.
+ * The type to open a downloaded file as: the server's, unless it only says "some bytes" (storage often does), in
+ * which case the file name's extension decides.
+ */
+fun mimeFor(fileName: String, contentType: String?): String {
+    val declared = contentType?.substringBefore(';')?.trim()?.lowercase()
+    if (!declared.isNullOrBlank() && declared != "application/octet-stream" && declared != "binary/octet-stream") return declared
+    val extension = fileName.substringAfterLast('.', "").lowercase()
+    return MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension) ?: "application/octet-stream"
+}
+
+/**
+ * Downloads a file the API protects (course attachments under /api/files/…) with the signed-in session, following the
+ * redirect to the short-lived storage URL, and opens it. The body is streamed to the cache rather than held in memory
+ * (attachments can be large). Returns a message to show when it fails.
  */
 suspend fun downloadAndOpen(context: Context, path: String, fileName: String): String? {
     val url = resolveUrl(path) ?: return "This file is not available."
     val client = (context.applicationContext as AcademyApp).container.network.client
     return try {
-        val (bytes, mime) = withContext(Dispatchers.IO) {
+        val (file, mime) = withContext(Dispatchers.IO) {
             client.newCall(Request.Builder().url(url).build()).execute().use { response ->
                 if (!response.isSuccessful) error("HTTP ${response.code}")
                 val body = response.body
-                body.bytes() to (body.contentType()?.toString()?.substringBefore(';') ?: "application/octet-stream")
+                cacheDocument(context, fileName, body.byteStream()) to mimeFor(fileName, body.contentType()?.toString())
             }
         }
-        openBytes(context, bytes, fileName, mime)
+        openDocument(context, file, mime)
         null
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         "Couldn't download the file. Check your connection and try again."
     }

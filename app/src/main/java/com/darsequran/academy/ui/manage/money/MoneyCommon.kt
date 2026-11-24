@@ -247,7 +247,9 @@ fun ScreenshotThumb(path: String?, isPdf: Boolean) {
     val scope = rememberCoroutineScope()
     var open by remember { mutableStateOf(false) }
     if (isPdf) {
-        OutlinedButton(onClick = { scope.launch { downloadAndOpen(context, path, "payment-proof.pdf") } }) {
+        OutlinedButton(onClick = {
+            scope.launch { downloadAndOpen(context, path, "payment-proof.pdf")?.let { android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_LONG).show() } }
+        }) {
             Icon(Icons.Rounded.PictureAsPdf, null); Spacer(Modifier.width(6.dp)); Text("Open proof (PDF)")
         }
         return

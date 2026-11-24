@@ -71,7 +71,8 @@ import com.darsequran.academy.ui.common.PagedListBody
 import com.darsequran.academy.ui.common.PagedViewModel
 import com.darsequran.academy.ui.common.TabTopBar
 import com.darsequran.academy.ui.common.Tone
-import com.darsequran.academy.ui.common.openBytes
+import com.darsequran.academy.ui.common.cacheDocument
+import com.darsequran.academy.ui.common.openDocument
 import com.darsequran.academy.ui.common.toLoad
 import com.darsequran.academy.ui.common.vmFactory
 import com.darsequran.academy.ui.theme.Brand
@@ -153,7 +154,7 @@ class ActionRunner(private val container: AppContainer) : ViewModel() {
 
     /** Downloads a PDF (or other file) and opens it in the phone's viewer. */
     fun openFile(fileName: String, mime: String = "application/pdf", fetch: suspend AppContainer.() -> ResponseBody, context: android.content.Context) {
-        run({ withContext(Dispatchers.IO) { fetch().use { it.bytes() } } }) { bytes -> openBytes(context, bytes, fileName, mime) }
+        run({ withContext(Dispatchers.IO) { fetch().use { body -> cacheDocument(context, fileName, body.byteStream()) } } }) { file -> openDocument(context, file, mime) }
     }
 }
 
