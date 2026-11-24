@@ -38,12 +38,21 @@ suspend fun <T> apiCall(block: suspend () -> T): ApiResult<T> = try {
     ApiResult.Err(message, e.code(), body?.code)
 } catch (e: kotlinx.serialization.SerializationException) {
     // Usually a web page where JSON was expected: the server is older (or newer) than this app.
-    android.util.Log.w("ApiCall", "Unexpected response", e)
+    logFailure("Unexpected response", e)
     ApiResult.Err("The server's answer wasn't what this app expects. The server may not have this feature yet.")
 } catch (e: IOException) {
     ApiResult.Err("No connection. Check your internet and try again.")
 } catch (e: Exception) {
     // The exception's own message is for developers (it can name classes or internals), so it goes to the log only.
-    android.util.Log.w("ApiCall", "Unexpected failure", e)
+    logFailure("Unexpected failure", e)
     ApiResult.Err("Something went wrong. Please try again.")
+}
+
+/**
+ * Logs a failure for developers. Release builds log only its type: a serialization message quotes part of the
+ * response, which can hold the user's profile or payments, and logcat is readable by anyone with the phone and a cable.
+ */
+private fun logFailure(what: String, e: Exception) {
+    if (com.darsequran.academy.BuildConfig.DEBUG) android.util.Log.w("ApiCall", what, e)
+    else android.util.Log.w("ApiCall", "$what: ${e.javaClass.name}")
 }
