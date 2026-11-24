@@ -1,375 +1,273 @@
 package com.darsequran.academy.ui.home
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Book
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.SupportAgent
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.Badge
+import androidx.compose.material.icons.rounded.HourglassTop
+import androidx.compose.material.icons.rounded.MarkEmailUnread
+import androidx.compose.material.icons.rounded.Notifications
+import androidx.compose.material.icons.rounded.Payments
+import androidx.compose.material.icons.rounded.School
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.darsequran.academy.R
-import com.darsequran.academy.data.local.TokenManager
-import com.darsequran.academy.ui.theme.EmeraldDark
-import com.darsequran.academy.ui.theme.GoldAccent
-import com.darsequran.academy.ui.theme.GoldDark
+import com.darsequran.academy.data.ApiResult
+import com.darsequran.academy.data.Session
+import com.darsequran.academy.data.remote.BlogPost
+import com.darsequran.academy.data.remote.Book
+import com.darsequran.academy.data.remote.Course
+import com.darsequran.academy.data.remote.Enrollment
+import com.darsequran.academy.data.remote.Fatwa
+import com.darsequran.academy.data.remote.HomeResponse
+import com.darsequran.academy.data.remote.Inspiration
+import com.darsequran.academy.data.remote.SiteAnnouncement
+import com.darsequran.academy.data.repo.AcademyRepository
+import com.darsequran.academy.data.repo.AuthRepository
+import com.darsequran.academy.data.repo.orNull
+import com.darsequran.academy.ui.common.AppCard
+import com.darsequran.academy.ui.common.ArabicText
+import com.darsequran.academy.ui.common.Avatar
+import com.darsequran.academy.ui.common.ErrorState
+import com.darsequran.academy.ui.common.HeroBox
+import com.darsequran.academy.ui.common.Overline
+import com.darsequran.academy.ui.common.PriceLine
+import com.darsequran.academy.ui.common.RemoteImage
+import com.darsequran.academy.ui.common.SectionHeader
+import com.darsequran.academy.ui.common.SkeletonList
+import com.darsequran.academy.ui.common.StatusChip
+import com.darsequran.academy.ui.common.feeFrequencySuffix
+import com.darsequran.academy.ui.common.formatDate
+import com.darsequran.academy.ui.common.plainText
+import com.darsequran.academy.ui.common.relativeTime
+import com.darsequran.academy.ui.common.rupees
+import com.darsequran.academy.ui.common.statusLabel
+import com.darsequran.academy.ui.common.vmFactory
+import com.darsequran.academy.ui.theme.Brand
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** Something the student should do now, shown at the top of Home. */
+data class ActionCard(val kind: Kind, val title: String, val message: String, val courseId: String? = null, val courseTitle: String? = null) {
+    enum class Kind { PayEnrollment, PayCourseFee, UnderReview, CompleteProfile, VerifyEmail }
+}
+
+data class HomeState(
+    val loading: Boolean = true,
+    val refreshing: Boolean = false,
+    val error: String? = null,
+    val content: HomeResponse? = null,
+    val session: Session? = null,
+    val enrollments: List<Enrollment> = emptyList(),
+    val actions: List<ActionCard> = emptyList(),
+    val unread: Int = 0,
+)
+
+class HomeViewModel(private val repo: AcademyRepository, private val auth: AuthRepository) : ViewModel() {
+    private val _state = MutableStateFlow(HomeState(content = repo.cachedHome(), loading = repo.cachedHome() == null))
+    val state: StateFlow<HomeState> = _state.asStateFlow()
+
+    init {
+        viewModelScope.launch { auth.session.collect { s -> _state.update { it.copy(session = s) }; load() } }
+    }
+
+    fun refresh() = load(refreshing = true)
+
+    private fun load(refreshing: Boolean = false) = viewModelScope.launch {
+        _state.update { it.copy(refreshing = refreshing, error = null) }
+        val signedIn = auth.session.value != null
+        val home = async { repo.home() }
+        val enrollments = async { if (signedIn) repo.enrollments().orNull() ?: emptyList() else emptyList() }
+        val history = async { if (signedIn) repo.paymentHistory().orNull() else null }
+        val profile = async { if (signedIn) auth.profile().orNull() else null }
+        val unread = async { if (signedIn) repo.notifications(1, unreadOnly = true).orNull()?.unreadCount ?: 0 else 0 }
+
+        val homeResult = home.await()
+        val list = enrollments.await()
+        val submissions = history.await()?.submissions.orEmpty()
+        val me = profile.await()
+
+        val actions = buildList {
+            if (me != null && me.emailVerified == null) add(ActionCard(ActionCard.Kind.VerifyEmail, "Verify your e-mail", "Check your inbox for the link. You need it to enrol and pay."))
+            if (me != null && !me.profileComplete) add(ActionCard(ActionCard.Kind.CompleteProfile, "Complete your profile", "Your details are needed before you can enrol in a course."))
+            val pending = submissions.filter { it.status == "pending_verification" }
+            for (e in list) {
+                val course = e.course ?: continue
+                val pendingHere = pending.filter { it.courseId == e.courseId }
+                if (e.status == "awaiting_enrollment_fee" && pendingHere.none { it.paymentType == "enrollment" }) {
+                    add(ActionCard(ActionCard.Kind.PayEnrollment, "Pay the enrollment fee", "${course.title} · ${rupees(course.priceInrPaise)}", course.id, course.title))
+                }
+                if (e.status == "active" && course.monthlyFeeInrPaise > 0 && (course.feeFrequency ?: "MONTHLY") == "MONTHLY") {
+                    val month = LocalDate.now()
+                    val label = "${month.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH)} ${month.year}"
+                    val paid = submissions.any { it.courseId == e.courseId && it.paymentType != "enrollment" && it.label.contains(label) && it.status != "rejected" && it.status != "declined" }
+                    if (!paid) add(ActionCard(ActionCard.Kind.PayCourseFee, "$label fee is due", "${course.title} · ${rupees(course.monthlyFeeInrPaise)}", course.id, course.title))
+                }
+            }
+            if (pending.isNotEmpty()) add(ActionCard(ActionCard.Kind.UnderReview, "Payment under review", if (pending.size == 1) "The academy will confirm it shortly." else "${pending.size} payments are being verified."))
+        }
+
+        _state.update {
+            it.copy(
+                loading = false,
+                refreshing = false,
+                content = (homeResult as? ApiResult.Ok)?.value ?: it.content,
+                error = (homeResult as? ApiResult.Err)?.message?.takeIf { _ -> it.content == null },
+                enrollments = list,
+                actions = actions,
+                unread = unread.await(),
+            )
+        }
+    }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel,
-    tokenManager: TokenManager,
-    onNavigateToAbout: () -> Unit,
-    onNavigateToContact: () -> Unit,
-    onLogout: () -> Unit,
-    onNavigateToExplore: () -> Unit = {}
+    onOpenCourse: (String) -> Unit,
+    onOpenLearn: (Enrollment) -> Unit,
+    onPay: (courseId: String, type: String, title: String) -> Unit,
+    onOpenNotifications: () -> Unit,
+    onOpenBlogPost: (String) -> Unit,
+    onOpenFatwa: (String) -> Unit,
+    onOpenBook: (String) -> Unit,
+    onOpenAnnouncement: (String) -> Unit,
+    onSeeCourses: () -> Unit,
+    onSeeExplore: () -> Unit,
+    onSeeBookstore: () -> Unit,
+    onSignIn: () -> Unit,
+    onEditProfile: () -> Unit,
+    onPayments: () -> Unit,
+    vm: HomeViewModel = viewModel(factory = vmFactory { HomeViewModel(it.repo, it.auth) }),
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val userName by tokenManager.userNameFlow.collectAsState(initial = "Student")
+    val state by vm.state.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { /* first load happens in init */ }
 
-    Scaffold(
-        topBar = {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = EmeraldDark
-            ) {
-                Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Image(
-                                painter = painterResource(id = R.drawable.logo),
-                                contentDescription = "Logo",
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(CircleShape)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                text = "Darse Quran Academy",
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    fontSize = 19.sp
-                                )
-                            )
-                        }
+    PullToRefreshBox(isRefreshing = state.refreshing, onRefresh = vm::refresh, modifier = Modifier.fillMaxSize()) {
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
+            item { HomeHero(state.session, state.unread, state.content?.dailyInspiration, onOpenNotifications, onSignIn) }
 
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(
-                                onClick = onNavigateToAbout,
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.School,
-                                    contentDescription = "About Us",
-                                    tint = GoldAccent,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(4.dp))
-                            IconButton(
-                                onClick = onNavigateToContact,
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.SupportAgent,
-                                    contentDescription = "Contact Us",
-                                    tint = GoldAccent,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
+            val content = state.content
+            if (content == null) {
+                item { if (state.error != null) ErrorState(state.error!!, vm::refresh) else SkeletonList(4) }
+                return@LazyColumn
+            }
+
+            if (state.actions.isNotEmpty()) {
+                item { Spacer(Modifier.height(20.dp)) }
+                items(state.actions) { action ->
+                    ActionCardView(action, Modifier.padding(horizontal = 20.dp, vertical = 5.dp)) {
+                        when (action.kind) {
+                            ActionCard.Kind.PayEnrollment -> onPay(action.courseId!!, "enrollment", action.courseTitle!!)
+                            ActionCard.Kind.PayCourseFee -> onPay(action.courseId!!, "course", action.courseTitle!!)
+                            ActionCard.Kind.UnderReview -> onPayments()
+                            ActionCard.Kind.CompleteProfile -> onEditProfile()
+                            ActionCard.Kind.VerifyEmail -> onEditProfile()
                         }
                     }
-                    HorizontalDivider(color = Color.White.copy(alpha = 0.12f), thickness = 1.dp)
                 }
             }
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.background)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp)
-        ) {
-            // Card 1: Personal Welcome Card (Rich Emerald + Gold Border)
-            HomeWelcomeCard(userName = userName)
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Card 2: Main Hero Course Card (Includes Merged "Connecting Hearts with the Quran" Hadith)
-            HomeHeroCard(onExploreCoursesClick = onNavigateToExplore)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Card 3: Daily Wisdom Section
-            uiState.inspiration?.let { insp ->
-                DailyWisdomCard(inspiration = insp)
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            // Card 4: About Us Section Card
-            HomeAboutCard(onNavigateToAbout = onNavigateToAbout)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Card 5: Experience Ribbon
-            ExperienceBannerCard()
-
-            Spacer(modifier = Modifier.height(20.dp))
-        }
-    }
-}
-
-@Composable
-fun HomeWelcomeCard(userName: String?) {
-    val displayName = if (userName.isNullOrBlank()) "Student" else userName
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF00382B)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.45f))
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            Color(0xFF003D2F),
-                            Color(0xFF0A4E3D)
-                        )
-                    )
-                )
-                .padding(20.dp)
-        ) {
-            Column {
-                Text(
-                    text = "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ ٱللَّهِ وَبَرَكَاتُهُ",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        color = GoldAccent,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 17.sp
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = "Welcome back, $displayName",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 21.sp
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = "Continue your authentic Islamic learning journey today.",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = Color.White.copy(alpha = 0.88f),
-                        fontSize = 13.5.sp
-                    )
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun HomeHeroCard(
-    onExploreCoursesClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF0B2E26)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        border = BorderStroke(1.dp, Color(0xFF95D3BA).copy(alpha = 0.3f))
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF0B3028),
-                            Color(0xFF021D17)
-                        )
-                    )
-                )
-                .padding(20.dp)
-        ) {
-            Column {
-                // Main Hero Headline
-                Text(
-                    text = buildAnnotatedString {
-                        append("Master the Quran & ")
-                        withStyle(style = SpanStyle(color = Color(0xFF95D3BA))) {
-                            append("Islamic Sciences ")
-                        }
-                        append("with Excellence")
-                    },
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 23.sp,
-                        lineHeight = 31.sp
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Subtitle Description
-                Text(
-                    text = "Join Darse Quran Academy to study Quran, Tajweed, Fiqh, Hadith, and Arabic Language with qualified teachers from anywhere in the world.",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = Color.White.copy(alpha = 0.88f),
-                        fontSize = 13.5.sp,
-                        lineHeight = 20.sp
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(18.dp))
-
-                // CTA Button: Explore Courses
-                Button(
-                    onClick = onExploreCoursesClick,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = GoldAccent,
-                        contentColor = Color(0xFF3E2723)
-                    ),
-                    shape = RoundedCornerShape(24.dp),
-                    contentPadding = PaddingValues(horizontal = 22.dp, vertical = 10.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "Explore Courses",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = "Explore",
-                            modifier = Modifier.size(16.dp)
-                        )
+            if (state.session != null && state.enrollments.isNotEmpty()) {
+                item { Spacer(Modifier.height(24.dp)); SectionHeader("My courses", action = "All", onAction = onSeeCourses) }
+                item {
+                    LazyRow(contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items(state.enrollments, key = { it.id }) { e -> MyCourseCard(e) { if (e.status == "active" || e.status == "completed") onOpenLearn(e) else onOpenCourse(e.courseId) } }
                     }
                 }
+            } else if (state.session == null) {
+                item { JoinCard(onSignIn, onSeeCourses) }
+            }
 
-                Spacer(modifier = Modifier.height(20.dp))
+            if (content.announcements.isNotEmpty()) {
+                item { Spacer(Modifier.height(20.dp)); SectionHeader("Announcements", action = "All", onAction = onSeeExplore) }
+                item {
+                    LazyRow(contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items(content.announcements, key = { it.id }) { AnnouncementCard(it) { onOpenAnnouncement(it.id) } }
+                    }
+                }
+            }
 
-                // Merged "Connecting Hearts with the Quran" Hadith Quote Strip
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    color = Color.White.copy(alpha = 0.08f),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f))
-                ) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 19.sp,
-                                textAlign = TextAlign.Center
-                            )
-                        )
+            if (content.courses.isNotEmpty()) {
+                item { Spacer(Modifier.height(12.dp)); SectionHeader("Featured courses", action = "Catalogue", onAction = onSeeCourses) }
+                item {
+                    LazyRow(contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items(content.courses, key = { it.id }) { CourseTile(it) { onOpenCourse(it.id) } }
+                    }
+                }
+            }
 
-                        Spacer(modifier = Modifier.height(4.dp))
+            if (content.blogPosts.isNotEmpty()) {
+                item { Spacer(Modifier.height(12.dp)); SectionHeader("From the blog", action = "More", onAction = onSeeExplore) }
+                items(content.blogPosts.take(3), key = { "b" + it.id }) { post ->
+                    BlogRow(post, Modifier.padding(horizontal = 20.dp, vertical = 6.dp)) { onOpenBlogPost(post.id) }
+                }
+            }
 
-                        Text(
-                            text = "(THE BEST AMONG YOU ARE THOSE WHO LEARN THE QURAN AND TEACH IT)",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = Color.White.copy(alpha = 0.75f),
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                letterSpacing = 1.sp,
-                                textAlign = TextAlign.Center
-                            )
-                        )
+            if (content.fatwas.isNotEmpty()) {
+                item { Spacer(Modifier.height(18.dp)); SectionHeader("Recent fatwas", action = "More", onAction = onSeeExplore) }
+                items(content.fatwas.take(3), key = { "f" + it.id }) { fatwa ->
+                    FatwaRow(fatwa, Modifier.padding(horizontal = 20.dp, vertical = 6.dp)) { onOpenFatwa(fatwa.id) }
+                }
+            }
 
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = "Star",
-                                tint = GoldAccent,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Connecting Hearts with the Quran",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    color = GoldAccent,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp
-                                )
-                            )
-                        }
+            if (content.books.isNotEmpty()) {
+                item { Spacer(Modifier.height(18.dp)); SectionHeader("Bookstore", action = "Shop", onAction = onSeeBookstore) }
+                item {
+                    LazyRow(contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items(content.books, key = { it.id }) { BookTile(it) { onOpenBook(it.id) } }
                     }
                 }
             }
@@ -377,257 +275,213 @@ fun HomeHeroCard(
     }
 }
 
-@Composable
-fun DailyWisdomCard(
-    inspiration: com.darsequran.academy.data.model.InspirationDto
-) {
-    val arabicText = inspiration.arabicText ?: "فَإِنَّ مَعَ الْعُسْرِ يُسْرًا"
-    val translation = inspiration.englishTranslation ?: "For indeed, with hardship will be ease."
-    val reference = inspiration.reference ?: "Surah Ash-Sharh 94:5"
+// ---------------------------------------------------------------- parts
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFBF2)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        border = BorderStroke(1.dp, GoldDark.copy(alpha = 0.4f))
-    ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Header Pill Tag
-            Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = GoldAccent.copy(alpha = 0.2f),
-                border = BorderStroke(1.dp, GoldDark.copy(alpha = 0.5f))
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AutoAwesome,
-                        contentDescription = "Inspiration",
-                        tint = GoldDark,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
+@Composable
+private fun HomeHero(session: Session?, unread: Int, inspiration: Inspiration?, onNotifications: () -> Unit, onSignIn: () -> Unit) {
+    HeroBox(Modifier.fillMaxWidth()) {
+        Column(Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(painterResource(R.drawable.logo), "Darse Quran Academy", Modifier.size(40.dp).clip(CircleShape).background(Color.White))
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Assalamu alaikum", style = MaterialTheme.typography.bodySmall, color = Brand.mint)
                     Text(
-                        text = "✦ DAILY WISDOM ✦",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            color = GoldDark,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.5.sp
-                        )
+                        session?.user?.name?.split(" ")?.firstOrNull() ?: "Darse Quran Academy",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Brand.onHero,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (session != null) {
+                    IconButton(onClick = onNotifications) {
+                        BadgedBox(badge = { if (unread > 0) Badge(containerColor = Brand.goldSoft, contentColor = Color.Black) { Text(if (unread > 9) "9+" else "$unread") } }) {
+                            Icon(Icons.Rounded.Notifications, "Notifications", tint = Brand.onHero)
+                        }
+                    }
+                } else {
+                    Text(
+                        "Sign in",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Brand.goldSoft,
+                        modifier = Modifier.clip(CircleShape).clickable(onClick = onSignIn).padding(horizontal = 14.dp, vertical = 8.dp),
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Arabic Text Container
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                color = EmeraldDark.copy(alpha = 0.08f)
-            ) {
-                Text(
-                    text = arabicText,
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        color = EmeraldDark,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 32.sp,
-                        fontSize = 21.sp
-                    ),
-                    modifier = Modifier.padding(14.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Translation
-            Text(
-                text = translation,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
-                    textAlign = TextAlign.Center,
-                    fontStyle = FontStyle.Italic,
-                    lineHeight = 20.sp,
-                    fontSize = 13.5.sp
-                )
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Reference Tag
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = GoldAccent
-            ) {
-                Text(
-                    text = "— $reference —",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = Color(0xFF3E2723),
-                        fontWeight = FontWeight.Bold
-                    ),
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
-                )
+            if (inspiration != null) {
+                Spacer(Modifier.height(18.dp))
+                InspirationCard(inspiration, Modifier.padding(end = 12.dp))
             }
         }
     }
 }
 
 @Composable
-fun HomeAboutCard(
-    onNavigateToAbout: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFEFF7F3)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        border = BorderStroke(1.dp, EmeraldDark.copy(alpha = 0.25f))
+fun InspirationCard(inspiration: Inspiration, modifier: Modifier = Modifier) {
+    val shape = MaterialTheme.shapes.large
+    Column(
+        modifier.fillMaxWidth().clip(shape).background(Color.White.copy(alpha = 0.06f))
+            .border(1.dp, Brand.goldSoft.copy(alpha = 0.55f), shape).padding(horizontal = 18.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Circular Icon
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .background(EmeraldDark.copy(alpha = 0.12f), CircleShape)
-                    .border(1.dp, EmeraldDark.copy(alpha = 0.3f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Book,
-                    contentDescription = "About Book",
-                    tint = EmeraldDark,
-                    modifier = Modifier.size(26.dp)
-                )
+        Overline(if (inspiration.kind == "HADITH") "Hadith of the day" else "Verse of the day", color = Brand.goldSoft)
+        // Amiri's marks rise well above the cap height; leave them room.
+        Spacer(Modifier.height(18.dp))
+        ArabicText(inspiration.arabicText, color = Brand.onHero, size = 24)
+        Spacer(Modifier.height(6.dp))
+        Text(
+            inspiration.englishTranslation,
+            style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic, fontFamily = MaterialTheme.typography.titleLarge.fontFamily),
+            color = Brand.onHero.copy(alpha = 0.9f),
+            textAlign = TextAlign.Center,
+        )
+        inspiration.reference?.let {
+            Spacer(Modifier.height(8.dp))
+            Text("— $it", style = MaterialTheme.typography.labelMedium, color = Brand.goldSoft)
+        }
+    }
+}
+
+@Composable
+private fun ActionCardView(action: ActionCard, modifier: Modifier, onClick: () -> Unit) {
+    val (icon, tint, bg) = when (action.kind) {
+        ActionCard.Kind.PayEnrollment, ActionCard.Kind.PayCourseFee -> Triple(Icons.Rounded.Payments, Brand.warning, Brand.warningContainer)
+        ActionCard.Kind.UnderReview -> Triple(Icons.Rounded.HourglassTop, Brand.info, Brand.infoContainer)
+        ActionCard.Kind.CompleteProfile -> Triple(Icons.Rounded.Badge, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer)
+        ActionCard.Kind.VerifyEmail -> Triple(Icons.Rounded.MarkEmailUnread, Brand.danger, Brand.dangerContainer)
+    }
+    AppCard(modifier.fillMaxWidth(), onClick = onClick, contentPadding = PaddingValues(14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(44.dp).clip(CircleShape).background(bg), contentAlignment = Alignment.Center) { Icon(icon, null, tint = tint) }
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(action.title, style = MaterialTheme.typography.titleMedium)
+                Text(action.message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
+            ActionIcon(Icons.AutoMirrored.Rounded.ArrowForward)
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.height(12.dp))
+@Composable
+private fun ActionIcon(icon: ImageVector) = Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
 
-            // Title
-            Text(
-                text = buildAnnotatedString {
-                    append("About ")
-                    withStyle(style = SpanStyle(color = GoldDark)) {
-                        append("Us")
-                    }
-                },
-                style = MaterialTheme.typography.titleLarge.copy(
-                    color = EmeraldDark,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp
-                )
-            )
+@Composable
+private fun JoinCard(onSignIn: () -> Unit, onBrowse: () -> Unit) {
+    AppCard(Modifier.fillMaxWidth().padding(20.dp), color = MaterialTheme.colorScheme.primaryContainer) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Rounded.School, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(32.dp))
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text("Learn with the academy", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Text("Quran, Tajweed, Fiqh and more with qualified teachers.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            androidx.compose.material3.Button(onClick = onSignIn, modifier = Modifier.weight(1f)) { Text("Sign in") }
+            androidx.compose.material3.OutlinedButton(onClick = onBrowse, modifier = Modifier.weight(1f)) { Text("Browse courses") }
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.height(8.dp))
+@Composable
+private fun MyCourseCard(enrollment: Enrollment, onClick: () -> Unit) {
+    val course = enrollment.course
+    val (label, tone) = statusLabel(enrollment.status)
+    AppCard(Modifier.width(250.dp), onClick = onClick) {
+        StatusChip(label, tone)
+        Spacer(Modifier.height(10.dp))
+        Text(course?.title ?: "Course", style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.height(44.dp))
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Avatar(course?.teacher?.name, course?.teacher?.imageUrl, 26.dp)
+            Spacer(Modifier.width(8.dp))
+            Text(course?.teacher?.name ?: "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, modifier = Modifier.weight(1f))
+            enrollment.rollNumber?.let { Text("Roll $it", style = MaterialTheme.typography.labelMedium, color = Brand.gold) }
+        }
+    }
+}
 
-            // Gold Accent Divider Line
-            Box(
-                modifier = Modifier
-                    .width(50.dp)
-                    .height(3.dp)
-                    .background(GoldDark, shape = RoundedCornerShape(2.dp))
-            )
+@Composable
+private fun AnnouncementCard(item: SiteAnnouncement, onClick: () -> Unit) {
+    AppCard(Modifier.width(280.dp), onClick = onClick, contentPadding = PaddingValues(0.dp)) {
+        if (item.images.isNotEmpty()) {
+            RemoteImage(item.images.first().imagePath, null, Modifier.fillMaxWidth().height(120.dp))
+        }
+        Column(Modifier.padding(14.dp)) {
+            Overline(item.eventDate?.let { formatDate(it) } ?: relativeTime(item.createdAt))
+            Spacer(Modifier.height(4.dp))
+            Text(item.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(4.dp))
+            Text(plainText(item.body), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Paragraph Description
-            Text(
-                text = "Darse Quran Academy is our online platform for structured Quran and Islamic studies—offering qualified teachers, interactive live sessions, and structured progress.",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = Color(0xFF2C3E35),
-                    fontSize = 13.5.sp,
-                    lineHeight = 20.sp,
-                    textAlign = TextAlign.Center
-                )
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // READ MORE Button -> Opens About Us Screen!
-            Button(
-                onClick = onNavigateToAbout,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = EmeraldDark,
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(20.dp),
-                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp)
-            ) {
-                Text(
-                    text = "READ MORE",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
-                    letterSpacing = 0.5.sp,
-                    color = GoldAccent
-                )
+@Composable
+fun CourseTile(course: Course, onClick: () -> Unit) {
+    AppCard(Modifier.width(240.dp), onClick = onClick, contentPadding = PaddingValues(0.dp)) {
+        HeroBox(Modifier.fillMaxWidth().height(86.dp)) {
+            Column(Modifier.padding(14.dp)) {
+                Overline(course.category.ifBlank { "Course" }, color = Brand.goldSoft)
+                Spacer(Modifier.height(4.dp))
+                Text(course.level, style = MaterialTheme.typography.labelMedium, color = Brand.mint)
+            }
+        }
+        Column(Modifier.padding(14.dp)) {
+            Text(course.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.height(44.dp))
+            Spacer(Modifier.height(6.dp))
+            Text(course.teacher?.name ?: "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            Spacer(Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(if (course.monthlyFeeInrPaise > 0) rupees(course.monthlyFeeInrPaise) else "Free", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                if (course.monthlyFeeInrPaise > 0) {
+                    Spacer(Modifier.width(4.dp))
+                    Text(feeFrequencySuffix(course.feeFrequency), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
     }
 }
 
 @Composable
-fun ExperienceBannerCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            Color(0xFFB38B22),
-                            Color(0xFFD4A017),
-                            Color(0xFFB38B22)
-                        )
-                    )
-                )
-                .padding(vertical = 16.dp, horizontal = 16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AutoAwesome,
-                    contentDescription = "Experience",
-                    tint = Color.White,
-                    modifier = Modifier.size(22.dp)
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = buildAnnotatedString {
-                        append("5+ Years ")
-                        withStyle(
-                            style = SpanStyle(
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 15.sp,
-                                color = Color.White.copy(alpha = 0.92f)
-                            )
-                        ) {
-                            append("of Experience")
-                        }
-                    },
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp
-                    )
-                )
+fun BlogRow(post: BlogPost, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    AppCard(modifier.fillMaxWidth(), onClick = onClick, contentPadding = PaddingValues(12.dp)) {
+        Row {
+            RemoteImage(post.images.firstOrNull()?.imagePath, null, Modifier.size(76.dp).clip(MaterialTheme.shapes.medium))
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(post.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Spacer(Modifier.height(4.dp))
+                Text(plainText(post.excerpt ?: post.body), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Spacer(Modifier.height(4.dp))
+                Text(listOfNotNull(post.createdBy?.name, formatDate(post.createdAt)).joinToString(" · "), style = MaterialTheme.typography.labelSmall, color = Brand.gold)
             }
         }
+    }
+}
+
+@Composable
+fun FatwaRow(fatwa: Fatwa, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    AppCard(modifier.fillMaxWidth(), onClick = onClick) {
+        Overline(fatwa.category)
+        Spacer(Modifier.height(4.dp))
+        Text(fatwa.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Spacer(Modifier.height(4.dp))
+        Text(plainText(fatwa.answer), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+@Composable
+fun BookTile(book: Book, modifier: Modifier = Modifier.width(150.dp), onClick: () -> Unit) {
+    Column(modifier.clickable(onClick = onClick)) {
+        RemoteImage(book.imagePath, book.title, Modifier.fillMaxWidth().aspectRatio(0.72f).clip(MaterialTheme.shapes.medium))
+        Spacer(Modifier.height(8.dp))
+        Text(book.title, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(book.author, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Spacer(Modifier.height(2.dp))
+        PriceLine(book.priceInrPaise, book.mrpInrPaise)
     }
 }
