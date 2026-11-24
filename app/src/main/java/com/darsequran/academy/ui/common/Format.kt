@@ -67,3 +67,17 @@ fun feeFrequencySuffix(frequency: String?): String = when (frequency) {
 
 fun titleCase(value: String): String =
     value.lowercase(Locale.ENGLISH).split('_', ' ').joinToString(" ") { it.replaceFirstChar { c -> c.titlecase(Locale.ENGLISH) } }
+
+/** Labels the web app shows for announcement categories. */
+fun announcementCategory(value: String): String = when (value) {
+    "EXAMS_TESTS" -> "Exams & Tests"
+    "ASSIGNMENTS_HOMEWORK" -> "Assignments & Homework"
+    "STUDY_MATERIALS" -> "Study Materials"
+    "CLASS_SCHEDULE" -> "Class Schedule"
+    "COURSE_ANNOUNCEMENT" -> "Course Announcement"
+    "GENERAL_NOTICE" -> "General Notice"
+    else -> titleCase(value)
+}
+
+/** "1 comment", "3 comments". */
+fun countOf(n: Int, singular: String, plural: String = singular + "s"): String = "$n ${if (n == 1) singular else plural}"

@@ -55,8 +55,11 @@ import com.darsequran.academy.data.remote.CourseAttendance
 import com.darsequran.academy.data.remote.CourseGrades
 import com.darsequran.academy.data.remote.PaymentHistory
 import com.darsequran.academy.data.repo.AcademyRepository
+import com.darsequran.academy.ui.common.countOf
 import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.AppCard
+import com.darsequran.academy.ui.common.announcementCategory
+import com.darsequran.academy.ui.common.announcementCategory
 import com.darsequran.academy.ui.common.BackTopBar
 import com.darsequran.academy.ui.common.EmptyState
 import com.darsequran.academy.ui.common.Load
@@ -167,7 +170,7 @@ private fun AnnouncementItem(item: CourseAnnouncement, personal: Boolean, snackb
         Text(item.title, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(4.dp))
         Text(item.body, style = MaterialTheme.typography.bodyMedium)
-        item.category?.let { Spacer(Modifier.height(8.dp)); StatusChip(titleCase(it), Tone.Neutral) }
+        item.category?.let { Spacer(Modifier.height(8.dp)); StatusChip(announcementCategory(it), Tone.Neutral) }
         if (item.attachmentPath != null) {
             Spacer(Modifier.height(8.dp))
             AssistChip(
@@ -197,7 +200,7 @@ private fun AttendanceTab(vm: LearnViewModel) {
                         ProgressRing(data.percentage / 100f, "${data.percentage}%")
                         Spacer(Modifier.width(20.dp))
                         Column {
-                            Text("${data.presentClasses} of ${data.totalClasses} classes", style = MaterialTheme.typography.titleLarge)
+                            Text("${data.presentClasses} of ${countOf(data.totalClasses, "class", "classes")}", style = MaterialTheme.typography.titleLarge)
                             Text("${data.absentClasses} absent", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }

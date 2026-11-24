@@ -77,6 +77,7 @@ import com.darsequran.academy.data.remote.Teacher
 import com.darsequran.academy.data.remote.TeacherDetailResponse
 import com.darsequran.academy.data.repo.AcademyRepository
 import com.darsequran.academy.data.repo.AuthRepository
+import com.darsequran.academy.ui.common.countOf
 import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.Avatar
 import com.darsequran.academy.ui.common.BackTopBar
@@ -247,7 +248,7 @@ fun BlogPostScreen(id: String, onBack: () -> Unit, onSignIn: () -> Unit) {
                                 }
                                 Text("${post.likeCount}", style = MaterialTheme.typography.labelLarge)
                                 Spacer(Modifier.width(16.dp))
-                                Text("${maxOf(post.commentCount, state.comments.size)} comments", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(countOf(maxOf(post.commentCount, state.comments.size), "comment"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
