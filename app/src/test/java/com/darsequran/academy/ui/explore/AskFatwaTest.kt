@@ -5,9 +5,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Rule
 import org.junit.Test
@@ -18,20 +18,31 @@ class AskFatwaTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun pickingTheFallbackCategoryDoesNotCrashWhenCategoriesHaventLoaded() {
+    fun theWebsitesCategoriesAreOfferedBeforeTheConfigLoads() {
         compose.setContent { AskFatwaScreen({}, null, null, categories = emptyList()) }
-        compose.onNodeWithText("General").performClick()            // open the menu
-        compose.onAllNodesWithText("General")[1].performClick()     // pick the menu item
-        compose.onNodeWithText("General").assertExists()
+        compose.onNodeWithText("Select a topic").performClick()    // open the menu
+        compose.onNodeWithText("Tajweed").performClick()           // pick the menu item
+        compose.onNodeWithText("Tajweed").assertExists()
     }
 
     @Test
-    fun theCategoryFollowsTheRealListWhenItArrives() {
+    fun pickingOthersAsksForTheCategory() {
         var categories by mutableStateOf(emptyList<String>())
         compose.setContent { AskFatwaScreen({}, null, null, categories) }
-        compose.onNodeWithText("General").assertExists()
-        categories = listOf("Salah", "Zakat")
+        categories = listOf("Salah", "Others")
         compose.waitForIdle()
-        compose.onNodeWithText("Salah").assertExists()
+        compose.onNodeWithText("Select a topic").performClick()
+        compose.onNodeWithText("Others").performClick()
+        compose.onNodeWithText("Specify Category").assertExists()
+    }
+
+    @Test
+    fun aSignedInUserAsksUnderTheirAccount() {
+        compose.setContent { AskFatwaScreen({}, "Amina", "amina@example.com", emptyList()) }
+        compose.onNodeWithText("Submitting as Amina (amina@example.com). We will email you when answered.")
+            .assertExists()
+        compose.onNodeWithText("Your name").assertDoesNotExist()
+        compose.onNodeWithText("Send Question Anonymously").performScrollTo().performClick()
+        compose.onNodeWithText("Submitting as", substring = true).assertDoesNotExist()
     }
 }

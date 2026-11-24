@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -41,6 +42,7 @@ import androidx.compose.material.icons.rounded.Mosque
 import androidx.compose.material.icons.rounded.PictureAsPdf
 import androidx.compose.material.icons.rounded.QuestionAnswer
 import androidx.compose.material.icons.rounded.Storefront
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -61,6 +63,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -69,7 +72,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.darsequran.academy.data.ApiResult
 import com.darsequran.academy.data.Session
-import com.darsequran.academy.data.remote.AskFatwaRequest
 import com.darsequran.academy.data.remote.BlogPost
 import com.darsequran.academy.data.remote.Comment
 import com.darsequran.academy.data.remote.Fatwa
@@ -377,9 +379,21 @@ class AskFatwaViewModel(private val repo: AcademyRepository) : ViewModel() {
     val busy = MutableStateFlow(false)
     val error = MutableStateFlow<String?>(null)
     val done = MutableStateFlow(false)
-    fun submit(body: AskFatwaRequest) = viewModelScope.launch {
+    val form = MutableStateFlow(AskFatwaForm())
+
+    fun edit(change: (AskFatwaForm) -> AskFatwaForm) = form.update(change)
+
+    /** Signed in, the name and e-mail are the account's and can't be changed, as on the website. */
+    fun account(name: String?, email: String?) = form.update {
+        if (email.isNullOrBlank()) it.copy(signedIn = false)
+        else it.copy(signedIn = true, name = name.orEmpty(), email = email)
+    }
+
+    fun submit(websiteUrl: String) = viewModelScope.launch {
+        val current = form.value
+        if (current.errors().isNotEmpty()) return@launch
         busy.value = true; error.value = null
-        when (val r = repo.askFatwa(body)) {
+        when (val r = repo.askFatwa(current.toRequest(websiteUrl))) {
             is ApiResult.Ok -> done.value = true
             is ApiResult.Err -> error.value = r.message
         }
@@ -387,38 +401,130 @@ class AskFatwaViewModel(private val repo: AcademyRepository) : ViewModel() {
     }
 }
 
+private const val ASK_FATWA_SENT =
+    "Thank you. Your question has been received. We will email you when a scholar publishes an answer."
+
+@Suppress("FunctionNaming") // Compose names composables like types
 @Composable
-fun AskFatwaScreen(onBack: () -> Unit, defaultName: String?, defaultEmail: String?, categories: List<String>) {
+fun AskFatwaScreen(
+    onBack: () -> Unit,
+    defaultName: String?,
+    defaultEmail: String?,
+    categories: List<String>,
+    websiteUrl: String = "https://darsequranacademy.com",
+) {
     val vm: AskFatwaViewModel = viewModel(factory = vmFactory { AskFatwaViewModel(it.repo) })
     val busy by vm.busy.collectAsStateWithLifecycle()
     val error by vm.error.collectAsStateWithLifecycle()
     val done by vm.done.collectAsStateWithLifecycle()
-    var title by rememberSaveable { mutableStateOf("") }
-    var question by rememberSaveable { mutableStateOf("") }
-    // Shown and picked from the same list: indexing the (possibly empty) server list crashed when it hadn't loaded.
-    val options = categories.ifEmpty { listOf("General") }
-    var category by rememberSaveable { mutableStateOf(options.first()) }
-    LaunchedEffect(options) { if (category !in options) category = options.first() } // the real list arrived late
-    var name by rememberSaveable { mutableStateOf(defaultName ?: "") }
-    var email by rememberSaveable { mutableStateOf(defaultEmail ?: "") }
+    val form by vm.form.collectAsStateWithLifecycle()
+    LaunchedEffect(defaultName, defaultEmail) { vm.account(defaultName, defaultEmail) }
+    // The website's list until the app config (which carries the same list) has loaded.
+    val options = categories.ifEmpty { WEBSITE_FATWA_CATEGORIES }
 
     Scaffold(topBar = { BackTopBar("Ask a question", onBack) }) { padding ->
         if (done) {
-            Box(Modifier.padding(padding)) { MessageState(Icons.Rounded.QuestionAnswer, "Question sent", "A scholar will answer it. You'll get an e-mail when the answer is published.", "Done", onBack) }
+            Box(Modifier.padding(padding)) {
+                MessageState(Icons.Rounded.QuestionAnswer, "Question sent", ASK_FATWA_SENT, "Done", onBack)
+            }
             return@Scaffold
         }
-        Column(Modifier.padding(padding).verticalScroll(rememberScrollState()).padding(20.dp).imePadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text("Your question is answered by the academy's scholars and may be published without your e-mail. Choose \"Anonymous\" as your name to hide it too.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        val errors = form.errors()
+        Column(
+            Modifier.padding(padding).verticalScroll(rememberScrollState()).padding(20.dp).imePadding(),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Text(
+                "Submit a question on Islam, Quran, Hadith, Fiqh, Tajweed, Seerah, or related topics. " +
+                    "We will email you when it is answered.",
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             error?.let { Banner(it, Tone.Danger) }
-            OutlinedTextField(title, { title = it.take(200) }, Modifier.fillMaxWidth(), label = { Text("Short title") }, singleLine = true)
-            Dropdown(category, options, Modifier.fillMaxWidth(), label = "Category") { category = options[it] }
-            OutlinedTextField(question, { question = it.take(5000) }, Modifier.fillMaxWidth().height(180.dp), label = { Text("Your question") })
-            OutlinedTextField(name, { name = it.take(100) }, Modifier.fillMaxWidth(), label = { Text("Your name") }, singleLine = true)
-            OutlinedTextField(email, { email = it.trim() }, Modifier.fillMaxWidth(), label = { Text("Your e-mail (not published)") }, singleLine = true)
-            PrimaryButton("Send question", { vm.submit(AskFatwaRequest(title.trim(), question.trim(), category, name.trim(), email)) },
-                enabled = title.length >= 5 && question.length >= 20 && name.isNotBlank() && email.contains("@"), loading = busy)
+            AskFatwaCategory(form, options, errors[AskFatwaField.Category], vm::edit)
+            FormField(
+                form.title, "Subject", errors[AskFatwaField.Title], placeholder = "Brief summary of your question",
+            ) { v -> vm.edit { it.copy(title = v.take(200)) } }
+            FormField(
+                form.question, "Your question", errors[AskFatwaField.Question], Modifier.height(180.dp),
+                placeholder = "Describe your question in detail (e.g. Fiqh, Quran, Tajweed, daily practice)",
+                singleLine = false,
+            ) { v -> vm.edit { it.copy(question = v.take(5000)) } }
+            Row(
+                Modifier.toggleable(form.anonymous, role = Role.Checkbox) { c -> vm.edit { it.copy(anonymous = c) } },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Checkbox(form.anonymous, onCheckedChange = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Send Question Anonymously", style = MaterialTheme.typography.bodyMedium)
+            }
+            if (!form.anonymous) AskFatwaAsker(form, errors, vm::edit)
+            PrimaryButton("Submit question", { vm.submit(websiteUrl) }, enabled = errors.isEmpty(), loading = busy)
         }
     }
+}
+
+@Suppress("FunctionNaming") // Compose names composables like types
+@Composable
+private fun AskFatwaCategory(
+    form: AskFatwaForm,
+    options: List<String>,
+    error: String?,
+    edit: ((AskFatwaForm) -> AskFatwaForm) -> Unit,
+) {
+    val shown = form.categoryChoice.ifEmpty { "Select a topic" }
+    Dropdown(shown, options, Modifier.fillMaxWidth(), label = "Category") { i ->
+        edit { it.copy(categoryChoice = options[i]) }
+    }
+    if (form.categoryChoice == OTHER_FATWA_CATEGORY) {
+        FormField(form.customCategory, "Specify Category", error, placeholder = "Enter custom category") { v ->
+            edit { it.copy(customCategory = v.take(100)) }
+        }
+    }
+}
+
+@Suppress("FunctionNaming") // Compose names composables like types
+@Composable
+private fun AskFatwaAsker(
+    form: AskFatwaForm,
+    errors: Map<AskFatwaField, String>,
+    edit: ((AskFatwaForm) -> AskFatwaForm) -> Unit,
+) {
+    if (form.signedIn) {
+        Text(
+            "Submitting as ${form.name} (${form.email}). We will email you when answered.",
+            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        return
+    }
+    FormField(form.name, "Your name", errors[AskFatwaField.Name]) { v -> edit { it.copy(name = v.take(100)) } }
+    FormField(
+        form.email, "Email", errors[AskFatwaField.Email],
+        supporting = "We will email you when your question is answered.",
+    ) { v -> edit { it.copy(email = v.trim()) } }
+}
+
+/** A text field that shows the website's message once something has been typed (the website's "touched"). */
+@Suppress("FunctionNaming") // Compose names composables like types
+@Composable
+private fun FormField(
+    value: String,
+    label: String,
+    error: String?,
+    modifier: Modifier = Modifier,
+    placeholder: String? = null,
+    supporting: String? = null,
+    singleLine: Boolean = true,
+    onChange: (String) -> Unit,
+) {
+    val shown = error?.takeIf { value.isNotEmpty() }
+    OutlinedTextField(
+        value, onChange, modifier.fillMaxWidth(),
+        label = { Text(label) },
+        placeholder = placeholder?.let { { Text(it) } },
+        supportingText = (shown ?: supporting)?.let { { Text(it) } },
+        isError = shown != null,
+        singleLine = singleLine,
+    )
 }
 
 // =============================================================== library

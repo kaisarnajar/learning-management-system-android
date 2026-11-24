@@ -355,7 +355,13 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                 composable<BlogPostRoute> { BlogPostScreen(it.toRoute<BlogPostRoute>().id, nav::popBackStack) { nav.navigate(SignInRoute) } }
                 composable<FatwaRoute> { FatwaListScreen(nav::popBackStack, { nav.navigate(FatwaDetailRoute(it)) }, { nav.navigate(AskFatwaRoute) }, config?.lookups?.fatwaCategories.orEmpty()) }
                 composable<FatwaDetailRoute> { FatwaDetailScreen(it.toRoute<FatwaDetailRoute>().id, nav::popBackStack) }
-                composable<AskFatwaRoute> { AskFatwaScreen(nav::popBackStack, session?.user?.name, session?.user?.email, config?.lookups?.fatwaCategories.orEmpty()) }
+                composable<AskFatwaRoute> {
+                    AskFatwaScreen(
+                        nav::popBackStack, session?.user?.name, session?.user?.email,
+                        config?.lookups?.fatwaCategories.orEmpty(),
+                        config?.brand?.websiteUrl ?: AppConfig().brand.websiteUrl,
+                    )
+                }
                 composable<LibraryRoute> { LibraryListScreen(nav::popBackStack) { nav.navigate(LibraryItemRoute(it)) } }
                 composable<LibraryItemRoute> { LibraryItemScreen(it.toRoute<LibraryItemRoute>().id, nav::popBackStack) }
                 composable<AnnouncementsRoute> { AnnouncementsScreen(nav::popBackStack) { nav.navigate(AnnouncementRoute(it)) } }
