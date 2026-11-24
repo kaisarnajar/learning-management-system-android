@@ -4,6 +4,11 @@ import com.darsequran.academy.ui.manage.AdminDashboardTab
 import com.darsequran.academy.ui.manage.TeachTab
 import com.darsequran.academy.data.staff.courses.Portal
 import com.darsequran.academy.ui.manage.routeForAdminHref
+import com.darsequran.academy.ui.manage.bookstore.BookOrderAdminRoute
+import com.darsequran.academy.ui.manage.courses.CourseHubRoute
+import com.darsequran.academy.ui.manage.courses.GradeListRoute
+import com.darsequran.academy.ui.manage.money.ReceiptRoute
+import com.darsequran.academy.ui.manage.students.StudentAdminRoute
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -41,6 +46,17 @@ class StaffLinksTest {
         assertEquals("Admin", Shell.of("ADMIN").tabs[3].label)
         assertEquals("Developer", Shell.of("DEVELOPER").tabs[3].label)
         assertEquals(Shell.Student, Shell.of("USER"))
+    }
+
+    @Test
+    fun oneRecordsAdminPageOpensItsScreen() {
+        assertEquals(StudentAdminRoute("s1"), routeForAdminHref("/admin/students/s1"))
+        assertEquals(ReceiptRoute("r1"), routeForAdminHref("/admin/receipts/r1?from=email"))
+        assertEquals(BookOrderAdminRoute("o1"), routeForAdminHref("/admin/bookstore/orders/o1"))
+        assertEquals(CourseHubRoute("admin", "c1"), routeForAdminHref("/admin/courses/c1"))
+        assertEquals(GradeListRoute("admin", "c1"), routeForAdminHref("/admin/courses/c1/grades"))
+        assertNull("a form page has no screen of its own here", routeForAdminHref("/admin/students/s1/edit"))
+        assertNull(routeForAdminHref("/admin/courses/new"))
     }
 
     @Test

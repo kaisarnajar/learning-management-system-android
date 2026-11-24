@@ -2,6 +2,24 @@ package com.darsequran.academy.ui.manage
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import com.darsequran.academy.data.staff.courses.Portal
+import com.darsequran.academy.ui.manage.bookstore.BookAdminRoute
+import com.darsequran.academy.ui.manage.bookstore.BookOrderAdminRoute
+import com.darsequran.academy.ui.manage.content.BlogApprovalRoute
+import com.darsequran.academy.ui.manage.content.FatwaAdminDetailRoute
+import com.darsequran.academy.ui.manage.content.InspirationDetailRoute
+import com.darsequran.academy.ui.manage.content.LibraryAdminDetailRoute
+import com.darsequran.academy.ui.manage.courses.AttendanceListRoute
+import com.darsequran.academy.ui.manage.courses.CourseAnnouncementsRoute
+import com.darsequran.academy.ui.manage.courses.CourseHubRoute
+import com.darsequran.academy.ui.manage.courses.CourseRosterRoute
+import com.darsequran.academy.ui.manage.courses.GradeListRoute
+import com.darsequran.academy.ui.manage.money.ReceiptRoute
+import com.darsequran.academy.ui.manage.people.CertificateAdminRoute
+import com.darsequran.academy.ui.manage.people.InquiryAdminRoute
+import com.darsequran.academy.ui.manage.people.ReviewAdminRoute
+import com.darsequran.academy.ui.manage.people.TeacherAdminRoute
+import com.darsequran.academy.ui.manage.students.StudentAdminRoute
 import com.darsequran.academy.ui.manage.bookstore.BookOrdersAdminRoute
 import com.darsequran.academy.ui.manage.bookstore.BooksAdminRoute
 import com.darsequran.academy.ui.manage.bookstore.bookstoreAdminGraph
@@ -87,5 +105,46 @@ val adminHrefRoutes: Map<String, Any> = mapOf(
     "/admin/coupons/finance" to WaiverFinanceRoute,
 )
 
-/** The app screen for a website admin path, or null when the app has none. */
-fun routeForAdminHref(href: String): Any? = adminHrefRoutes[href.substringBefore('?').trimEnd('/')]
+/** The app screen for a website admin path (a section, or one record's page), or null when the app has none. */
+fun routeForAdminHref(href: String): Any? {
+    val path = href.substringBefore('#').substringBefore('?').trimEnd('/')
+    return adminHrefRoutes[path] ?: adminRecordRoute(path.removePrefix("/admin/").split('/'))
+}
+
+/** A record's own page on the website (`/admin/students/{id}`, …) → its app screen. */
+private val adminRecordPages: Map<String, (String) -> Any> = mapOf(
+    "students" to ::StudentAdminRoute,
+    "teachers" to ::TeacherAdminRoute,
+    "bookstore" to ::BookAdminRoute,
+    "certificates" to ::CertificateAdminRoute,
+    "contact-inquiries" to ::InquiryAdminRoute,
+    "review-approvals" to ::ReviewAdminRoute,
+    "blog-approvals" to ::BlogApprovalRoute,
+    "fatwa" to ::FatwaAdminDetailRoute,
+    "library" to ::LibraryAdminDetailRoute,
+    "daily-inspiration" to ::InspirationDetailRoute,
+    "receipts" to ::ReceiptRoute,
+    "courses" to { id -> CourseHubRoute(Portal.Admin.path, id) },
+)
+
+/** A course's admin pages (`/admin/courses/{id}/grades`, …) → their app screens. */
+private val adminCoursePages: Map<String, (String) -> Any> = mapOf(
+    "students" to ::CourseRosterRoute,
+    "attendance" to { id -> AttendanceListRoute(Portal.Admin.path, id) },
+    "grades" to { id -> GradeListRoute(Portal.Admin.path, id) },
+    "announcements" to { id -> CourseAnnouncementsRoute(Portal.Admin.path, id) },
+)
+
+/** One record's page (`p` is the path after /admin/, split): its screen, or null (forms such as `/edit` have none). */
+private fun adminRecordRoute(p: List<String>): Any? {
+    val id = p.getOrNull(1)?.takeIf { it.isNotBlank() && it != "new" } ?: return null
+    return when {
+        p.size == 2 -> adminRecordPages[p[0]]?.invoke(id)
+        p[0] == "bookstore" && p[1] == "orders" && p.size == RECORD_UNDER_SECTION -> BookOrderAdminRoute(p[2])
+        p[0] == "courses" && p.size == RECORD_UNDER_SECTION -> adminCoursePages[p[2]]?.invoke(id)
+        else -> null
+    }
+}
+
+/** `section/{id}/page` or `section/sub/{id}`. */
+private const val RECORD_UNDER_SECTION = 3
