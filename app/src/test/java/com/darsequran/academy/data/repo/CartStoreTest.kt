@@ -55,7 +55,9 @@ class CartStoreTest {
     @Test
     fun quickTapsAllCount() = runBlocking {
         (1..3).map { async(Dispatchers.Default) { cart.change("b1", +1) } }.awaitAll()
-        assertEquals(listOf(2, 3, 4), sent.toList())
+        // Taps made while an update is on its way are merged into the next one; nothing is lost or reordered.
+        assertEquals(4, sent.last())
+        assertEquals(sent.sorted().distinct(), sent.toList())
         assertEquals(4, cart.quantityOf("b1"))
     }
 
