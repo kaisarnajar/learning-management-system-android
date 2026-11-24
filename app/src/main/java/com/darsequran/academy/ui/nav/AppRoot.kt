@@ -171,8 +171,10 @@ fun AppRoot() {
     val env by container.environments.environment.collectAsStateWithLifecycle()
     val shell = Shell.of(session?.user?.role)
 
-    // A new environment or role starts a fresh navigation graph: nothing from the previous one carries over.
-    key(env, shell) {
+    // A new environment, role or user starts a fresh navigation graph: nothing from the previous one carries over.
+    // The user matters even within one role: after a student signs out (or another signs in on the phone), the tab
+    // stacks saved by switchTab would otherwise bring back the previous student's screens and data.
+    key(env, shell, session?.user?.id) {
         val nav = rememberNavController()
         Column(Modifier.fillMaxSize()) {
             if (env != AppEnvironment.PRODUCTION) { HeroUnderStatusBar(); EnvironmentStrip(env) { nav.navigate(EnvironmentRoute) } }
