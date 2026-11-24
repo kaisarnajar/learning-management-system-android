@@ -70,6 +70,7 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
@@ -90,12 +91,21 @@ import com.darsequran.academy.ui.common.vmFactory
 import com.darsequran.academy.ui.theme.Brand
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-data class AuthState(val busy: Boolean = false, val error: String? = null, val unverifiedEmail: String? = null, val info: String? = null, val done: Boolean = false)
+/** [googleSignedIn]: done by Google sign-in, which needs no e-mail verification (unlike [AuthViewModel.register]). */
+data class AuthState(
+    val busy: Boolean = false,
+    val error: String? = null,
+    val unverifiedEmail: String? = null,
+    val info: String? = null,
+    val done: Boolean = false,
+    val googleSignedIn: Boolean = false,
+)
 
 class AuthViewModel(private val auth: AuthRepository) : ViewModel() {
     private val _state = MutableStateFlow(AuthState())
@@ -119,7 +129,7 @@ class AuthViewModel(private val auth: AuthRepository) : ViewModel() {
 
     fun register(name: String, email: String, password: String) = run({ auth.register(name, email, password) })
 
-    fun google(idToken: String) = run({ auth.google(idToken) })
+    fun google(idToken: String) = run({ auth.google(idToken) }) { _state.value = AuthState(done = true, googleSignedIn = true) }
 
     fun googleFailed(message: String) { _state.value = AuthState(error = message) }
 
@@ -132,8 +142,8 @@ class AuthViewModel(private val auth: AuthRepository) : ViewModel() {
     }
 }
 
-/** Google sign-in through Credential Manager; returns the ID token or an error message. */
-suspend fun requestGoogleIdToken(context: Context): Result<String> = runCatching {
+/** Google sign-in through Credential Manager; returns the ID token, or the failure. Leaving the screen cancels it. */
+suspend fun requestGoogleIdToken(context: Context): Result<String> = try {
     val option = GetGoogleIdOption.Builder()
         .setFilterByAuthorizedAccounts(false)
         .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
@@ -141,8 +151,12 @@ suspend fun requestGoogleIdToken(context: Context): Result<String> = runCatching
     val result = CredentialManager.create(context).getCredential(context, GetCredentialRequest(listOf(option)))
     val credential = result.credential
     if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-        GoogleIdTokenCredential.createFrom(credential.data).idToken
-    } else error("Unexpected credential")
+        Result.success(GoogleIdTokenCredential.createFrom(credential.data).idToken)
+    } else Result.failure(IllegalStateException("Unexpected credential"))
+} catch (e: CancellationException) {
+    throw e
+} catch (e: Exception) {
+    Result.failure(e)
 }
 
 val googleSignInAvailable: Boolean get() = BuildConfig.GOOGLE_WEB_CLIENT_ID.isNotBlank()
@@ -193,7 +207,13 @@ private fun GoogleButton(vm: AuthViewModel) {
         scope.launch {
             requestGoogleIdToken(context).fold(
                 onSuccess = vm::google,
-                onFailure = { if (it !is GetCredentialCancellationException) vm.googleFailed("Google sign-in didn't work on this phone. Use your e-mail instead.") },
+                onFailure = {
+                    when (it) {
+                        is GetCredentialCancellationException -> Unit
+                        is NoCredentialException -> vm.googleFailed("There's no Google account on this phone. Add one in Settings, or use your e-mail.")
+                        else -> vm.googleFailed("Google sign-in didn't work on this phone. Use your e-mail instead.")
+                    }
+                },
             )
         }
     })
@@ -215,8 +235,10 @@ fun RegisterScreen(
     var email by rememberSaveable { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var accepted by rememberSaveable { mutableStateOf(false) }
+    // Google accounts are already verified: go straight on, without the "check your e-mail" step.
+    LaunchedEffect(state.googleSignedIn) { if (state.googleSignedIn) onDone() }
 
-    if (state.done) {
+    if (state.done && !state.googleSignedIn) {
         Scaffold { p ->
             Box(Modifier.padding(p).fillMaxSize(), contentAlignment = Alignment.Center) {
                 MessageState(
