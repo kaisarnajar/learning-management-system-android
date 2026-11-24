@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -109,6 +110,9 @@ import com.darsequran.academy.ui.theme.Brand
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -176,18 +180,33 @@ class BlogPostViewModel(private val repo: AcademyRepository, private val auth: A
     val state: StateFlow<PostState> = _state.asStateFlow()
     val session: StateFlow<Session?> get() = auth.session
 
-    init { load() }
+    private var liking = false
+
+    init {
+        load()
+        // "Liked by me" and comment rights depend on who is signed in: reload when that changes.
+        viewModelScope.launch { auth.session.map { it?.user?.id }.distinctUntilChanged().drop(1).collect { load() } }
+    }
 
     fun load() = viewModelScope.launch {
         val r = repo.blogPost(id)
         _state.update { it.copy(post = r.toLoad(), comments = (r as? ApiResult.Ok)?.value?.comments ?: it.comments) }
     }
 
-    fun like() = viewModelScope.launch {
-        val post = (_state.value.post as? Load.Ready)?.value ?: return@launch
-        when (val r = repo.toggleLike(id)) {
-            is ApiResult.Ok -> _state.update { it.copy(post = Load.Ready(post.copy(likedByMe = r.value.liked, likeCount = r.value.likeCount))) }
-            is ApiResult.Err -> _state.update { it.copy(error = r.message) }
+    /** A toggle: a second tap while the first is on its way would undo it, so it is ignored. */
+    fun like() {
+        if (liking) return
+        val post = (_state.value.post as? Load.Ready)?.value ?: return
+        liking = true
+        viewModelScope.launch {
+            try {
+                when (val r = repo.toggleLike(id)) {
+                    is ApiResult.Ok -> _state.update { it.copy(post = Load.Ready(post.copy(likedByMe = r.value.liked, likeCount = r.value.likeCount))) }
+                    is ApiResult.Err -> _state.update { it.copy(error = r.message) }
+                }
+            } finally {
+                liking = false
+            }
         }
     }
 
@@ -229,7 +248,7 @@ fun BlogPostScreen(id: String, onBack: () -> Unit, onSignIn: () -> Unit) {
                             Text(listOfNotNull(post.createdBy?.name, formatDate(post.createdAt)).joinToString(" · "), style = MaterialTheme.typography.labelMedium, color = Brand.gold)
                         }
                     }
-                    items(post.images, key = { it.imagePath }) { img ->
+                    itemsIndexed(post.images, key = { i, img -> "$i:${img.imagePath}" }) { _, img -> // a post can repeat an image
                         Column(Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
                             RemoteImage(img.imagePath, img.caption, Modifier.fillMaxWidth().aspectRatio(1.5f).clip(MaterialTheme.shapes.large))
                             img.caption?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp)) }
