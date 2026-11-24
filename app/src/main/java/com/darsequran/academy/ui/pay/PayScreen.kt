@@ -58,6 +58,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.darsequran.academy.data.ApiResult
+import com.darsequran.academy.data.repo.orNull
 import com.darsequran.academy.data.remote.PaymentQuote
 import com.darsequran.academy.data.remote.PaymentSettings
 import com.darsequran.academy.data.repo.AcademyRepository
@@ -97,6 +98,7 @@ data class PayState(
     val couponId: String? = null,
     val month: Int = academyToday().monthValue,
     val year: String = academyToday().year.toString(),
+    val settingsError: String? = null,
     val submitting: Boolean = false,
     val submitError: String? = null,
     val done: Boolean = false,
@@ -135,13 +137,21 @@ class PayViewModel(
                 it.copy(
                     loading = false,
                     quote = q.value,
-                    settings = (settings.await() as? ApiResult.Ok)?.value,
+                    settings = settings.await().orNull(),
+                    settingsError = (settings.await() as? ApiResult.Err)?.message,
                     year = if (saved.contains(YEAR)) it.year
                     else q.value.yearOptions.firstOrNull { y -> y == academyToday().year.toString() } ?: q.value.yearOptions.firstOrNull() ?: it.year,
                 )
             }
             is ApiResult.Err -> _state.update { it.copy(loading = false, error = q.message) }
         }
+    }
+
+    /** Fetches the academy's UPI and bank details again (after they failed to load). */
+    fun reloadSettings() = viewModelScope.launch {
+        _state.update { it.copy(settingsError = null) }
+        val r = repo.paymentSettings()
+        _state.update { it.copy(settings = r.orNull() ?: it.settings, settingsError = (r as? ApiResult.Err)?.message) }
     }
 
     fun selectCoupon(id: String?) { saved[COUPON] = id; _state.update { it.copy(couponId = id) } }
@@ -207,7 +217,11 @@ fun launchUpi(context: Context, settings: PaymentSettings, amountPaise: Int, not
         .appendQueryParameter("cu", "INR")
         .appendQueryParameter("tn", note.take(60))
         .build()
-    return runCatching { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_VIEW, uri), "Pay with")) }.isSuccess
+    val intent = Intent(Intent.ACTION_VIEW, uri)
+    // The chooser opens (saying "no apps") even when nothing handles upi://, so ask first; the manifest declares the
+    // upi scheme in <queries>, which makes UPI apps visible here.
+    if (context.packageManager.queryIntentActivities(intent, 0).isEmpty()) return false
+    return runCatching { context.startActivity(Intent.createChooser(intent, "Pay with")) }.isSuccess
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -288,6 +302,7 @@ private fun PayFlow(state: PayState, vm: PayViewModel, courseTitle: String, head
         if (!free) {
             // ---- step 2: pay
             StepHeader(2, "Pay")
+            PaymentDetailsError(state.settingsError, vm::reloadSettings)
             PayWithUpiButton(settings, state.amountPaise, "$heading - $courseTitle")
             PaymentDetailsCard(settings)
 

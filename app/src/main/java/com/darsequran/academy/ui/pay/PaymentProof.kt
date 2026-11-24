@@ -33,9 +33,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.darsequran.academy.data.remote.PaymentSettings
 import com.darsequran.academy.ui.common.AppCard
+import com.darsequran.academy.ui.common.Banner
 import com.darsequran.academy.ui.common.Overline
 import com.darsequran.academy.ui.common.PrimaryButton
 import com.darsequran.academy.ui.common.ProofImagePicker
+import com.darsequran.academy.ui.common.SecondaryButton
+import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.rupees
 import com.darsequran.academy.ui.theme.Brand
 import kotlinx.coroutines.launch
@@ -55,6 +58,14 @@ fun PayWithUpiButton(settings: PaymentSettings?, amountPaise: Int, note: String)
             Toast.makeText(context, "No UPI app found. Use the details below.", Toast.LENGTH_LONG).show()
         }
     })
+}
+
+/** The payment details failed to load: without them there is nothing to pay to, so say so and offer a retry. */
+@Composable
+fun PaymentDetailsError(message: String?, onRetry: () -> Unit) {
+    if (message == null) return
+    Banner("Couldn't load the academy's payment details. $message", Tone.Danger)
+    SecondaryButton("Try again", onRetry)
 }
 
 /** The academy's UPI and bank details, each with a copy button. */

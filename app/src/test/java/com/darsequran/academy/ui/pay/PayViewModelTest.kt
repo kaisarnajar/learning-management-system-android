@@ -30,10 +30,13 @@ class PayViewModelTest {
     private val app = ApplicationProvider.getApplicationContext<AcademyApp>()
     private val server = MockWebServer()
     private val submissions = AtomicInteger()
+    @Volatile private var settingsFail = false
 
     @Before fun setUp() {
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse = when (request.url.encodedPath) {
+                "/api/v1/payment-settings" ->
+                    if (settingsFail) MockResponse(code = 503) else MockResponse(body = """{"settings":{"upiId":"academy@upi"}}""")
                 "/api/v1/payments/quote" -> MockResponse(body = """{"courseId":"c1","type":"course","canPay":true,"baseAmountPaise":50000,"yearOptions":["2026"]}""")
                 "/api/v1/payments/submit" -> {
                     submissions.incrementAndGet()
@@ -80,5 +83,18 @@ class PayViewModelTest {
         assertEquals("waiver-50", saved.get<String>("couponId"))
         assertEquals(7, saved.get<Int>("month"))
         assertEquals("2026", saved.get<String>("year"))
+    }
+
+    @Test
+    fun paymentDetailsThatFailToLoadAreReportedAndCanBeRetried() = runBlocking {
+        settingsFail = true
+        val vm = PayViewModel(app.container.repo, "c1", "course", SavedStateHandle())
+        withTimeout(5_000) { vm.state.first { it.quote != null } }
+        assertEquals("The academy's server had a problem. Please try again.", vm.state.value.settingsError)
+        settingsFail = false
+        vm.reloadSettings()
+        withTimeout(5_000) { vm.state.first { it.settings != null } }
+        assertEquals(null, vm.state.value.settingsError)
+        assertEquals("academy@upi", vm.state.value.settings?.upiId)
     }
 }

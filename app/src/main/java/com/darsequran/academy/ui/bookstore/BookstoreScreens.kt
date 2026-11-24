@@ -67,6 +67,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.darsequran.academy.data.ApiResult
+import com.darsequran.academy.data.repo.orNull
 import com.darsequran.academy.data.Session
 import com.darsequran.academy.data.remote.Book
 import com.darsequran.academy.data.remote.BookOrder
@@ -109,6 +110,7 @@ import com.darsequran.academy.ui.home.BookTile
 import com.darsequran.academy.ui.pay.PayWithUpiButton
 import com.darsequran.academy.ui.pay.PaymentConfirmFields
 import com.darsequran.academy.ui.pay.PaymentDetailsCard
+import com.darsequran.academy.ui.pay.PaymentDetailsError
 import com.darsequran.academy.ui.theme.Brand
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -274,6 +276,7 @@ fun CartScreen(onBack: () -> Unit, onCheckout: () -> Unit, onBrowse: () -> Unit)
 data class CheckoutState(
     val quote: Load<CheckoutQuote> = Load.Loading,
     val settings: PaymentSettings? = null,
+    val settingsError: String? = null,
     val submitting: Boolean = false,
     val error: String? = null,
     val done: Boolean = false,
@@ -289,7 +292,15 @@ class CheckoutViewModel(private val repo: AcademyRepository, private val cart: C
     fun load() = viewModelScope.launch {
         _state.update { it.copy(quote = Load.Loading) }
         val settings = async { repo.paymentSettings() }
-        _state.update { it.copy(quote = repo.checkoutQuote(lines).toLoad(), settings = (settings.await() as? ApiResult.Ok)?.value) }
+        val s = settings.await()
+        _state.update { it.copy(quote = repo.checkoutQuote(lines).toLoad(), settings = s.orNull(), settingsError = (s as? ApiResult.Err)?.message) }
+    }
+
+    /** Fetches the academy's UPI and bank details again (after they failed to load). */
+    fun reloadSettings() = viewModelScope.launch {
+        _state.update { it.copy(settingsError = null) }
+        val r = repo.paymentSettings()
+        _state.update { it.copy(settings = r.orNull() ?: it.settings, settingsError = (r as? ApiResult.Err)?.message) }
     }
 
     /** One order per checkout: a second tap (even in the same frame) or a tap after success is ignored. */
@@ -362,6 +373,7 @@ fun CheckoutScreen(onBack: () -> Unit, onDone: () -> Unit) {
                     OutlinedTextField(notes, { notes = it.take(300) }, Modifier.fillMaxWidth(), label = { Text("Note for the academy (optional)") })
 
                     Text("Payment", style = MaterialTheme.typography.titleLarge)
+                    PaymentDetailsError(state.settingsError, vm::reloadSettings)
                     PayWithUpiButton(state.settings, quote.totalAmountInrPaise, "Book order")
                     PaymentDetailsCard(state.settings)
                     PaymentConfirmFields(state.settings, method, { method = it }, reference, { reference = it }, proof)
