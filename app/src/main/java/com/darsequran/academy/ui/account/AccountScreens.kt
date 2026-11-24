@@ -238,13 +238,9 @@ fun AccountScreen(
             }
         }
 
-        // Admins and developers manage the academy rather than study in it, so their account has no learning items.
+        // Everyone signed in has the same profile pages, as on the website (admins and teachers included).
         val admin = Roles.isAdmin(session?.user?.role)
-        if (session != null && admin) {
-            item { Group("Account") }
-            item { Entry(Icons.Rounded.Notifications, "Notifications", onNotifications) }
-        }
-        if (session != null && !admin) {
+        if (session != null) {
             item { Group("My learning") }
             item { Entry(Icons.Rounded.Notifications, "Notifications", onNotifications) }
             item { Entry(Icons.Rounded.Payments, "Payments & receipts", onPayments) }

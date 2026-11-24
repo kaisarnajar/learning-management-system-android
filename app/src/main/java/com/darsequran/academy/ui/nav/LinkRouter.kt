@@ -1,10 +1,14 @@
 package com.darsequran.academy.ui.nav
 
+import com.darsequran.academy.ui.manage.AdminDashboardTab
 import com.darsequran.academy.ui.manage.TeachTab
 import com.darsequran.academy.ui.manage.routeForAdminHref
 
-/** Where a website link leads in the app: a screen to open, or a tab to switch to. */
-data class HrefDestination(val route: Any, val isTab: Boolean = false)
+/**
+ * Where a website link leads in the app: a screen to open, or a tab to switch to ([isTab]). A screen with [underTab]
+ * opens on top of that tab (staff pages open inside the staff tab).
+ */
+data class HrefDestination(val route: Any, val isTab: Boolean = false, val underTab: Any? = null)
 
 /**
  * The app's screen for a path of the academy's website (from a notification or a link in an article), for a user in
@@ -16,7 +20,11 @@ internal fun routeForHref(href: String, shell: Shell): HrefDestination? {
     val parts = path.trim('/').split('/')
     fun go(route: Any) = HrefDestination(route)
     return when {
-        parts.getOrNull(0) == "admin" -> if (shell == Shell.Admin) routeForAdminHref(path)?.let(::go) else null
+        parts.getOrNull(0) == "admin" -> when {
+            !shell.adminPanel -> null
+            parts.size == 1 -> HrefDestination(AdminDashboardTab, isTab = true)
+            else -> routeForAdminHref(path)?.let { HrefDestination(it, underTab = AdminDashboardTab) }
+        }
         parts.getOrNull(0) == "teacher" -> if (shell == Shell.Teacher) HrefDestination(TeachTab, isTab = true) else null
         parts.getOrNull(0) == "blog" && parts.size >= 2 -> go(BlogPostRoute(parts[1]))
         parts.getOrNull(0) == "fatwa" && parts.size >= 2 -> go(FatwaDetailRoute(parts[1]))

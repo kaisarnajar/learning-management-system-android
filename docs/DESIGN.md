@@ -36,15 +36,19 @@ easy to reach, but it never pushes the student's own courses down the screen.
 
 ## 3. Navigation
 
-A bottom navigation bar with **four tabs**. Four, not five: each label stays
-readable, and every tab earns its place.
+A bottom navigation bar with **four tabs** for everyone. As on the website,
+where staff see the whole public site plus one header link into their area,
+staff get the same four tabs plus **one** more, placed before Account:
+**Teach** for teachers, **Admin** for admins, **Developer** for developers.
+Every role starts on Home.
 
 | Tab | Icon | Contents |
 |---|---|---|
 | **Home** | house | greeting, action cards (fee due, pending payment, profile incomplete, verify e-mail), daily inspiration, my courses strip, announcements, featured courses / posts / books |
 | **Courses** | book | *My courses* (when signed in) and the *catalogue*; course detail; inside an enrolled course: announcements, attendance, grades, fees |
 | **Explore** | compass | the academy's content: blog, fatwa (read and ask), digital library, announcements, teachers |
-| **Account** | person | profile and registration number, payments and receipts, waiver requests, reviews, bookstore orders, settings, contact, about, policies, sign out, delete account. For guests: sign in / create account, plus the public entries |
+| **Teach** / **Admin** / **Developer** | (staff only) | the teacher's courses, blogs and fatwa questions; or the admin dashboard: what needs action, then every group of the website's admin sidebar. Admin pages opened from a link open inside this tab |
+| **Account** | person | profile and registration number, payments, waiver requests, reviews, bookstore orders, settings, contact, about, policies, sign out, delete account. For guests: sign in / create account, plus the public entries |
 
 The **bookstore** is reached from Home (featured books) and Explore; the
 **cart** is a top-bar icon on bookstore screens. **Notifications** are a bell in

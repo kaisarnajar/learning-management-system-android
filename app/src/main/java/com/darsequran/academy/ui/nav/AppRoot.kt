@@ -6,27 +6,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.material.icons.automirrored.outlined.Article
-import androidx.compose.material.icons.automirrored.rounded.Article
-import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.CastForEducation
 import androidx.compose.material.icons.outlined.Dashboard
-import androidx.compose.material.icons.outlined.School
-import androidx.compose.material.icons.rounded.AccountBalanceWallet
 import androidx.compose.material.icons.rounded.CastForEducation
 import androidx.compose.material.icons.rounded.Dashboard
-import androidx.compose.material.icons.rounded.School
 import androidx.compose.runtime.key
 import com.darsequran.academy.BuildConfig
 import com.darsequran.academy.data.AppEnvironment
 import com.darsequran.academy.data.canSwitchEnvironment
-import com.darsequran.academy.ui.manage.AdminAcademicsTab
-import com.darsequran.academy.ui.manage.AdminContentTab
 import com.darsequran.academy.ui.manage.AdminDashboardScreen
 import com.darsequran.academy.ui.manage.AdminDashboardTab
-import com.darsequran.academy.ui.manage.AdminFinanceTab
-import com.darsequran.academy.ui.manage.AdminHubScreen
-import com.darsequran.academy.ui.manage.AdminHubs
 import com.darsequran.academy.ui.manage.EnvironmentRoute
 import com.darsequran.academy.ui.manage.EnvironmentScreen
 import com.darsequran.academy.ui.manage.EnvironmentStrip
@@ -137,27 +126,31 @@ private val coursesTab = TabItem(CoursesTab, CoursesTab::class, "Courses", Icons
 private val exploreTab = TabItem(ExploreTab, ExploreTab::class, "Explore", Icons.Outlined.Explore, Icons.Rounded.Explore)
 private val accountTab = TabItem(AccountTab, AccountTab::class, "Account", Icons.Outlined.Person, Icons.Rounded.Person)
 
-/** Which app a signed-in user sees: students the learning app, teachers that plus a Teach tab, admins the admin panel. */
-internal enum class Shell(val tabs: List<TabItem>, val start: Any) {
-    Student(listOf(homeTab, coursesTab, exploreTab, accountTab), HomeTab),
-    Teacher(
-        listOf(homeTab, coursesTab, TabItem(TeachTab, TeachTab::class, "Teach", Icons.Outlined.CastForEducation, Icons.Rounded.CastForEducation), exploreTab, accountTab),
-        HomeTab,
-    ),
-    Admin(
-        listOf(
-            TabItem(AdminDashboardTab, AdminDashboardTab::class, "Dashboard", Icons.Outlined.Dashboard, Icons.Rounded.Dashboard),
-            TabItem(AdminAcademicsTab, AdminAcademicsTab::class, "Academy", Icons.Outlined.School, Icons.Rounded.School),
-            TabItem(AdminFinanceTab, AdminFinanceTab::class, "Finance", Icons.Outlined.AccountBalanceWallet, Icons.Rounded.AccountBalanceWallet),
-            TabItem(AdminContentTab, AdminContentTab::class, "Content", Icons.AutoMirrored.Outlined.Article, Icons.AutoMirrored.Rounded.Article),
-            accountTab,
-        ),
-        AdminDashboardTab,
-    );
+private val teachTab =
+    TabItem(TeachTab, TeachTab::class, "Teach", Icons.Outlined.CastForEducation, Icons.Rounded.CastForEducation)
+private fun adminTab(label: String) =
+    TabItem(AdminDashboardTab, AdminDashboardTab::class, label, Icons.Outlined.Dashboard, Icons.Rounded.Dashboard)
+
+/**
+ * The tabs a signed-in user sees. As on the website, everyone gets the public app (Home, Courses, Explore, Account);
+ * staff also get one entry into their area, named as in the website's header: Teach, Admin or Developer.
+ */
+internal enum class Shell(staff: TabItem?) {
+    Student(null),
+    Teacher(teachTab),
+    Admin(adminTab("Admin")),
+    Developer(adminTab("Developer"));
+
+    val tabs: List<TabItem> = listOfNotNull(homeTab, coursesTab, exploreTab, staff, accountTab)
+    val start: Any = HomeTab
+
+    /** Admins and developers share the admin panel. */
+    val adminPanel: Boolean get() = this == Admin || this == Developer
 
     companion object {
         fun of(role: String?) = when (role) {
-            Roles.ADMIN, Roles.DEVELOPER -> Admin
+            Roles.ADMIN -> Admin
+            Roles.DEVELOPER -> Developer
             Roles.TEACHER -> Teacher
             else -> Student
         }
@@ -223,7 +216,12 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
     /** Website links (notifications, article links) → app screens; false when the app has no screen for it. */
     fun openHref(href: String): Boolean {
         val destination = routeForHref(href, shell) ?: return false
-        if (destination.isTab) nav.switchTab(destination.route) else nav.navigate(destination.route)
+        when {
+            destination.isTab -> nav.switchTab(destination.route)
+            // Staff pages open inside the staff tab, so Back leads to the staff area, not to wherever the link was.
+            destination.underTab != null -> { nav.switchTab(destination.underTab); nav.navigate(destination.route) }
+            else -> nav.navigate(destination.route)
+        }
         return true
     }
 
@@ -308,14 +306,11 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
 
                 // ---- admin (admins and developers) and teacher tabs: registered only for those roles, so no route or
                 // link can open a staff screen in a student's app (the server checks roles as well)
-                if (shell == Shell.Admin) {
+                if (shell.adminPanel) {
                     val openAdmin: (String) -> Unit = { href -> routeForAdminHref(href)?.let { nav.navigate(it) } ?: notAvailable(context) }
                     composable<AdminDashboardTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
                         AdminDashboardScreen(session?.user?.name, session?.user?.role ?: Roles.ADMIN, openAdmin)
                     }
-                    composable<AdminAcademicsTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Academics", AdminHubs.academics, openAdmin) }
-                    composable<AdminFinanceTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Finance", AdminHubs.finance, openAdmin) }
-                    composable<AdminContentTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { AdminHubScreen("Content", AdminHubs.content, openAdmin) }
                 }
                 if (shell == Shell.Teacher) {
                     composable<TeachTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { TeachHomeScreen(nav) }

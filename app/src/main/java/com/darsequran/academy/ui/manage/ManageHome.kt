@@ -41,7 +41,6 @@ import com.darsequran.academy.ui.common.Overline
 import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.SectionHeader
 import com.darsequran.academy.ui.common.academyToday
-import com.darsequran.academy.ui.manage.common.ManageScaffold
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.theme.Brand
 import com.darsequran.academy.ui.theme.HeroUnderStatusBar
@@ -51,7 +50,7 @@ import java.time.format.DateTimeFormatter
 // ------------------------------------------------------------------ API
 
 /**
- * The admin's first tab: what needs action now, then every section of the website's admin panel with its count.
+ * The Admin (or Developer) tab: what needs action now, then every section of the website's admin panel with its count.
  * [onOpen] receives a website admin path ("/admin/payments"); the caller maps it to an app screen.
  */
 @Composable
@@ -96,24 +95,6 @@ fun AdminDashboardScreen(name: String?, role: String, onOpen: (String) -> Unit) 
                     }
                 }
                 else -> item { LoadContent(s, { loader.reload(showLoading = true) }) {} }
-            }
-        }
-    }
-}
-
-/** A hub tab: some of the admin panel's groups as tiles, e.g. Finance = payments, fee waivers and the bookstore. */
-@Composable
-fun AdminHubScreen(title: String, groupTitles: List<String>, onOpen: (String) -> Unit) {
-    val loader = rememberLoader("admin-dashboard") { service<DashboardApi>().dashboard() }
-    ReloadOnReturn { loader.reload() }
-    val state by loader.state.collectAsStateWithLifecycle()
-    ManageScaffold(title, onBack = null) { padding ->
-        LoadContent(state, { loader.reload(showLoading = true) }) { data ->
-            LazyColumn(Modifier.padding(padding).fillMaxSize(), contentPadding = PaddingValues(bottom = 32.dp)) {
-                data.groups.filter { it.title in groupTitles }.forEach { group ->
-                    item { Spacer(Modifier.height(16.dp)); SectionHeader(group.title); Spacer(Modifier.height(12.dp)) }
-                    tiles(group.links, onOpen)
-                }
             }
         }
     }

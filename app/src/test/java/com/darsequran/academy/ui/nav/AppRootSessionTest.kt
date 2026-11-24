@@ -48,13 +48,19 @@ class AppRootSessionTest {
     }
 
     @Test
-    fun eachStaffShellStartsOnItsOwnTabs() {
+    fun staffKeepThePublicTabsAndGetTheirOwnEntry() {
         signIn("ustadh", role = "TEACHER")
         compose.setContent { AppRoot() }
         compose.waitUntilSettled { compose.onAllNodes(hasText("Teach")).fetchSemanticsNodes().isNotEmpty() }
+        listOf("Home", "Courses", "Explore", "Account").forEach { compose.onAllNodesWithText(it)[0].assertExists() }
+
         signIn("admin", role = "ADMIN")
-        compose.waitUntilSettled { compose.onAllNodes(hasText("Dashboard")).fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntilSettled { compose.onAllNodes(hasText("Admin")).fetchSemanticsNodes().isNotEmpty() }
+        listOf("Home", "Courses", "Explore", "Account").forEach { compose.onAllNodesWithText(it)[0].assertExists() }
         assertEquals(0, compose.onAllNodesWithText("Teach").fetchSemanticsNodes().size)
+
+        signIn("dev", role = "DEVELOPER")
+        compose.waitUntilSettled { compose.onAllNodes(hasText("Developer")).fetchSemanticsNodes().isNotEmpty() }
     }
 
     @Test
