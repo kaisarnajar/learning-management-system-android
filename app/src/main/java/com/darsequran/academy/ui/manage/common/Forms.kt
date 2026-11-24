@@ -92,6 +92,7 @@ import com.darsequran.academy.data.staff.readPicked
 import com.darsequran.academy.ui.common.PrimaryButton
 import com.darsequran.academy.ui.common.RemoteImage
 import com.darsequran.academy.ui.theme.Brand
+import com.darsequran.academy.ui.common.academyToday
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
 import kotlinx.coroutines.launch
@@ -288,7 +289,7 @@ fun FormDateField(label: String, value: String, onChange: (String) -> Unit, modi
         Box(Modifier.matchParentSize().padding(end = if (clearable && date != null) 48.dp else 0.dp).clickable { open = true })
     }
     if (open) {
-        val state = rememberDatePickerState(initialSelectedDateMillis = (date ?: LocalDate.now()).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli())
+        val state = rememberDatePickerState(initialSelectedDateMillis = (date ?: academyToday()).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli())
         DatePickerDialog(
             onDismissRequest = { open = false },
             confirmButton = {

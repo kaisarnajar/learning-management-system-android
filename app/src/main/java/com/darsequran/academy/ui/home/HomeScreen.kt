@@ -91,13 +91,13 @@ import com.darsequran.academy.ui.common.rupees
 import com.darsequran.academy.ui.common.statusLabel
 import com.darsequran.academy.ui.common.vmFactory
 import com.darsequran.academy.ui.theme.Brand
+import com.darsequran.academy.ui.common.academyToday
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -153,7 +153,7 @@ class HomeViewModel(private val repo: AcademyRepository, private val auth: AuthR
                     add(ActionCard(ActionCard.Kind.PayEnrollment, "Pay the enrollment fee", "${course.title} · ${rupees(course.priceInrPaise)}", course.id, course.title))
                 }
                 if (e.status == "active" && course.monthlyFeeInrPaise > 0 && (course.feeFrequency ?: "MONTHLY") == "MONTHLY") {
-                    val month = LocalDate.now()
+                    val month = academyToday()
                     val label = "${month.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH)} ${month.year}"
                     val paid = submissions.any { it.courseId == e.courseId && it.paymentType != "enrollment" && it.label.contains(label) && it.status != "rejected" && it.status != "declined" }
                     if (!paid) add(ActionCard(ActionCard.Kind.PayCourseFee, "$label fee is due", "${course.title} · ${rupees(course.monthlyFeeInrPaise)}", course.id, course.title))

@@ -46,10 +46,10 @@ import com.darsequran.academy.ui.manage.common.rememberContainer
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.theme.Brand
 import com.darsequran.academy.ui.theme.HeroUnderStatusBar
+import com.darsequran.academy.ui.common.academyToday
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import retrofit2.http.GET
-import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 // ------------------------------------------------------------------ API
@@ -84,7 +84,7 @@ fun AdminDashboardScreen(name: String?, role: String, onOpen: (String) -> Unit) 
                         Overline(if (role == "DEVELOPER") "Developer panel" else "Admin panel", Brand.goldSoft)
                         Spacer(Modifier.height(6.dp))
                         Text("Assalamu alaikum${name?.let { ", " + it.substringBefore(' ') } ?: ""}", style = MaterialTheme.typography.headlineSmall, color = Brand.onHero)
-                        Text(LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, d MMMM")), style = MaterialTheme.typography.bodyMedium, color = Brand.onHero.copy(alpha = 0.8f))
+                        Text(academyToday().format(DateTimeFormatter.ofPattern("EEEE, d MMMM")), style = MaterialTheme.typography.bodyMedium, color = Brand.onHero.copy(alpha = 0.8f))
                     }
                 }
             }

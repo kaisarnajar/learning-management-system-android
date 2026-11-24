@@ -89,7 +89,10 @@ fun NavGraphBuilder.coursesGraph(nav: NavHostController) {
     }
     composable<AttendanceTakeRoute> {
         val r = it.toRoute<AttendanceTakeRoute>()
-        AttendanceTakeScreen(Portal.of(r.portal), r.courseId, r.date, nav::popBackStack)
+        AttendanceTakeScreen(
+            Portal.of(r.portal), r.courseId, r.date, nav::popBackStack,
+            onEditExisting = { d -> nav.navigate(AttendanceTakeRoute(r.portal, r.courseId, d)) { popUpTo<AttendanceTakeRoute> { inclusive = true } } },
+        )
     }
     composable<AttendanceDayRoute> {
         val r = it.toRoute<AttendanceDayRoute>()

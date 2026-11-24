@@ -52,9 +52,9 @@ import com.darsequran.academy.ui.manage.common.StatTile
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.theme.Brand
+import com.darsequran.academy.ui.common.academyToday
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.time.LocalDate
 
 /*
  * Grade cards / test reports (website: …/courses/[id]/grades, /new, /[gradeId]/edit, /student/[enrollmentId] and,
@@ -114,7 +114,7 @@ fun GradeFormScreen(portal: Portal, courseId: String, gradeId: String?, onBack: 
     val roster = (studentState as? Load.Ready)?.value
     val grade = (gradeState as? Load.Ready)?.value
     var title by rememberSaveable { mutableStateOf("") }
-    var date by rememberSaveable { mutableStateOf(LocalDate.now().toString()) }
+    var date by rememberSaveable { mutableStateOf(academyToday().toString()) }
     var maxMarks by rememberSaveable { mutableStateOf("") }
     val entries = rememberRosterEntries<String>("grade-marks-${portal.path}-$courseId-${gradeId ?: "new"}")
     val marks = entries.values

@@ -57,6 +57,8 @@ import com.darsequran.academy.ui.common.PrimaryButton
 import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.StatusChip
 import com.darsequran.academy.ui.common.Tone
+import com.darsequran.academy.ui.common.academyToday
+import com.darsequran.academy.ui.common.formatDate
 import com.darsequran.academy.ui.manage.common.AddFab
 import com.darsequran.academy.ui.manage.common.ConfirmDialog
 import com.darsequran.academy.ui.manage.common.DetailCard
@@ -69,7 +71,7 @@ import com.darsequran.academy.ui.manage.common.StatTile
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.theme.Brand
-import java.time.LocalDate
+import retrofit2.HttpException
 
 /*
  * Attendance (website: …/courses/[id]/attendance, /new, /[date], /[date]/edit, /student/[enrollmentId] and, for
@@ -118,14 +120,16 @@ fun AttendanceListScreen(portal: Portal, courseId: String, onBack: () -> Unit, o
  * them, "All present" / "All absent" for the whole class, then Save.
  */
 @Composable
-fun AttendanceTakeScreen(portal: Portal, courseId: String, date: String?, onBack: () -> Unit) {
+fun AttendanceTakeScreen(portal: Portal, courseId: String, date: String?, onBack: () -> Unit, onEditExisting: (String) -> Unit = {}) {
     val students = rememberLoader("attendance-students-${portal.path}-$courseId") { service<CourseToolsApi>().attendanceStudents(portal.path, courseId).data }
     val saved = if (date != null) rememberLoader("attendance-day-${portal.path}-$courseId-$date") { service<CourseToolsApi>().attendanceDay(portal.path, courseId, date) } else null
     val studentState by students.state.collectAsStateWithLifecycle()
     val savedState = saved?.state?.collectAsStateWithLifecycle()?.value
     val runner = rememberActionRunner()
 
-    var day by rememberSaveable { mutableStateOf(date ?: LocalDate.now().toString()) }
+    var day by rememberSaveable { mutableStateOf(date ?: academyToday().toString()) }
+    // A new day that turns out to be marked already: saving would replace it for every student.
+    var alreadyMarked by remember { mutableStateOf<String?>(null) }
     val entries = rememberRosterEntries<Boolean>("attendance-marks-${portal.path}-$courseId-${date ?: "new"}")
     val marks = entries.values
     val initialised = entries.initialised
@@ -138,13 +142,21 @@ fun AttendanceTakeScreen(portal: Portal, courseId: String, date: String?, onBack
     }
 
     val present = roster?.count { marks[it.enrollmentId] ?: true } ?: 0
-    val save = {
+    val store = {
         val list = roster.orEmpty()
-        if (day.isBlank()) runner.message("Please select a date.")
-        else runner.run(
+        runner.run(
             { service<CourseToolsApi>().saveAttendance(portal.path, courseId, day, AttendanceSave(list.map { AttendanceMark(it.enrollmentId, marks[it.enrollmentId] ?: true) })) },
             success = "Attendance saved.",
         ) { onBack() }
+    }
+    val save = {
+        when {
+            day.isBlank() -> runner.message("Please select a date.")
+            date != null -> store() // editing that day on purpose
+            else -> runner.run({ service<CourseToolsApi>().isMarked(portal.path, courseId, day) }) { marked ->
+                if (marked) alreadyMarked = day else store()
+            }
+        }
     }
 
     ManageScaffold(
@@ -188,6 +200,21 @@ fun AttendanceTakeScreen(portal: Portal, courseId: String, date: String?, onBack
             }
         }
     }
+    alreadyMarked?.let { d -> AlreadyMarkedDialog(d, onEdit = { alreadyMarked = null; onEditExisting(d) }, onDismiss = { alreadyMarked = null }) }
+}
+
+@Composable
+private fun AlreadyMarkedDialog(day: String, onEdit: () -> Unit, onDismiss: () -> Unit) = ConfirmDialog(
+    "Attendance already marked", "Attendance for ${formatDate(day)} is already saved. Saving here would replace it for every student. Open that day to change it instead.", "Open that day",
+    onConfirm = onEdit,
+    onDismiss = onDismiss,
+)
+
+/** Whether [date] already has attendance (the website answers 404 for a day with none). */
+private suspend fun CourseToolsApi.isMarked(portal: String, courseId: String, date: String): Boolean = try {
+    attendanceDay(portal, courseId, date).records.any { it.isPresent != null }
+} catch (e: HttpException) {
+    if (e.code() == 404) false else throw e
 }
 
 @Composable

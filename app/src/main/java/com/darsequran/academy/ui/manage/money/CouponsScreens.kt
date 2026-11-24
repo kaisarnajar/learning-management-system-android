@@ -60,7 +60,7 @@ import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
 import com.darsequran.academy.ui.theme.Brand
-import java.time.LocalDate
+import com.darsequran.academy.ui.common.academyToday
 
 private val couponTabs = listOf(
     FilterOption(null, "Waiver Requests"),
@@ -167,7 +167,7 @@ private fun WaiverRequestCard(r: WaiverRequest, runner: ActionRunner, onChanged:
 @Composable
 private fun ApproveWaiverDialog(onDismiss: () -> Unit, onApprove: (percentage: String, validUntil: String) -> Unit) {
     var percentage by remember { mutableStateOf("100") }
-    var validUntil by remember { mutableStateOf(LocalDate.now().plusDays(30).toString()) }
+    var validUntil by remember { mutableStateOf(academyToday().plusDays(30).toString()) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Approve fee waiver") },
@@ -231,7 +231,7 @@ fun CouponFormScreen(route: CouponFormRoute, onBack: () -> Unit) {
     val special = route.type == "SPECIAL"
     var code by rememberSaveable { mutableStateOf(route.code) }
     var percentage by rememberSaveable { mutableStateOf(route.percentage) }
-    var validFrom by rememberSaveable { mutableStateOf(route.validFrom.ifBlank { LocalDate.now().toString() }) }
+    var validFrom by rememberSaveable { mutableStateOf(route.validFrom.ifBlank { academyToday().toString() }) }
     var validUntil by rememberSaveable { mutableStateOf(route.validUntil) }
     var courseId by rememberSaveable { mutableStateOf(route.courseId) }
     var gender by rememberSaveable { mutableStateOf(route.gender) }

@@ -1,6 +1,7 @@
 package com.darsequran.academy.ui.common
 
 import java.text.NumberFormat
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -23,7 +24,12 @@ fun rupees(paise: Int): String = "₹" + (if (paise % 100 == 0) inr else inrPais
 
 private val dayFormat = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
 private val dayTimeFormat = DateTimeFormatter.ofPattern("d MMM yyyy, h:mm a", Locale.ENGLISH)
-private val zone: ZoneId = ZoneId.of("Asia/Kolkata")
+/** The academy's time zone: "today", a fee's month and a class date are the academy's, not the phone's. */
+val academyZone: ZoneId = ZoneId.of("Asia/Kolkata")
+private val zone: ZoneId = academyZone
+
+/** Today's date at the academy, whatever time zone the phone is set to. */
+fun academyToday(clock: Clock = Clock.system(academyZone)): LocalDate = LocalDate.now(clock.withZone(academyZone))
 
 private fun parse(value: String?): java.time.ZonedDateTime? {
     if (value.isNullOrBlank()) return null

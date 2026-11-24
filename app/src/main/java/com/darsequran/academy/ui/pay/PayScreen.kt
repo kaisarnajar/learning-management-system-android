@@ -87,6 +87,7 @@ import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.rupees
 import com.darsequran.academy.ui.common.vmFactory
 import com.darsequran.academy.ui.theme.Brand
+import com.darsequran.academy.ui.common.academyToday
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -96,7 +97,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
-import java.time.LocalDate
 import java.time.Month
 import java.time.format.TextStyle
 import java.util.Locale
@@ -107,8 +107,8 @@ data class PayState(
     val quote: PaymentQuote? = null,
     val settings: PaymentSettings? = null,
     val couponId: String? = null,
-    val month: Int = LocalDate.now().monthValue,
-    val year: String = LocalDate.now().year.toString(),
+    val month: Int = academyToday().monthValue,
+    val year: String = academyToday().year.toString(),
     val submitting: Boolean = false,
     val submitError: String? = null,
     val done: Boolean = false,
@@ -132,7 +132,7 @@ class PayViewModel(private val repo: AcademyRepository, val courseId: String, va
                     loading = false,
                     quote = q.value,
                     settings = (settings.await() as? ApiResult.Ok)?.value,
-                    year = q.value.yearOptions.firstOrNull { y -> y == LocalDate.now().year.toString() } ?: q.value.yearOptions.firstOrNull() ?: it.year,
+                    year = q.value.yearOptions.firstOrNull { y -> y == academyToday().year.toString() } ?: q.value.yearOptions.firstOrNull() ?: it.year,
                 )
             }
             is ApiResult.Err -> _state.update { it.copy(loading = false, error = q.message) }
