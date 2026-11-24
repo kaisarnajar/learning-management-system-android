@@ -22,6 +22,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.darsequran.academy.data.ApiResult
 import com.darsequran.academy.data.remote.Paged
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,29 +42,51 @@ data class PagedState<T>(
     val canLoadMore get() = !loading && items.size < total
 }
 
-/** A searchable, paginated list backed by one `/api/v1` list endpoint. */
+/**
+ * A searchable, paginated list backed by one `/api/v1` list endpoint.
+ *
+ * A refresh, search or filter change supersedes whatever is loading: the old request is cancelled and, should its
+ * answer still arrive, ignored (a late page of the previous query must not be appended to the new one). Only one
+ * "load more" runs at a time.
+ */
 class PagedViewModel<T>(private val fetch: suspend (page: Int, query: String, filter: String?) -> ApiResult<Paged<T>>) : ViewModel() {
     private val _state = MutableStateFlow(PagedState<T>())
     val state: StateFlow<PagedState<T>> = _state.asStateFlow()
+
+    private var job: Job? = null
+    private var generation = 0
 
     init { load(reset = true) }
 
     fun refresh() { _state.update { it.copy(refreshing = true) }; load(reset = true) }
     fun search(query: String) { _state.update { it.copy(query = query) }; load(reset = true) }
     fun filter(value: String?) { _state.update { it.copy(filter = value) }; load(reset = true) }
-    fun loadMore() { if (_state.value.canLoadMore) load(reset = false) }
+    fun loadMore() { if (_state.value.canLoadMore && job?.isActive != true) load(reset = false) }
 
-    private fun load(reset: Boolean) = viewModelScope.launch {
-        val page = if (reset) 1 else _state.value.page + 1
+    private fun load(reset: Boolean) {
+        if (reset) { job?.cancel(); generation++ }
+        val gen = generation
+        val current = _state.value
+        val page = if (reset) 1 else current.page + 1
         _state.update { it.copy(loading = true, error = null) }
-        when (val r = fetch(page, _state.value.query, _state.value.filter)) {
-            is ApiResult.Ok -> _state.update {
-                it.copy(items = if (reset) r.value.data else it.items + r.value.data, page = page, total = r.value.totalCount, loading = false, refreshing = false)
+        job = viewModelScope.launch {
+            val r = fetch(page, current.query, current.filter)
+            if (gen != generation) return@launch // superseded while in flight
+            when (r) {
+                is ApiResult.Ok -> _state.update {
+                    it.copy(items = if (reset) r.value.data else it.items + r.value.data, page = page, total = r.value.totalCount, loading = false, refreshing = false)
+                }
+                is ApiResult.Err -> _state.update { it.copy(loading = false, refreshing = false, error = r.message) }
             }
-            is ApiResult.Err -> _state.update { it.copy(loading = false, refreshing = false, error = r.message) }
         }
     }
 }
+
+/**
+ * [items] without repeated keys. Pages are fetched by offset, so a row added on the server between two pages shows
+ * up again at the top of the next one; a lazy list throws on a repeated key.
+ */
+fun <T> List<T>.distinctByKey(key: (T) -> Any): List<T> = distinctBy(key)
 
 /** Standard list screen body: pull to refresh, search, infinite scroll, empty and error states. */
 @Composable
@@ -87,7 +110,7 @@ fun <T> PagedListBody(
             header()
             if (state.error != null && state.items.isEmpty()) item { ErrorState(state.error!!, vm::refresh) }
             else if (!state.loading && state.items.isEmpty()) item { EmptyState(emptyTitle, if (state.query.isNotBlank()) "Try a different search." else null) }
-            items(state.items, key = key) { itemContent(it) }
+            items(state.items.distinctByKey(key), key = key) { itemContent(it) }
             if (state.loading && !state.refreshing) item { if (state.items.isEmpty()) SkeletonList(4) else LoadingBox(Modifier.fillMaxWidth().height(72.dp)) }
         }
     }
