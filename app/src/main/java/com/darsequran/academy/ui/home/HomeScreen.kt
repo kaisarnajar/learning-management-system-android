@@ -94,6 +94,12 @@ import com.darsequran.academy.ui.common.academyToday
 import com.darsequran.academy.ui.common.feePeriod
 import com.darsequran.academy.ui.common.monthlyFeeDue
 import com.darsequran.academy.data.remote.EnrollmentStatus
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.StarOutline
+import androidx.compose.material3.TextButton
+import com.darsequran.academy.data.remote.LibraryItem
+import com.darsequran.academy.data.remote.Review
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -119,7 +125,26 @@ data class HomeState(
     val enrollments: List<Enrollment> = emptyList(),
     val actions: List<ActionCard> = emptyList(),
     val unread: Int = 0,
+    val resend: ResendState = ResendState(),
 )
+
+/** The verify-email card's "Resend Verification Email" button, as the website's VerificationBanner. */
+data class ResendState(val sending: Boolean = false, val sent: Boolean = false, val message: String? = null) {
+    val label: String get() = when {
+        sending -> "Sending..."
+        sent -> "Sent"
+        else -> "Resend Verification Email"
+    }
+}
+
+internal const val RESEND_SENT = "Verification email sent! Please check your Inbox. If you don't see it, check your " +
+    "Spam/Junk folder as well."
+internal const val RESEND_FAILED = "Failed to resend verification email."
+
+internal fun resendOutcome(result: ApiResult<*>): ResendState = when (result) {
+    is ApiResult.Ok -> ResendState(sent = true, message = RESEND_SENT)
+    is ApiResult.Err -> ResendState(message = result.message.ifBlank { RESEND_FAILED })
+}
 
 class HomeViewModel(private val repo: AcademyRepository, private val auth: AuthRepository) : ViewModel() {
     private val _state = MutableStateFlow(HomeState(content = repo.cachedHome(), loading = repo.cachedHome() == null))
@@ -134,6 +159,18 @@ class HomeViewModel(private val repo: AcademyRepository, private val auth: AuthR
     private var loadJob: Job? = null
 
     fun refresh() = load(refreshing = true)
+
+    /** Sends the verification link again; once sent, the button stays "Sent" (as on the website). */
+    fun resendVerification() {
+        val email = auth.session.value?.user?.email ?: return
+        val current = _state.value.resend
+        if (current.sending || current.sent) return
+        _state.update { it.copy(resend = ResendState(sending = true)) }
+        viewModelScope.launch {
+            val result = auth.resendVerification(email)
+            _state.update { it.copy(resend = resendOutcome(result)) }
+        }
+    }
     fun reload() = load()
 
     /** The newest load wins: a slower one started for the previous session must not overwrite it (or its user's data). */
@@ -187,6 +224,8 @@ class HomeViewModel(private val repo: AcademyRepository, private val auth: AuthR
     }
 }
 
+// Baselined for its size before the library and testimonials callbacks changed its signature.
+@Suppress("FunctionNaming", "LongMethod", "CyclomaticComplexMethod")
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -204,6 +243,9 @@ fun HomeScreen(
     onSignIn: () -> Unit,
     onEditProfile: () -> Unit,
     onPayments: () -> Unit,
+    onOpenLibraryItem: (String) -> Unit,
+    onSeeLibrary: () -> Unit,
+    onWriteReview: () -> Unit,
     vm: HomeViewModel = viewModel(factory = vmFactory { HomeViewModel(it.repo, it.auth) }),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
@@ -230,6 +272,9 @@ fun HomeScreen(
                             ActionCard.Kind.CompleteProfile -> onEditProfile()
                             ActionCard.Kind.VerifyEmail -> onEditProfile()
                         }
+                    }
+                    if (action.kind == ActionCard.Kind.VerifyEmail) {
+                        VerifyEmailResend(state.resend, vm::resendVerification)
                     }
                 }
             }
@@ -277,6 +322,8 @@ fun HomeScreen(
                 }
             }
 
+            if (content.libraryItems.isNotEmpty()) libraryItems(content.libraryItems, onOpenLibraryItem, onSeeLibrary)
+
             if (content.books.isNotEmpty()) {
                 item { Spacer(Modifier.height(18.dp)); SectionHeader("Bookstore", action = "Shop", onAction = onSeeBookstore) }
                 item {
@@ -285,6 +332,8 @@ fun HomeScreen(
                     }
                 }
             }
+
+            testimonials(content.reviews, onWriteReview)
         }
     }
 }
@@ -498,5 +547,151 @@ fun BookTile(book: Book, modifier: Modifier = Modifier.width(150.dp), onClick: (
         Text(book.author, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.height(2.dp))
         PriceLine(book.priceInrPaise, book.mrpInrPaise)
+    }
+}
+
+// ------------------------------------------------- library and testimonials (the website's homepage sections)
+
+private const val CARD_IMAGE_RATIO = 16f / 9f
+private const val MAX_STARS = 5
+
+/** The website's FeaturedResources: "Study Materials" from the digital library. */
+private fun LazyListScope.libraryItems(items: List<LibraryItem>, onOpen: (String) -> Unit, onSeeAll: () -> Unit) {
+    item {
+        Spacer(Modifier.height(18.dp))
+        SectionHeader("Study Materials", action = "View all", onAction = onSeeAll)
+        SectionIntro("Books and study materials from the academy digital library.")
+    }
+    item {
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(items, key = { "l" + it.id }) { LibraryCard(it) { onOpen(it.id) } }
+        }
+    }
+}
+
+/** The website's StudentTestimonials: approved reviews, or an invitation to write the first. */
+private fun LazyListScope.testimonials(reviews: List<Review>, onWriteReview: () -> Unit) {
+    item {
+        Spacer(Modifier.height(18.dp))
+        SectionHeader("What our students say", action = "Write Review", onAction = onWriteReview)
+        SectionIntro(
+            "Hear from learners across Jammu & Kashmir and beyond who study Quran, Tajweed, and Islamic " +
+                "sciences with us online.",
+        )
+    }
+    if (reviews.isEmpty()) {
+        item {
+            Text(
+                "Be the first to share your experience — your review may appear here after admin approval.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
+            )
+        }
+        return
+    }
+    item {
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(reviews, key = { "r" + it.id }) { TestimonialCard(it) }
+        }
+    }
+}
+
+@Suppress("FunctionNaming") // a composable, named like one
+@Composable
+private fun SectionIntro(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp),
+    )
+}
+
+@Suppress("FunctionNaming") // a composable, named like one
+@Composable
+private fun LibraryCard(item: LibraryItem, onClick: () -> Unit) {
+    AppCard(Modifier.width(260.dp), onClick = onClick, contentPadding = PaddingValues(0.dp)) {
+        if (item.imagePath != null) {
+            RemoteImage(item.imagePath, item.title, Modifier.fillMaxWidth().aspectRatio(CARD_IMAGE_RATIO))
+        }
+        Column(Modifier.padding(14.dp)) {
+            if (item.topic.isNotBlank()) Overline(item.topic)
+            Spacer(Modifier.height(4.dp))
+            Text(item.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            if (item.author.isNotBlank()) {
+                Text(
+                    "by ${item.author}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            val facts = listOf(item.level, item.language).filter { it.isNotBlank() }
+            if (facts.isNotEmpty()) {
+                Spacer(Modifier.height(6.dp))
+                Text(facts.joinToString(" · "), style = MaterialTheme.typography.labelSmall, color = Brand.gold)
+            }
+        }
+    }
+}
+
+@Suppress("FunctionNaming") // a composable, named like one
+@Composable
+private fun TestimonialCard(review: Review) {
+    AppCard(Modifier.width(280.dp)) {
+        Row(Modifier.align(Alignment.CenterHorizontally)) {
+            repeat(MAX_STARS) { i ->
+                Icon(
+                    if (i < review.rating) Icons.Rounded.Star else Icons.Rounded.StarOutline,
+                    null,
+                    tint = if (i < review.rating) Brand.gold else MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(
+            "“${review.quote}”",
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(14.dp))
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Avatar(review.name, null)
+            Spacer(Modifier.height(8.dp))
+            review.name?.let { Text(it, style = MaterialTheme.typography.titleSmall) }
+            review.location?.let {
+                val muted = MaterialTheme.colorScheme.onSurfaceVariant
+                Text(it, style = MaterialTheme.typography.labelSmall, color = muted)
+            }
+            review.course?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = Brand.gold) }
+        }
+    }
+}
+
+/** The website's "Resend Verification Email" button, under the verify-email card, with its outcome. */
+@Suppress("FunctionNaming") // a composable, named like one
+@Composable
+private fun VerifyEmailResend(state: ResendState, onResend: () -> Unit) {
+    Column(Modifier.padding(horizontal = 20.dp)) {
+        TextButton(onResend, enabled = !state.sending && !state.sent) { Text(state.label) }
+        state.message?.let {
+            Text(
+                it,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (state.sent) Brand.success else Brand.danger,
+                modifier = Modifier.padding(start = 12.dp, bottom = 6.dp),
+            )
+        }
     }
 }

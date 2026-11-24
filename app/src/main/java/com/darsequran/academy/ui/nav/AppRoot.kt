@@ -279,6 +279,9 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                         onSignIn = { nav.navigate(SignInRoute) },
                         onEditProfile = { nav.navigate(EditProfileRoute) },
                         onPayments = { nav.navigate(PaymentsRoute) },
+                        onOpenLibraryItem = { nav.navigate(LibraryItemRoute(it)) },
+                        onSeeLibrary = { nav.navigate(LibraryRoute) },
+                        onWriteReview = { signedIn { nav.navigate(ReviewsRoute) } },
                     )
                 }
                 composable<CoursesTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
