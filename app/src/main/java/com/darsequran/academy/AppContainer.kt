@@ -5,12 +5,18 @@ import com.darsequran.academy.data.AppEnvironment
 import com.darsequran.academy.data.EnvironmentStore
 import com.darsequran.academy.data.Network
 import com.darsequran.academy.data.SessionStore
+import com.darsequran.academy.data.clearDocumentCache
 import com.darsequran.academy.data.repo.AcademyRepository
 import com.darsequran.academy.data.repo.AuthRepository
 import com.darsequran.academy.data.repo.CartStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
 /** Manual dependency container: one instance per process, created by [AcademyApp]. */
@@ -25,6 +31,16 @@ class AppContainer(context: Context) {
     val auth = AuthRepository(network.api, sessionStore)
     val repo = AcademyRepository(network.api)
     val cart = CartStore(repo)
+
+    init {
+        // A different user (sign-out, another account, another environment) must not find the last one's receipts.
+        val appContext = context.applicationContext
+        appScope.launch {
+            sessionStore.session.map { it?.user?.id }.distinctUntilChanged().drop(1).collect {
+                withContext(Dispatchers.IO) { clearDocumentCache(appContext) }
+            }
+        }
+    }
 
     /** A Retrofit service for one part of the API, e.g. `container.service<StudentsAdminApi>()`. */
     inline fun <reified T> service(): T = network.create(T::class.java)

@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.FileProvider
 import com.darsequran.academy.AcademyApp
+import com.darsequran.academy.data.documentCacheDir
 import com.darsequran.academy.data.resolveUrl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -33,7 +34,7 @@ fun openWeb(context: Context, url: String?) {
  */
 fun openBytes(context: Context, bytes: ByteArray, fileName: String, mime: String) {
     val safeName = fileName.replace(Regex("[^A-Za-z0-9._-]"), "_")
-    val dir = File(context.cacheDir, "documents").apply { mkdirs() }
+    val dir = documentCacheDir(context).apply { mkdirs() }
     val file = File(dir, safeName)
     file.writeBytes(bytes)
     val uri = FileProvider.getUriForFile(context, context.packageName + ".files", file)
