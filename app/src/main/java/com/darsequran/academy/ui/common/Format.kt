@@ -13,8 +13,13 @@ private val inr = NumberFormat.getNumberInstance(Locale("en", "IN")).apply {
     maximumFractionDigits = 2
 }
 
-/** ₹ amount from paise: 34900 → "₹349", 12350 → "₹123.5". */
-fun rupees(paise: Int): String = "₹" + inr.format(paise / 100.0)
+private val inrPaise = NumberFormat.getNumberInstance(Locale("en", "IN")).apply {
+    minimumFractionDigits = 2
+    maximumFractionDigits = 2
+}
+
+/** ₹ amount from paise: 34900 → "₹349", 12350 → "₹123.50". */
+fun rupees(paise: Int): String = "₹" + (if (paise % 100 == 0) inr else inrPaise).format(paise / 100.0)
 
 private val dayFormat = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
 private val dayTimeFormat = DateTimeFormatter.ofPattern("d MMM yyyy, h:mm a", Locale.ENGLISH)
