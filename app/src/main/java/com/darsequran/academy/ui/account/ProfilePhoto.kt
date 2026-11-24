@@ -50,6 +50,9 @@ fun ProfilePhoto(p: Profile, gender: String, busy: Boolean, onPhoto: (ByteArray,
         } else {
             Toast.makeText(context, "That photo couldn't be read. Try another one.", Toast.LENGTH_LONG).show()
         }
+        // Forgotten once handed on (last: changing the key ends this effect), so picking the same photo again after
+        // a failed upload still uploads it.
+        picked = null
     }
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Box {
@@ -57,7 +60,8 @@ fun ProfilePhoto(p: Profile, gender: String, busy: Boolean, onPhoto: (ByteArray,
             if (photoAllowed(gender)) {
                 IconButton(
                     { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
-                    Modifier.align(Alignment.BottomEnd).size(36.dp).clip(CircleShape)
+                    enabled = !busy, // one upload at a time
+                    modifier = Modifier.align(Alignment.BottomEnd).size(36.dp).clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary),
                 ) {
                     if (busy) {

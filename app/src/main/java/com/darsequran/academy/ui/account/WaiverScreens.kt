@@ -139,8 +139,10 @@ private fun WaiverList(page: WaiverPage, message: Pair<String, Boolean>?, form: 
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        message?.let { (text, ok) -> item { Banner(text, if (ok) Tone.Success else Tone.Danger) } }
-        if (form != null) item { form() }
+        // Keyed: without keys the banner appearing above the form (a failed request) would move the form to another
+        // index, and it would start over empty just when the student needs to send it again.
+        message?.let { (text, ok) -> item(key = "message") { Banner(text, if (ok) Tone.Success else Tone.Danger) } }
+        if (form != null) item(key = "waiver-form") { form() }
         if (page.requests.isEmpty()) {
             item {
                 EmptyState(
