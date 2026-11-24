@@ -22,7 +22,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,9 +32,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.darsequran.academy.data.staff.formOf
 import com.darsequran.academy.ui.common.AppCard
-import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.StatusChip
 import com.darsequran.academy.ui.common.Tone
@@ -65,22 +65,23 @@ import com.darsequran.academy.ui.manage.money.ScreenshotThumb
 
 private const val NOTIFIED = "The student has been notified by email — if they don't see it, ask them to check their Spam/Junk folder."
 
+/** The tab counts from the latest page of the book-order list, kept across rotation. */
+class BookOrderBadges : ViewModel() {
+    var counts by mutableStateOf<BookOrderCounts?>(null)
+}
+
 @Composable
 fun BookOrdersListScreen(onBack: () -> Unit, onOpen: (String) -> Unit, onBooks: () -> Unit) {
+    // The tab badges (every tab's total for the current search) come with each page of the list; they used to be
+    // fetched again with a second list request.
+    val badges: BookOrderBadges = viewModel()
     val vm = rememberPaged("admin-book-orders") { page, q, status ->
-        service<BookstoreAdminApi>().orders(page, q.ifBlank { null }, status).paged()
+        service<BookstoreAdminApi>().orders(page, q.ifBlank { null }, status).also { badges.counts = it.counts }.paged()
     }
-    // The tab badges: every tab's total for the current search (one row each).
     val listState by vm.state.collectAsStateWithLifecycle()
-    val counts = rememberLoader("admin-book-order-counts") {
-        service<BookstoreAdminApi>().orders(1, vm.state.value.query.ifBlank { null }, null, pageSize = 1).counts
-    }
-    var countedQuery by remember { mutableStateOf(listState.query) }
-    LaunchedEffect(listState.query) { if (listState.query != countedQuery) { countedQuery = listState.query; counts.reload() } }
-    val countState by counts.state.collectAsStateWithLifecycle()
-    val c = (countState as? Load.Ready)?.value
+    val c = badges.counts
     val runner = rememberActionRunner()
-    val refresh: () -> Unit = { vm.refresh(); counts.reload() }
+    val refresh: () -> Unit = { vm.refresh() }
     ReloadOnReturn(refresh)
 
     fun label(name: String, n: Int?) = if (n != null && n > 0) "$name ($n)" else name
