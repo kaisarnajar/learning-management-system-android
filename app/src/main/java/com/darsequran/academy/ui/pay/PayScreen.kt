@@ -6,9 +6,6 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -49,7 +46,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -86,8 +82,8 @@ import com.darsequran.academy.ui.common.PrimaryButton
 import com.darsequran.academy.ui.common.SecondaryButton
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.rupees
+import com.darsequran.academy.ui.common.rememberProofImagePicker
 import com.darsequran.academy.ui.common.savedVmFactory
-import com.darsequran.academy.ui.common.vmFactory
 import com.darsequran.academy.ui.theme.Brand
 import com.darsequran.academy.ui.common.academyToday
 import kotlinx.coroutines.Dispatchers
@@ -263,16 +259,7 @@ private fun PayFlow(state: PayState, vm: PayViewModel, courseTitle: String, head
     val quote = state.quote!!
     var method by rememberSaveable { mutableStateOf("upi") }
     var reference by rememberSaveable { mutableStateOf("") }
-    var screenshot by remember { mutableStateOf<Pair<ByteArray, String>?>(null) }
-    var preview by remember { mutableStateOf<Bitmap?>(null) }
-    var pickedUri by remember { mutableStateOf<Uri?>(null) }
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> pickedUri = uri }
-    LaunchedEffect(pickedUri) {
-        val uri = pickedUri ?: return@LaunchedEffect
-        val image = readImage(context, uri)
-        screenshot = image
-        preview = image?.first?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
-    }
+    val proof = rememberProofImagePicker()
     val free = state.amountPaise == 0
     val settings = state.settings
 
@@ -359,7 +346,7 @@ private fun PayFlow(state: PayState, vm: PayViewModel, courseTitle: String, head
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, capitalization = KeyboardCapitalization.Characters),
             )
-            ScreenshotPicker(preview, onPick = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, onClear = { screenshot = null; preview = null; pickedUri = null })
+            ScreenshotPicker(proof.image?.preview, onPick = proof::pick, onClear = proof::clear)
         } else {
             Banner("This fee is fully waived. Submit it for the academy to confirm.", Tone.Success)
         }
@@ -367,7 +354,7 @@ private fun PayFlow(state: PayState, vm: PayViewModel, courseTitle: String, head
         state.submitError?.let { Banner(it, Tone.Danger) }
         PrimaryButton(
             if (free) "Submit waiver" else "Submit payment of ${rupees(state.amountPaise)}",
-            onClick = { vm.submit(method, reference, screenshot) },
+            onClick = { vm.submit(method, reference, proof.image?.upload) },
             enabled = free || reference.length >= 6,
             loading = state.submitting,
         )

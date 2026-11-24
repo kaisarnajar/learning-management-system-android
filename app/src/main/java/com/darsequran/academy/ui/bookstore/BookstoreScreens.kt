@@ -1,11 +1,5 @@
 package com.darsequran.academy.ui.bookstore
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,7 +48,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -96,6 +89,7 @@ import com.darsequran.academy.ui.common.Overline
 import com.darsequran.academy.ui.common.PagedState
 import com.darsequran.academy.ui.common.PagedViewModel
 import com.darsequran.academy.ui.common.distinctByKey
+import com.darsequran.academy.ui.common.rememberProofImagePicker
 import com.darsequran.academy.ui.common.LoadMoreEffect
 import com.darsequran.academy.ui.common.LoadMoreError
 import com.darsequran.academy.ui.common.PriceLine
@@ -115,7 +109,6 @@ import com.darsequran.academy.ui.home.BookTile
 import com.darsequran.academy.ui.pay.ChoicePill
 import com.darsequran.academy.ui.pay.ScreenshotPicker
 import com.darsequran.academy.ui.pay.launchUpi
-import com.darsequran.academy.ui.pay.readImage
 import com.darsequran.academy.ui.theme.Brand
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -334,11 +327,7 @@ fun CheckoutScreen(onBack: () -> Unit, onDone: () -> Unit) {
     var pin by rememberSaveable { mutableStateOf("") }
     var phone by rememberSaveable { mutableStateOf("") }
     var notes by rememberSaveable { mutableStateOf("") }
-    var screenshot by remember { mutableStateOf<Pair<ByteArray, String>?>(null) }
-    var preview by remember { mutableStateOf<Bitmap?>(null) }
-    var picked by remember { mutableStateOf<Uri?>(null) }
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { picked = it }
-    LaunchedEffect(picked) { picked?.let { uri -> readImage(context, uri)?.let { screenshot = it; preview = BitmapFactory.decodeByteArray(it.first, 0, it.first.size) } } }
+    val proof = rememberProofImagePicker()
 
     Scaffold(topBar = { BackTopBar("Checkout", onBack) }) { padding ->
         Box(Modifier.padding(padding)) {
@@ -385,11 +374,11 @@ fun CheckoutScreen(onBack: () -> Unit, onDone: () -> Unit) {
                         ChoicePill("Bank transfer", method == "bank", Modifier.weight(1f)) { method = "bank" }
                     }
                     OutlinedTextField(reference, { v -> reference = v.filter { it.isLetterOrDigit() }.take(40) }, Modifier.fillMaxWidth(), label = { Text("Transaction reference (UTR)") }, singleLine = true)
-                    ScreenshotPicker(preview, { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, { screenshot = null; preview = null; picked = null })
+                    ScreenshotPicker(proof.image?.preview, proof::pick, proof::clear)
                     state.error?.let { Banner(it, Tone.Danger) }
                     PrimaryButton(
                         "Place order · ${rupees(quote.totalAmountInrPaise)}",
-                        { vm.place(method, reference, address, pin, phone, notes, screenshot) },
+                        { vm.place(method, reference, address, pin, phone, notes, proof.image?.upload) },
                         enabled = address.trim().length >= 10 && pin.length >= 5 && phone.length >= 10 && reference.length >= 6,
                         loading = state.submitting,
                     )
