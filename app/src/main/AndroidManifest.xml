@@ -13,10 +13,28 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
         </intent>
-        <!-- Viewers for receipts and course files; without one the file is saved to Downloads. -->
+        <!-- Viewers for what the app opens: receipts (PDF), course attachments (PDF, images, Word) and finance exports
+             (Excel). Without one the file is saved to Downloads. Listing the types, not */*, keeps the app from seeing
+             every installed app that views any file. -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
-            <data android:mimeType="*/*" />
+            <data android:mimeType="application/pdf" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="image/*" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="application/msword" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
         </intent>
     </queries>
 
