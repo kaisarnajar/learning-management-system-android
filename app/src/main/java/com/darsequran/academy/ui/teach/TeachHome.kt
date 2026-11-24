@@ -57,7 +57,7 @@ import com.darsequran.academy.ui.manage.courses.CourseAnnouncementsRoute
 import com.darsequran.academy.ui.manage.courses.CourseHubRoute
 import com.darsequran.academy.ui.manage.courses.StudentAttendanceRoute
 import com.darsequran.academy.ui.manage.courses.StudentGradesRoute
-import com.darsequran.academy.ui.manage.courses.courseStatusTone
+import com.darsequran.academy.ui.common.courseStatusTone
 import kotlinx.serialization.Serializable
 
 /*

@@ -70,6 +70,7 @@ import com.darsequran.academy.data.staff.students.StudentRow
 import com.darsequran.academy.data.staff.students.StudentsAdminApi
 import com.darsequran.academy.ui.theme.Brand
 import com.darsequran.academy.ui.common.formatInr
+import com.darsequran.academy.ui.common.orderStatusTone
 import java.net.URLDecoder
 import java.net.URLEncoder
 import kotlinx.coroutines.delay
@@ -302,13 +303,7 @@ fun ActionRunner.openExport(context: Context, name: String, params: Map<String, 
 /** Status chip for fee submissions, book orders, waiver requests. */
 fun moneyStatus(status: String?, label: String? = null): Pair<String, Tone> {
     val s = status.orEmpty().lowercase()
-    val tone = when (s) {
-        "approved", "shipped" -> Tone.Success
-        "pending", "pending_verification" -> Tone.Warning
-        "rejected", "declined" -> Tone.Danger
-        "refunded" -> Tone.Neutral
-        else -> Tone.Neutral
-    }
+    val tone = orderStatusTone(s)
     val text = label ?: when (s) {
         "pending_verification" -> "Pending verification"
         else -> com.darsequran.academy.ui.common.titleCase(s.ifBlank { "unknown" })

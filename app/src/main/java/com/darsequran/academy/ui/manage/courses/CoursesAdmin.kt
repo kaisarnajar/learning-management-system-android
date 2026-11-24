@@ -64,14 +64,8 @@ import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
 import com.darsequran.academy.ui.manage.common.withOther
+import com.darsequran.academy.ui.common.courseStatusTone
 
-/** Course status → chip tone, as the website's CourseStatusBadge colours them. */
-fun courseStatusTone(status: String): Tone = when (status) {
-    "PUBLISHED" -> Tone.Info
-    "ONGOING" -> Tone.Success
-    "ON_HOLD", "COMING_SOON" -> Tone.Warning
-    else -> Tone.Neutral
-}
 
 // ------------------------------------------------------------------ list (/admin/courses)
 

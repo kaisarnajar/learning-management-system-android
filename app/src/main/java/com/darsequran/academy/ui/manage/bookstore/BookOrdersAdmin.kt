@@ -60,6 +60,7 @@ import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
 import com.darsequran.academy.ui.manage.money.ScreenshotThumb
+import com.darsequran.academy.ui.common.orderStatusTone
 
 /*
  * Book orders: /admin/bookstore/orders (pending, approved and completed tabs) and /admin/bookstore/orders/[id].
@@ -124,7 +125,7 @@ private fun BookOrderCard(order: BookOrderRow, runner: ActionRunner, onOpen: () 
             Column(horizontalAlignment = Alignment.End) {
                 Text(rupees(order.totalAmountInrPaise), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(4.dp))
-                StatusChip(order.statusLabel.ifBlank { order.status }, bookOrderTone(order.status))
+                StatusChip(order.statusLabel.ifBlank { order.status }, orderStatusTone(order.status))
             }
         }
         Spacer(Modifier.height(8.dp))
@@ -278,7 +279,7 @@ fun BookOrderDetailScreen(id: String, onBack: () -> Unit) {
                 DetailCard {
                     Text("Order ${o.shortId}", style = MaterialTheme.typography.titleLarge)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        StatusChip(o.statusLabel.ifBlank { o.status }, bookOrderTone(o.status))
+                        StatusChip(o.statusLabel.ifBlank { o.status }, orderStatusTone(o.status))
                         if (o.deleted) StatusChip("Deleted", Tone.Danger)
                     }
                     Text("Placed ${formatDateTime(o.createdAt)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

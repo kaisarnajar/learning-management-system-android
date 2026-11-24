@@ -51,6 +51,7 @@ import com.darsequran.academy.ui.manage.common.rememberAccountCheck
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
+import com.darsequran.academy.ui.common.courseStatusTone
 
 private fun publishedChip(published: Boolean) = if (published) "Published" to Tone.Success else "Draft" to Tone.Neutral
 
@@ -134,7 +135,7 @@ fun TeacherDetailScreen(id: String, onBack: () -> Unit, onEdit: () -> Unit) {
                                 listOfNotNull(c.category, countOf(c.studentCount, "student")).joinToString(" · "),
                                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
-                            StatusChip(c.statusLabel.ifBlank { c.status }, courseTone(c.status))
+                            StatusChip(c.statusLabel.ifBlank { c.status }, courseStatusTone(c.status))
                         }
                     }
                 }
@@ -156,12 +157,6 @@ fun TeacherDetailScreen(id: String, onBack: () -> Unit, onEdit: () -> Unit) {
     }
 }
 
-private fun courseTone(status: String) = when (status) {
-    "ONGOING" -> Tone.Success
-    "PUBLISHED", "COMING_SOON" -> Tone.Info
-    "ON_HOLD" -> Tone.Warning
-    else -> Tone.Neutral
-}
 
 /** Add ([id] null) or edit a teacher. The e-mail must belong to a registered account; its name is used. */
 @Composable

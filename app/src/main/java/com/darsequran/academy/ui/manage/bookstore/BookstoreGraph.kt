@@ -16,14 +16,6 @@ fun bookStatusTone(status: String): Tone = when (status) {
     else -> Tone.Neutral
 }
 
-fun bookOrderTone(status: String): Tone = when (status) {
-    "PENDING_VERIFICATION" -> Tone.Warning
-    "APPROVED" -> Tone.Success
-    "DECLINED" -> Tone.Danger
-    "SHIPPED" -> Tone.Info
-    else -> Tone.Neutral
-}
-
 // --------------------------------------------------------------- routes
 
 @Serializable data object BooksAdminRoute
