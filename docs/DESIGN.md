@@ -71,30 +71,38 @@ Built as a Material 3 colour scheme from the website's palette.
 | secondary (accent) | `#9A7B0A` gold (AA on white) | `#E9C349` | website `--color-brand-gold` |
 | secondaryContainer | `#F8EBC0` | `#544200` | |
 | background / surface | `#FBF9F4` warm paper | `#0E1412` | website `--color-surface-cream` |
+| call to action (`Brand.cta`) | `#D4A017` gold, text `#1A1A1A` | same | website `--primary` |
+| hero gradient | `#003527` → `#002117` | `#0C3326` → `#04170F` | website PageHero |
 | surfaceContainer | `#F2EFE7` | `#1A211E` | |
 | error | `#B3261E` | `#F2B8B5` | M3 default |
 
-Gold is used for **accents only**: the active tab indicator, the divider under
-headings, the inspiration card border, price highlights. Buttons are green,
-because gold text on white fails contrast.
+Primary buttons are **gold with dark text**, like the website's `bg-primary`
+buttons (white on gold fails contrast; `#1A1A1A` on gold is about 7.6:1). Gold
+**text** stays the darker `#9A7B0A` (AA on white): the accent word of section
+titles, prices, small caps. Links and the rest of the Material scheme stay
+green.
 
 ### Type
 
 | Use | Face | Why |
 |---|---|---|
-| Display / headings | **Source Serif 4** (semibold) | the website's heading face |
+| Hero and page titles (display, headlineLarge/Medium) | **Source Serif 4** (semibold) | the website's PageHero title |
+| Section and card headings (headlineSmall, titleLarge and below) | **Poppins** semibold | the website's `font-serif` maps to Poppins bold |
+| Section headers | Poppins, uppercase, 0.06em, last word gold | the website's SplitSectionTitle |
 | Body / UI | **Poppins** | the website's body face |
 | Arabic (verses, hadith, Urdu titles) | **Amiri** | the website's Arabic face; classical Naskh, excellent diacritics |
 
-Fonts are loaded as downloadable Google Fonts (no APK weight), with the system
-serif / sans as fallback while they arrive.
+Fonts are bundled in `res/font` (see FONTS.md). Poppins Bold is not bundled,
+so bold maps to SemiBold.
 
 ### Shape, space, elevation
 
-- Corner radius: 20dp cards, 14dp inputs and buttons, full-round chips.
+- Corner radius: 12dp cards, 8dp inputs and full-width buttons, 16dp sheets
+  and dialogs, full-round chips (close to the website's 8px cards and 6px
+  buttons).
 - 4dp spacing grid; screen padding 20dp; card padding 16dp.
-- Flat cards on `surfaceContainer` with a hairline outline instead of shadows;
-  the only shadowed element is the bottom sheet.
+- Cards on `surfaceContainerLowest` (white) with a hairline outline and a soft
+  shadow, like the website's `card-elevated`.
 
 ### Signature elements
 
@@ -104,8 +112,9 @@ serif / sans as fallback while they arrive.
 - **Inspiration card**: cream card, thin gold border, the Arabic text centred in
   Amiri at 26sp with generous line height, the translation below in italic
   serif, reference in gold small caps.
-- **Status chips**: pending (amber), approved/active (green), declined (red),
-  completed (blue), always with a text label as well as colour.
+- **Status chips**, worded and coloured as on the website: pending (amber),
+  approved and completed (green), active and info (violet), rejected or
+  declined (red), always with a text label as well as colour.
 
 ## 5. Key screens
 
