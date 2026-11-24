@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -25,6 +26,7 @@ import com.darsequran.academy.data.staff.money.ShippingSlab
 import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.PrimaryButton
 import com.darsequran.academy.ui.common.ReloadOnReturn
+import com.darsequran.academy.ui.manage.common.rememberFormReset
 import com.darsequran.academy.ui.manage.common.ConfirmDialog
 import com.darsequran.academy.ui.manage.common.DetailCard
 import com.darsequran.academy.ui.manage.common.FormMoneyField
@@ -115,9 +117,7 @@ fun ShippingChargesScreen(onBack: () -> Unit) {
     ReloadOnReturn { loader.reload() }
     val runner = rememberActionRunner()
     var deleting by remember { mutableStateOf<ShippingSlab?>(null) }
-    var min by rememberSaveable { mutableStateOf("") }
-    var max by rememberSaveable { mutableStateOf("") }
-    var charge by rememberSaveable { mutableStateOf("") }
+    val reset = rememberFormReset("add-shipping-slab")
 
     ManageScaffold("Shipping charges", onBack, runner.snackbar) { padding ->
         LoadedColumn(loader, padding) { slabs ->
@@ -139,7 +139,10 @@ fun ShippingChargesScreen(onBack: () -> Unit) {
                     )
                 }
             }
-            item {
+            item(key = "add-slab") { key(reset.generation) {
+                var min by rememberSaveable { mutableStateOf("") }
+                var max by rememberSaveable { mutableStateOf("") }
+                var charge by rememberSaveable { mutableStateOf("") }
                 DetailCard("Add new slab") {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FormNumberField("Min weight (g)", min, { min = it }, Modifier.weight(1f))
@@ -149,10 +152,10 @@ fun ShippingChargesScreen(onBack: () -> Unit) {
                     PrimaryButton("Add slab", {
                         runner.run({
                             service<MoneyApi>().addSlab(formOf { text("minWeightGrams", min); text("maxWeightGrams", max); text("chargeInr", charge) })
-                        }, success = "Shipping slab added.") { min = ""; max = ""; charge = ""; loader.reload() }
+                        }, success = "Shipping slab added.") { reset.reset(); loader.reload() }
                     }, enabled = min.isNotBlank() && max.isNotBlank() && charge.isNotBlank(), loading = runner.busy)
                 }
-            }
+            } }
         }
     }
     deleting?.let { slab ->

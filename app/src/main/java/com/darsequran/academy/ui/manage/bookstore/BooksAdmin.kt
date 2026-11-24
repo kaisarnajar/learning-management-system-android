@@ -39,6 +39,7 @@ import com.darsequran.academy.ui.common.StatusChip
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.formatDate
 import com.darsequran.academy.ui.common.rupees
+import com.darsequran.academy.ui.manage.common.rememberFormFiles
 import com.darsequran.academy.ui.manage.common.AddFab
 import com.darsequran.academy.ui.manage.common.ConfirmDialog
 import com.darsequran.academy.ui.manage.common.DetailCard
@@ -194,7 +195,8 @@ fun BookFormScreen(id: String?, onBack: () -> Unit) {
     var published by rememberSaveable { mutableStateOf(true) }
     var featured by rememberSaveable { mutableStateOf(false) }
     var removeImage by rememberSaveable { mutableStateOf(false) }
-    var image by remember { mutableStateOf<PickedFile?>(null) }
+    // Kept across rotation like "remove cover" above: losing only the new cover sent removeImage alone and deleted it.
+    var image by rememberFormFiles("book-files-${id ?: "new"}")::single
     var error by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(loaded) {

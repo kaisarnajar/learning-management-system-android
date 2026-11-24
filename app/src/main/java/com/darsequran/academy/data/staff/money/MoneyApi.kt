@@ -356,7 +356,7 @@ interface MoneyApi {
     @GET("admin/finance")
     suspend fun finance(@Query("page") page: Int, @Query("q") q: String?, @QueryMap filters: Map<String, String>): FinanceResponse
 
-    @GET("admin/finance/options") suspend fun options(@Query("students") students: String? = null): FinanceOptions
+    @GET("admin/finance/options") suspend fun options(): FinanceOptions
 
     @Streaming @GET("admin/finance/export") suspend fun export(@QueryMap params: Map<String, String>): ResponseBody
 

@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.key
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -29,6 +30,8 @@ import com.darsequran.academy.ui.common.ErrorState
 import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.PrimaryButton
 import com.darsequran.academy.ui.common.Tone
+import com.darsequran.academy.ui.manage.common.FormReset
+import com.darsequran.academy.ui.manage.common.rememberFormReset
 import com.darsequran.academy.ui.manage.common.AccountAnswer
 import com.darsequran.academy.ui.manage.common.ActionRunner
 import com.darsequran.academy.ui.manage.common.FilterChips
@@ -52,6 +55,7 @@ fun TransactionsScreen(expense: Boolean, onBack: () -> Unit) {
     val opts = (optionsState as? Load.Ready)?.value
     val runner = rememberActionRunner()
 
+    val reset = rememberFormReset("record-transaction")
     ManageScaffold("Record transactions", onBack, runner.snackbar) { padding ->
         Column(
             Modifier.padding(padding).fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(20.dp),
@@ -62,8 +66,9 @@ fun TransactionsScreen(expense: Boolean, onBack: () -> Unit) {
             when {
                 optionsState is Load.Failed -> ErrorState((optionsState as Load.Failed).message, { options.reload(true) })
                 opts == null -> Text("Loading…")
-                expenseTab -> RecordExpenseForm(opts, runner)
-                else -> RecordPaymentForm(opts, runner)
+                else -> key(reset.generation) {
+                    if (expenseTab) RecordExpenseForm(opts, runner, reset) else RecordPaymentForm(opts, runner, reset)
+                }
             }
             Spacer(Modifier.height(24.dp))
         }
@@ -71,7 +76,7 @@ fun TransactionsScreen(expense: Boolean, onBack: () -> Unit) {
 }
 
 @Composable
-private fun RecordPaymentForm(opts: FinanceOptions, runner: ActionRunner) {
+private fun RecordPaymentForm(opts: FinanceOptions, runner: ActionRunner, reset: FormReset) {
     val account = rememberAccountCheck { e -> AccountAnswer(service<MoneyApi>().lookupStudent(e).student.name) }
     var amount by rememberSaveable { mutableStateOf("") }
     var paidAt by rememberSaveable { mutableStateOf(opts.today) }
@@ -106,14 +111,12 @@ private fun RecordPaymentForm(opts: FinanceOptions, runner: ActionRunner) {
             service<MoneyApi>().recordPayment(formOf {
                 text("email", account.email.trim()); text("amountInr", amount); text("paidAt", paidAt); text("paymentType", type); text("courseId", courseId)
             })
-        }, success = "Transaction recorded successfully.") {
-            account.reset(); amount = ""; courseId = ""; type = "monthly"; paidAt = opts.today
-        }
+        }, success = "Transaction recorded successfully.") { reset.reset() }
     }, enabled = canSubmit && account.email.isNotBlank(), loading = runner.busy)
 }
 
 @Composable
-private fun RecordExpenseForm(opts: FinanceOptions, runner: ActionRunner) {
+private fun RecordExpenseForm(opts: FinanceOptions, runner: ActionRunner, reset: FormReset) {
     var category by rememberSaveable { mutableStateOf(opts.expenseCategories.firstOrNull()?.value ?: "teacher_salary") }
     var note by rememberSaveable { mutableStateOf("") }
     var teacherId by rememberSaveable { mutableStateOf("") }
@@ -134,8 +137,6 @@ private fun RecordExpenseForm(opts: FinanceOptions, runner: ActionRunner) {
                 if (category == "other") text("note", note)
                 if (category == "teacher_salary") text("teacherId", teacherId)
             })
-        }, success = "Transaction recorded successfully.") {
-            note = ""; teacherId = ""; amount = ""; description = ""; paidAt = opts.today
-        }
+        }, success = "Transaction recorded successfully.") { reset.reset() }
     }, loading = runner.busy)
 }

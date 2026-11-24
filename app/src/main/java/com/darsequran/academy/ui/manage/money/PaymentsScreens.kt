@@ -93,7 +93,7 @@ fun PendingPaymentsScreen(onBack: () -> Unit, onOpenReceipt: (String) -> Unit) {
 
     confirming?.let { (row, approve) ->
         if (approve) ConfirmDialog(
-            "Confirm payment", "Approve this payment of ${money(row.amountInrPaise)} from ${row.user?.display} and notify the student?", "Confirm",
+            "Confirm payment", "Approve this payment of ${money(row.amountInrPaise)} from ${row.user?.display ?: "this student"} and notify the student?", "Confirm",
             onConfirm = {
                 runner.run({ service<MoneyApi>().approve(row.id) }, success = "Payment approved and recorded. The student will be notified.") { vm.refresh() }
             },

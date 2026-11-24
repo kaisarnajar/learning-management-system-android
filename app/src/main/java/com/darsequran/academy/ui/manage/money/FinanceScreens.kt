@@ -138,7 +138,7 @@ fun FinanceScreen(onBack: () -> Unit, onBookstore: () -> Unit, onRecord: (expens
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (!expenses) {
                             FilterDropdown("Course", "All courses", opts?.courses.orEmpty().map { it.id to it.title }, state.filter, "courseId", vm::filter)
-                            FilterDropdown("Student", "All students", opts?.students.orEmpty().map { it.id to (it.name?.let { n -> "$n (${it.email})" } ?: it.email) }, state.filter, "studentId", vm::filter)
+                            StudentFilter(state.filter, vm::filter) // a search: a menu of every student grows without limit
                             FilterDropdown("Payment type", "All types", opts?.incomePaymentTypes.orEmpty().map { it.value to it.label }, state.filter, "paymentType", vm::filter)
                         } else {
                             FilterDropdown("Category", "All categories", opts?.expenseCategories.orEmpty().map { it.value to it.label }, state.filter, "category", vm::filter)

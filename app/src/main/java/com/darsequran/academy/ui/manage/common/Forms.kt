@@ -64,6 +64,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -450,6 +451,21 @@ class FormFiles : ViewModel() {
     var single by mutableStateOf<PickedFile?>(null)
     var removed by mutableStateOf(emptySet<String>())
 }
+
+/**
+ * Starts a form over once it has been sent: the form sits inside `key(reset.generation) { … }` and the success
+ * callback calls [reset]. Clearing the fields from that callback instead failed after a rotation mid-request: it
+ * cleared the old screen's fields, the new one still held the values, and a second tap sent them again.
+ */
+class FormReset : ViewModel() {
+    var generation by mutableIntStateOf(0)
+        private set
+
+    fun reset() { generation++ }
+}
+
+@Composable
+fun rememberFormReset(key: String): FormReset = viewModel(key = key) { FormReset() }
 
 /** The [FormFiles] of one form; [key] must differ per form and record. */
 @Composable
