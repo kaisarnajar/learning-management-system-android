@@ -1,6 +1,5 @@
 package com.darsequran.academy.ui.account
 
-import com.darsequran.academy.ui.theme.HeroUnderStatusBar
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -70,6 +69,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -93,6 +93,7 @@ import com.darsequran.academy.BuildConfig
 import com.darsequran.academy.R
 import com.darsequran.academy.data.ApiResult
 import com.darsequran.academy.data.SessionStore
+import com.darsequran.academy.data.map
 import com.darsequran.academy.data.remote.AppConfig
 import com.darsequran.academy.data.remote.ContactRequest
 import com.darsequran.academy.data.remote.Enrollment
@@ -107,12 +108,12 @@ import com.darsequran.academy.data.repo.AcademyRepository
 import com.darsequran.academy.data.repo.AuthRepository
 import com.darsequran.academy.data.repo.orNull
 import com.darsequran.academy.ui.auth.PasswordField
-import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.Avatar
 import com.darsequran.academy.ui.common.BackTopBar
 import com.darsequran.academy.ui.common.Banner
 import com.darsequran.academy.ui.common.EmptyState
+import com.darsequran.academy.ui.common.ErrorState
 import com.darsequran.academy.ui.common.HeroBox
 import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.LoadContent
@@ -122,12 +123,15 @@ import com.darsequran.academy.ui.common.Overline
 import com.darsequran.academy.ui.common.PagedListBody
 import com.darsequran.academy.ui.common.PagedViewModel
 import com.darsequran.academy.ui.common.PrimaryButton
+import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.StatusChip
+import com.darsequran.academy.ui.common.SubmitResult
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.formatDate
 import com.darsequran.academy.ui.common.openBytes
 import com.darsequran.academy.ui.common.openWeb
 import com.darsequran.academy.ui.common.relativeTime
+import com.darsequran.academy.ui.common.rememberSubmitter
 import com.darsequran.academy.ui.common.rupees
 import com.darsequran.academy.ui.common.statusLabel
 import com.darsequran.academy.ui.common.titleCase
@@ -138,6 +142,7 @@ import com.darsequran.academy.ui.pay.ChoicePill
 import com.darsequran.academy.ui.pay.Dropdown
 import com.darsequran.academy.ui.pay.readImage
 import com.darsequran.academy.ui.theme.Brand
+import com.darsequran.academy.ui.theme.HeroUnderStatusBar
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -653,10 +658,10 @@ fun ReviewsScreen(onBack: () -> Unit) {
 @Composable
 fun NotificationsScreen(onBack: () -> Unit, onOpenHref: (String) -> Unit) {
     val vm: PagedViewModel<Notification> = viewModel(key = "notifications", factory = vmFactory { c -> PagedViewModel { p, _, f -> c.repo.notifications(p, f == "unread") } })
-    val repo = (LocalContext.current.applicationContext as com.darsequran.academy.AcademyApp).container.repo
-    val scope = rememberCoroutineScope()
+    val container = (LocalContext.current.applicationContext as com.darsequran.academy.AcademyApp).container
     val state by vm.state.collectAsStateWithLifecycle()
-    Scaffold(topBar = { BackTopBar("Notifications", onBack, actions = { TextButton({ scope.launch { repo.markAllRead(); vm.refresh() } }) { Text("Mark all read") } }) }) { padding ->
+    // App scope: opening a notification leaves this screen, which must not cancel marking it read.
+    Scaffold(topBar = { BackTopBar("Notifications", onBack, actions = { TextButton({ container.appScope.launch { container.repo.markAllRead(); vm.refresh() } }) { Text("Mark all read") } }) }) { padding ->
         PagedListBody(vm, null, "You're all caught up", { it.id }, Modifier.padding(padding), header = {
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -666,7 +671,7 @@ fun NotificationsScreen(onBack: () -> Unit, onOpenHref: (String) -> Unit) {
             }
         }) { n ->
             val unread = n.readAt == null
-            AppCard(Modifier.fillMaxWidth(), onClick = { scope.launch { repo.notification(n.id) }; onOpenHref(n.href) },
+            AppCard(Modifier.fillMaxWidth(), onClick = { container.appScope.launch { container.repo.notification(n.id) }; onOpenHref(n.href) },
                 color = if (unread) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f) else MaterialTheme.colorScheme.surfaceContainerLowest) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (unread) { Box(Modifier.size(8.dp).clip(CircleShape).background(Brand.goldSoft)); Spacer(Modifier.width(8.dp)) }
@@ -685,27 +690,25 @@ fun NotificationsScreen(onBack: () -> Unit, onOpenHref: (String) -> Unit) {
 fun ChangePasswordScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val auth = remember { (context.applicationContext as com.darsequran.academy.AcademyApp).container.auth }
-    val scope = rememberCoroutineScope()
+    val submitter = rememberSubmitter("change-password")
     var current by remember { mutableStateOf("") }
     var new by remember { mutableStateOf("") }
-    var busy by remember { mutableStateOf(false) }
-    var result by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+    LaunchedEffect(submitter.result) { if (submitter.result?.ok == true) { current = ""; new = "" } }
     Scaffold(topBar = { BackTopBar("Change password", onBack) }) { padding ->
         Column(Modifier.padding(padding).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            result?.let { (t, ok) -> Banner(t, if (ok) Tone.Success else Tone.Danger) }
+            submitter.result?.let { Banner(it.message, if (it.ok) Tone.Success else Tone.Danger) }
             PasswordField(current, "Current password", {}) { current = it }
             PasswordField(new, "New password (at least 8 characters)", {}) { new = it }
             Text("Other phones signed in to your account will be signed out.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             PrimaryButton("Change password", {
-                busy = true
-                scope.launch {
-                    result = when (val r = auth.changePassword(current, new)) {
-                        is ApiResult.Ok -> { current = ""; new = ""; "Password changed." to true }
-                        is ApiResult.Err -> r.message to false
+                val (from, to) = current to new
+                submitter.submit {
+                    when (val r = auth.changePassword(from, to)) {
+                        is ApiResult.Ok -> SubmitResult("Password changed.", ok = true)
+                        is ApiResult.Err -> SubmitResult(r.message, ok = false)
                     }
-                    busy = false
                 }
-            }, enabled = current.isNotEmpty() && new.length >= 8, loading = busy)
+            }, enabled = current.isNotEmpty() && new.length >= 8, loading = submitter.busy)
         }
     }
 }
@@ -716,14 +719,17 @@ fun ChangePasswordScreen(onBack: () -> Unit) {
 fun DeleteAccountScreen(onBack: () -> Unit, onDeleted: () -> Unit) {
     val context = LocalContext.current
     val container = remember { (context.applicationContext as com.darsequran.academy.AcademyApp).container }
-    val scope = rememberCoroutineScope()
-    var hasPassword by remember { mutableStateOf<Boolean?>(null) }
+    val submitter = rememberSubmitter("delete-account")
+    // Whether the account has a password decides what confirms the deletion; guessing "yes" when the profile didn't
+    // load left a Google-only user with a password field they couldn't fill.
+    var profileAttempt by remember { mutableIntStateOf(0) }
+    var hasPassword by remember { mutableStateOf<Load<Boolean>>(Load.Loading) }
+    LaunchedEffect(profileAttempt) { hasPassword = Load.Loading; hasPassword = container.auth.profile().map { it.hasPassword }.toLoad() }
     var password by remember { mutableStateOf("") }
     var confirm by rememberSaveable { mutableStateOf("") }
-    var busy by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var done by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { hasPassword = container.auth.profile().orNull()?.hasPassword ?: true }
+    val busy = submitter.busy
+    val error = submitter.result?.takeIf { !it.ok }?.message
+    val done = submitter.result?.ok == true
     Scaffold(topBar = { BackTopBar("Delete account", onBack) }) { padding ->
         Column(Modifier.padding(padding).verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             if (done) { MessageState(Icons.Rounded.CheckCircle, "Account deleted", "Your account has been deleted. JazakAllahu khairan for learning with us.", "Close", onDeleted); return@Column }
@@ -736,23 +742,26 @@ fun DeleteAccountScreen(onBack: () -> Unit, onDeleted: () -> Unit) {
                 "You can register again later with the same e-mail address.",
             ).forEach { Row { Text("•  ", color = Brand.gold); Text(it, style = MaterialTheme.typography.bodyMedium) } }
             error?.let { Banner(it, Tone.Danger) }
-            when (hasPassword) {
-                null -> LoadingBox(Modifier.fillMaxWidth().height(60.dp))
-                true -> PasswordField(password, "Your password", {}) { password = it }
-                false -> OutlinedTextField(confirm, { confirm = it }, Modifier.fillMaxWidth(), label = { Text("Type DELETE to confirm") }, singleLine = true)
+            when (val h = hasPassword) {
+                Load.Loading -> LoadingBox(Modifier.fillMaxWidth().height(60.dp))
+                is Load.Failed -> ErrorState(h.message, { profileAttempt++ })
+                is Load.Ready -> if (h.value) PasswordField(password, "Your password", {}) { password = it }
+                else OutlinedTextField(confirm, { confirm = it }, Modifier.fillMaxWidth(), label = { Text("Type DELETE to confirm") }, singleLine = true)
             }
             androidx.compose.material3.Button(
                 onClick = {
-                    busy = true; error = null
-                    scope.launch {
-                        when (val r = container.auth.deleteAccount(password.ifBlank { null }, confirm.ifBlank { null })) {
-                            is ApiResult.Ok -> { container.cart.clearLocal(); done = true }
-                            is ApiResult.Err -> error = r.message
+                    val (pass, typed) = password.ifBlank { null } to confirm.ifBlank { null }
+                    submitter.submit {
+                        when (val r = container.auth.deleteAccount(pass, typed)) {
+                            is ApiResult.Ok -> { container.cart.clearLocal(); SubmitResult("Account deleted.", ok = true) }
+                            is ApiResult.Err -> SubmitResult(r.message, ok = false)
                         }
-                        busy = false
                     }
                 },
-                enabled = !busy && (if (hasPassword == true) password.isNotEmpty() else confirm == "DELETE"),
+                enabled = !busy && when (val h = hasPassword) {
+                    is Load.Ready -> if (h.value) password.isNotEmpty() else confirm == "DELETE"
+                    else -> false
+                },
                 colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = Brand.danger, contentColor = Color.White),
                 modifier = Modifier.fillMaxWidth().height(52.dp),
             ) { Text(if (busy) "Deleting…" else "Delete my account") }
@@ -769,13 +778,12 @@ fun ContactScreen(onBack: () -> Unit) {
     val session by container.sessionStore.session.collectAsStateWithLifecycle()
     var config by remember { mutableStateOf<AppConfig?>(null) }
     LaunchedEffect(Unit) { config = container.repo.appConfig().orNull() }
-    val scope = rememberCoroutineScope()
+    val submitter = rememberSubmitter("contact")
     var name by rememberSaveable { mutableStateOf(session?.user?.name ?: "") }
     var email by rememberSaveable { mutableStateOf(session?.user?.email ?: "") }
     var phone by rememberSaveable { mutableStateOf("") }
     var message by rememberSaveable { mutableStateOf("") }
-    var busy by remember { mutableStateOf(false) }
-    var result by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+    LaunchedEffect(submitter.result) { if (submitter.result?.ok == true) message = "" }
     val contact = config?.brand?.contact
 
     Scaffold(topBar = { BackTopBar("Contact us", onBack) }) { padding ->
@@ -792,7 +800,7 @@ fun ContactScreen(onBack: () -> Unit) {
                 }
             }
             Text("Send a message", style = MaterialTheme.typography.titleLarge)
-            result?.let { (t, ok) -> Banner(t, if (ok) Tone.Success else Tone.Danger) }
+            submitter.result?.let { Banner(it.message, if (it.ok) Tone.Success else Tone.Danger) }
             if (session == null) {
                 OutlinedTextField(name, { name = it.take(100) }, Modifier.fillMaxWidth(), label = { Text("Your name") }, singleLine = true)
                 OutlinedTextField(email, { email = it.trim() }, Modifier.fillMaxWidth(), label = { Text("Your e-mail") }, singleLine = true)
@@ -800,15 +808,14 @@ fun ContactScreen(onBack: () -> Unit) {
             OutlinedTextField(phone, { phone = it.take(20) }, Modifier.fillMaxWidth(), label = { Text("Phone (optional)") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone))
             OutlinedTextField(message, { message = it.take(2000) }, Modifier.fillMaxWidth().height(160.dp), label = { Text("Message") })
             PrimaryButton("Send", {
-                busy = true
-                scope.launch {
-                    result = when (val r = container.repo.contact(ContactRequest(name.ifBlank { null }, email.ifBlank { null }, phone.ifBlank { null }, message.trim()))) {
-                        is ApiResult.Ok -> { message = ""; "Message sent. The academy will reply by e-mail." to true }
-                        is ApiResult.Err -> r.message to false
+                val request = ContactRequest(name.ifBlank { null }, email.ifBlank { null }, phone.ifBlank { null }, message.trim())
+                submitter.submit {
+                    when (val r = container.repo.contact(request)) {
+                        is ApiResult.Ok -> SubmitResult("Message sent. The academy will reply by e-mail.", ok = true)
+                        is ApiResult.Err -> SubmitResult(r.message, ok = false)
                     }
-                    busy = false
                 }
-            }, enabled = message.trim().length >= 10 && (session != null || (name.isNotBlank() && email.contains("@"))), loading = busy)
+            }, enabled = message.trim().length >= 10 && (session != null || (name.isNotBlank() && email.contains("@"))), loading = submitter.busy)
         }
     }
 }
