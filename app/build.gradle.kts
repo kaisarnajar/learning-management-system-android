@@ -85,6 +85,8 @@ android {
     testOptions {
         // JVM tests: android.* calls such as Log.w return defaults instead of throwing.
         unitTests.isReturnDefaultValues = true
+        // Robolectric tests (Context, DataStore, Compose UI) run on the JVM, here and in CI.
+        unitTests.isIncludeAndroidResources = true
     }
 
     lint {
@@ -137,6 +139,10 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.ext.junit)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.test.runner)
