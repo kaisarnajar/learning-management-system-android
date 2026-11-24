@@ -107,7 +107,7 @@ import com.darsequran.academy.ui.common.statusLabel
 import com.darsequran.academy.ui.common.toLoad
 import com.darsequran.academy.ui.common.vmFactory
 import com.darsequran.academy.ui.common.SearchField
-import com.darsequran.academy.ui.explore.SimpleLoadViewModel
+import com.darsequran.academy.ui.common.LoaderViewModel
 import com.darsequran.academy.ui.home.BookTile
 import com.darsequran.academy.ui.pay.PayWithUpiButton
 import com.darsequran.academy.ui.pay.PaymentConfirmFields
@@ -176,7 +176,7 @@ private fun BookGrid(state: PagedState<Book>, vm: PagedViewModel<Book>, modifier
 
 @Composable
 fun BookScreen(id: String, onBack: () -> Unit, onCart: () -> Unit, onSignIn: () -> Unit) {
-    val vm: SimpleLoadViewModel<Book> = viewModel(key = "book-$id", factory = vmFactory { c -> SimpleLoadViewModel { c.repo.book(id) } })
+    val vm: LoaderViewModel<Book> = viewModel(key = "book-$id", factory = vmFactory { c -> LoaderViewModel { c.repo.book(id) } })
     val cartVm: CartViewModel = viewModel(factory = vmFactory { CartViewModel(it.cart, it.auth) })
     val state by vm.state.collectAsStateWithLifecycle()
     val session by cartVm.session.collectAsStateWithLifecycle()
@@ -420,7 +420,7 @@ fun CheckoutScreen(onBack: () -> Unit, onDone: () -> Unit) {
 
 @Composable
 fun OrdersScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
-    val vm: SimpleLoadViewModel<List<BookOrder>> = viewModel(key = "orders", factory = vmFactory { c -> SimpleLoadViewModel { c.repo.orders() } })
+    val vm: LoaderViewModel<List<BookOrder>> = viewModel(key = "orders", factory = vmFactory { c -> LoaderViewModel { c.repo.orders() } })
     val state by vm.state.collectAsStateWithLifecycle()
     Scaffold(topBar = { BackTopBar("Book orders", onBack) }) { padding ->
         Box(Modifier.padding(padding)) {
@@ -453,7 +453,7 @@ private fun OrderCard(o: BookOrder, onClick: () -> Unit) {
 
 @Composable
 fun OrderScreen(id: String, onBack: () -> Unit, onReceipt: (String) -> Unit) {
-    val vm: SimpleLoadViewModel<BookOrder> = viewModel(key = "order-$id", factory = vmFactory { c -> SimpleLoadViewModel { c.repo.order(id) } })
+    val vm: LoaderViewModel<BookOrder> = viewModel(key = "order-$id", factory = vmFactory { c -> LoaderViewModel { c.repo.order(id) } })
     val state by vm.state.collectAsStateWithLifecycle()
     Scaffold(topBar = { BackTopBar("Order #${id.takeLast(6).uppercase()}", onBack) }) { padding ->
         Box(Modifier.padding(padding)) {

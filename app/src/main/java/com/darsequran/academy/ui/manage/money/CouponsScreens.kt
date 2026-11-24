@@ -280,7 +280,7 @@ private data class WaiverMeta(val range: FinanceRange, val stats: WaiverStats)
 /** Claimed fee waivers: totals, filters and each waiver with its receipt. */
 @Composable
 fun WaiverFinanceScreen(onBack: () -> Unit, onOpenReceipt: (String) -> Unit) {
-    val extras = rememberListExtras("money-waiver-finance")
+    val extras = rememberListExtras<WaiverMeta>("money-waiver-finance")
     val vm = rememberPaged("money-waiver-finance") { page, q, filter ->
         val r = service<MoneyApi>().waiverFinance(page, q.ifBlank { null }, decodeFilters(filter))
         extras.value.value = WaiverMeta(r.range, r.stats)
@@ -290,7 +290,7 @@ fun WaiverFinanceScreen(onBack: () -> Unit, onOpenReceipt: (String) -> Unit) {
     ReloadOnReturn(vm::refresh)
     val runner = rememberActionRunner()
     val state by vm.state.collectAsStateWithLifecycle()
-    val meta = extras.value.collectAsStateWithLifecycle().value as? WaiverMeta
+    val meta = extras.value.collectAsStateWithLifecycle().value
     val opts = (options.state.collectAsStateWithLifecycle().value as? Load.Ready)?.value
 
     ManageScaffold("Fee waiver finance", onBack, runner.snackbar) { padding ->

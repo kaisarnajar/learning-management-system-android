@@ -66,7 +66,7 @@ private fun FinanceSectionChips(bookstore: Boolean, onSwitch: () -> Unit) {
  */
 @Composable
 fun FinanceScreen(onBack: () -> Unit, onBookstore: () -> Unit, onRecord: (expense: Boolean) -> Unit) {
-    val extras = rememberListExtras("money-finance")
+    val extras = rememberListExtras<FinanceMeta>("money-finance")
     val vm = rememberPaged("money-finance") { page, q, filter ->
         val r = service<MoneyApi>().finance(page, q.ifBlank { null }, decodeFilters(filter))
         extras.value.value = FinanceMeta(r.range, r.summary, r.filtered)
@@ -77,7 +77,7 @@ fun FinanceScreen(onBack: () -> Unit, onBookstore: () -> Unit, onRecord: (expens
     val runner = rememberActionRunner()
     val context = LocalContext.current
     val state by vm.state.collectAsStateWithLifecycle()
-    val meta = extras.value.collectAsStateWithLifecycle().value as? FinanceMeta
+    val meta = extras.value.collectAsStateWithLifecycle().value
     val opts = (options.state.collectAsStateWithLifecycle().value as? Load.Ready)?.value
     val filters = decodeFilters(state.filter)
     val expenses = filters["tab"] == "expenses"
@@ -170,7 +170,7 @@ private data class BookstoreMeta(val range: FinanceRange, val summary: Bookstore
 /** /admin/finance/bookstore: Book Store summary, the book sales report and the order finance report. */
 @Composable
 fun BookstoreFinanceScreen(onBack: () -> Unit, onCourses: () -> Unit) {
-    val extras = rememberListExtras("money-bookstore")
+    val extras = rememberListExtras<BookstoreMeta>("money-bookstore")
     val vm = rememberPaged("money-bookstore") { page, q, filter ->
         val r = service<MoneyApi>().bookstore(page, q.ifBlank { null }, decodeFilters(filter))
         extras.value.value = BookstoreMeta(r.range, r.summary)
@@ -180,7 +180,7 @@ fun BookstoreFinanceScreen(onBack: () -> Unit, onCourses: () -> Unit) {
     val runner = rememberActionRunner()
     val context = LocalContext.current
     val state by vm.state.collectAsStateWithLifecycle()
-    val meta = extras.value.collectAsStateWithLifecycle().value as? BookstoreMeta
+    val meta = extras.value.collectAsStateWithLifecycle().value
     val filters = decodeFilters(state.filter)
     val orders = filters["view"] == "orders"
 

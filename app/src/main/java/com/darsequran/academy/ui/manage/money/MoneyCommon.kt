@@ -121,12 +121,12 @@ fun withFilters(current: String?, vararg changes: Pair<String, String?>): String
  * Extra data that comes with a list page (summary totals, tab counts) kept beside the list's view model, so it
  * survives rotation with it. The list's fetch writes [value]; the screen reads it.
  */
-class ListExtras : ViewModel() {
-    val value = MutableStateFlow<Any?>(null)
+class ListExtras<T> : ViewModel() {
+    val value = MutableStateFlow<T?>(null)
 }
 
 @Composable
-fun rememberListExtras(key: String): ListExtras = viewModel(key = "$key-extras") { ListExtras() }
+fun <T> rememberListExtras(key: String): ListExtras<T> = viewModel(key = "$key-extras") { ListExtras<T>() }
 
 // ---------------------------------------------------------------- date range
 

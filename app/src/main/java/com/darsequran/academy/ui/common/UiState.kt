@@ -12,6 +12,8 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.darsequran.academy.AcademyApp
 import com.darsequran.academy.AppContainer
 import com.darsequran.academy.data.ApiResult
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 /** Loading → content or error, for screens that load one thing. */
 sealed interface Load<out T> {
@@ -51,4 +53,27 @@ fun ReloadOnReturn(reload: () -> Unit) {
         if (away) { away = false; reload() }
         onPauseOrDispose { if (activity?.isChangingConfigurations != true) away = true }
     }
+}
+
+/**
+ * Loads one thing (a record, a list) for a screen. [reload] refreshes in place (the current content stays up until
+ * the new one arrives); [load] starts over from the loading state. The newest load wins, so an older answer that
+ * arrives late can't replace a newer one.
+ */
+class LoaderViewModel<T>(private val fetch: suspend () -> ApiResult<T>) : androidx.lifecycle.ViewModel() {
+    private val _state = kotlinx.coroutines.flow.MutableStateFlow<Load<T>>(Load.Loading)
+    val state: kotlinx.coroutines.flow.StateFlow<Load<T>> = _state
+    private var job: kotlinx.coroutines.Job? = null
+
+    init { reload() }
+
+    fun reload(showLoading: Boolean = false): kotlinx.coroutines.Job {
+        job?.cancel()
+        return viewModelScope.launch {
+            if (showLoading || _state.value !is Load.Ready) _state.value = Load.Loading
+            _state.value = fetch().toLoad()
+        }.also { job = it }
+    }
+
+    fun load(): kotlinx.coroutines.Job = reload(showLoading = true)
 }

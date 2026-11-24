@@ -54,7 +54,7 @@ import com.darsequran.academy.ui.theme.Brand
 /** Pending fee payments: check the screenshot and reference, then approve or decline. */
 @Composable
 fun PendingPaymentsScreen(onBack: () -> Unit, onOpenReceipt: (String) -> Unit) {
-    val extras = rememberListExtras("money-pending")
+    val extras = rememberListExtras<Map<String, Int>>("money-pending")
     val vm = rememberPaged("money-pending") { page, q, filter ->
         val r = service<MoneyApi>().pending(filter ?: "enrollment_pending", page, q.ifBlank { null })
         extras.value.value = r.counts
@@ -63,8 +63,7 @@ fun PendingPaymentsScreen(onBack: () -> Unit, onOpenReceipt: (String) -> Unit) {
     ReloadOnReturn(vm::refresh)
     val runner = rememberActionRunner()
     val state by vm.state.collectAsStateWithLifecycle()
-    val countsAny by extras.value.collectAsStateWithLifecycle()
-    @Suppress("UNCHECKED_CAST") val counts = countsAny as? Map<String, Int> ?: emptyMap()
+    val counts = extras.value.collectAsStateWithLifecycle().value.orEmpty()
     var confirming by remember { mutableStateOf<Pair<MoneyRow, Boolean>?>(null) }
 
     ManageScaffold("Pending payments", onBack, runner.snackbar) { padding ->

@@ -65,7 +65,7 @@ import com.darsequran.academy.data.remote.Paged
 import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.BackTopBar
 import com.darsequran.academy.ui.common.Banner
-import com.darsequran.academy.ui.common.Load
+import com.darsequran.academy.ui.common.LoaderViewModel
 import com.darsequran.academy.ui.common.LoadContent
 import com.darsequran.academy.ui.common.PagedListBody
 import com.darsequran.academy.ui.common.PagedViewModel
@@ -73,13 +73,9 @@ import com.darsequran.academy.ui.common.TabTopBar
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.cacheDocument
 import com.darsequran.academy.ui.common.openDocument
-import com.darsequran.academy.ui.common.toLoad
 import com.darsequran.academy.ui.common.vmFactory
 import com.darsequran.academy.ui.theme.Brand
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
@@ -93,18 +89,6 @@ import okhttp3.ResponseBody
 
 // ------------------------------------------------------------------ data
 
-/** Loads one thing for a screen; `reload()` after a change. */
-class LoaderViewModel<T>(private val fetch: suspend () -> ApiResult<T>) : ViewModel() {
-    private val _state = MutableStateFlow<Load<T>>(Load.Loading)
-    val state: StateFlow<Load<T>> = _state.asStateFlow()
-
-    init { reload() }
-
-    fun reload(showLoading: Boolean = false) = viewModelScope.launch {
-        if (showLoading || _state.value !is Load.Ready) _state.value = Load.Loading
-        _state.value = fetch().toLoad()
-    }
-}
 
 /** A [LoaderViewModel] for this screen. [key] must differ per record (e.g. "student-$id"). */
 @Composable

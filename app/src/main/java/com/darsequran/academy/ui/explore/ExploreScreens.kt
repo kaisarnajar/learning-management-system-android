@@ -108,6 +108,7 @@ import com.darsequran.academy.ui.home.FatwaRow
 import com.darsequran.academy.ui.courses.CourseCard
 import com.darsequran.academy.ui.theme.Brand
 import com.darsequran.academy.ui.common.Dropdown
+import com.darsequran.academy.ui.common.LoaderViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -337,7 +338,7 @@ fun FatwaListScreen(onBack: () -> Unit, onOpen: (String) -> Unit, onAsk: () -> U
 
 @Composable
 fun FatwaDetailScreen(id: String, onBack: () -> Unit) {
-    val vm: SimpleLoadViewModel<Fatwa> = viewModel(key = "fatwa-$id", factory = vmFactory { c -> SimpleLoadViewModel { c.repo.fatwa(id) } })
+    val vm: LoaderViewModel<Fatwa> = viewModel(key = "fatwa-$id", factory = vmFactory { c -> LoaderViewModel { c.repo.fatwa(id) } })
     val state by vm.state.collectAsStateWithLifecycle()
     Scaffold(topBar = { BackTopBar("Fatwa", onBack) }) { padding ->
         Box(Modifier.padding(padding)) {
@@ -447,7 +448,7 @@ fun LibraryListScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
 
 @Composable
 fun LibraryItemScreen(id: String, onBack: () -> Unit) {
-    val vm: SimpleLoadViewModel<LibraryItem> = viewModel(key = "lib-$id", factory = vmFactory { c -> SimpleLoadViewModel { c.repo.libraryItem(id) } })
+    val vm: LoaderViewModel<LibraryItem> = viewModel(key = "lib-$id", factory = vmFactory { c -> LoaderViewModel { c.repo.libraryItem(id) } })
     val state by vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     Scaffold(topBar = { BackTopBar("Library", onBack) }) { padding ->
@@ -504,7 +505,7 @@ fun AnnouncementsScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
 
 @Composable
 fun AnnouncementScreen(id: String, onBack: () -> Unit) {
-    val vm: SimpleLoadViewModel<SiteAnnouncement> = viewModel(key = "ann-$id", factory = vmFactory { c -> SimpleLoadViewModel { c.repo.announcement(id) } })
+    val vm: LoaderViewModel<SiteAnnouncement> = viewModel(key = "ann-$id", factory = vmFactory { c -> LoaderViewModel { c.repo.announcement(id) } })
     val state by vm.state.collectAsStateWithLifecycle()
     Scaffold(topBar = { BackTopBar("Announcement", onBack) }) { padding ->
         Box(Modifier.padding(padding)) {
@@ -554,7 +555,7 @@ fun TeachersScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
 
 @Composable
 fun TeacherScreen(id: String, onBack: () -> Unit, onOpenCourse: (String) -> Unit) {
-    val vm: SimpleLoadViewModel<TeacherDetailResponse> = viewModel(key = "teacher-$id", factory = vmFactory { c -> SimpleLoadViewModel { c.repo.teacher(id) } })
+    val vm: LoaderViewModel<TeacherDetailResponse> = viewModel(key = "teacher-$id", factory = vmFactory { c -> LoaderViewModel { c.repo.teacher(id) } })
     val state by vm.state.collectAsStateWithLifecycle()
     Scaffold(topBar = { BackTopBar("", onBack) }) { padding ->
         Box(Modifier.padding(padding)) {
@@ -578,12 +579,4 @@ fun TeacherScreen(id: String, onBack: () -> Unit, onOpenCourse: (String) -> Unit
             }
         }
     }
-}
-
-/** One-shot loader for detail screens. */
-class SimpleLoadViewModel<T>(private val fetch: suspend () -> ApiResult<T>) : ViewModel() {
-    private val _state = MutableStateFlow<Load<T>>(Load.Loading)
-    val state: StateFlow<Load<T>> = _state.asStateFlow()
-    init { load() }
-    fun load() = viewModelScope.launch { _state.value = Load.Loading; _state.value = fetch().toLoad() }
 }

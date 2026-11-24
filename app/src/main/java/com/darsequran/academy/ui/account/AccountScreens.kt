@@ -137,7 +137,7 @@ import com.darsequran.academy.ui.common.statusLabel
 import com.darsequran.academy.ui.common.titleCase
 import com.darsequran.academy.ui.common.toLoad
 import com.darsequran.academy.ui.common.vmFactory
-import com.darsequran.academy.ui.explore.SimpleLoadViewModel
+import com.darsequran.academy.ui.common.LoaderViewModel
 import com.darsequran.academy.ui.common.ChoicePill
 import com.darsequran.academy.ui.common.Dropdown
 import com.darsequran.academy.ui.common.readImage
@@ -447,8 +447,8 @@ fun rememberReceiptOpener(): (String) -> Unit {
 
 @Composable
 fun PaymentsScreen(onBack: () -> Unit) {
-    val vm: SimpleLoadViewModel<Pair<PaymentHistory, List<Enrollment>>> = viewModel(key = "payments", factory = vmFactory { c ->
-        SimpleLoadViewModel<Pair<PaymentHistory, List<Enrollment>>> {
+    val vm: LoaderViewModel<Pair<PaymentHistory, List<Enrollment>>> = viewModel(key = "payments", factory = vmFactory { c ->
+        LoaderViewModel<Pair<PaymentHistory, List<Enrollment>>> {
             when (val h = c.repo.paymentHistory()) {
                 is ApiResult.Ok -> ApiResult.Ok(h.value to (c.repo.enrollments().orNull() ?: emptyList()))
                 is ApiResult.Err -> h
