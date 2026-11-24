@@ -315,7 +315,16 @@ private fun Entry(icon: ImageVector, label: String, onClick: () -> Unit, trailin
 
 // ============================================================ edit profile
 
-data class EditState(val profile: Load<Profile> = Load.Loading, val config: AppConfig? = null, val saving: Boolean = false, val error: String? = null, val saved: Boolean = false, val photoBusy: Boolean = false)
+data class EditState(
+    val profile: Load<Profile> = Load.Loading,
+    val config: AppConfig? = null,
+    val saving: Boolean = false,
+    val error: String? = null,
+    val saved: Boolean = false,
+    val photoBusy: Boolean = false,
+    /** This save completed the profile: the website's "Your profile is complete" step is shown. */
+    val justCompleted: Boolean = false,
+)
 
 class EditProfileViewModel(private val auth: AuthRepository, private val repo: AcademyRepository) : ViewModel() {
     private val _state = MutableStateFlow(EditState())
@@ -327,8 +336,12 @@ class EditProfileViewModel(private val auth: AuthRepository, private val repo: A
     }
     fun save(update: ProfileUpdate) = viewModelScope.launch {
         _state.update { it.copy(saving = true, error = null, saved = false) }
+        val wasComplete = (_state.value.profile as? Load.Ready)?.value?.profileComplete == true
         when (val r = auth.updateProfile(update)) {
-            is ApiResult.Ok -> _state.update { it.copy(saving = false, saved = true, profile = Load.Ready(r.value)) }
+            is ApiResult.Ok -> _state.update {
+                val done = profileJustCompleted(wasComplete, r.value.profileComplete)
+                it.copy(saving = false, saved = true, profile = Load.Ready(r.value), justCompleted = done)
+            }
             is ApiResult.Err -> _state.update { it.copy(saving = false, error = r.message) }
         }
     }
@@ -343,19 +356,20 @@ class EditProfileViewModel(private val auth: AuthRepository, private val repo: A
 }
 
 @Composable
-fun EditProfileScreen(onBack: () -> Unit) {
+fun EditProfileScreen(onBack: () -> Unit, onBrowseCourses: (() -> Unit)? = null) {
     val vm: EditProfileViewModel = viewModel(factory = vmFactory { EditProfileViewModel(it.auth, it.repo) })
     val state by vm.state.collectAsStateWithLifecycle()
     Scaffold(topBar = { BackTopBar("Edit profile", onBack) }) { padding ->
         Box(Modifier.padding(padding)) {
-            LoadContent(state.profile, vm::load) { p -> ProfileForm(p, state, vm) }
+            LoadContent(state.profile, vm::load) { p ->
+                if (state.justCompleted) ProfileCompleteStep(onBrowseCourses ?: onBack) else ProfileForm(p, state, vm)
+            }
         }
     }
 }
 
 @Composable
 private fun ProfileForm(p: Profile, state: EditState, vm: EditProfileViewModel) {
-    val context = LocalContext.current
     val config = state.config
     val countries = config?.lookups?.countries.orEmpty()
     val occupations = config?.lookups?.occupations.orEmpty()
@@ -367,27 +381,11 @@ private fun ProfileForm(p: Profile, state: EditState, vm: EditProfileViewModel) 
     var gender by rememberSaveable { mutableStateOf(p.gender ?: "") }
     var country by rememberSaveable { mutableStateOf(p.whatsappCountry ?: config?.lookups?.defaultCountryCode ?: "IN") }
     var whatsapp by rememberSaveable { mutableStateOf(p.whatsappLocal ?: "") }
-    var picked by remember { mutableStateOf<Uri?>(null) }
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { picked = it }
-    LaunchedEffect(picked) {
-        val uri = picked ?: return@LaunchedEffect
-        val image = readImage(context, uri)
-        if (image != null) vm.photo(image.first, image.second)
-        else android.widget.Toast.makeText(context, "That photo couldn't be read. Try another one.", android.widget.Toast.LENGTH_LONG).show()
-    }
     val selectedCountry = countries.firstOrNull { it.code == country }
 
     Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp).imePadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Box(Modifier.align(Alignment.CenterHorizontally)) {
-            Avatar(p.name, p.image, 96.dp)
-            if (gender != "FEMALE") {
-                IconButton(
-                    { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
-                    Modifier.align(Alignment.BottomEnd).size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
-                ) { if (state.photoBusy) LoadingBox(Modifier.size(18.dp)) else Icon(Icons.Rounded.CameraAlt, "Change photo", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(18.dp)) }
-            }
-        }
-        if (!p.profileComplete) Banner("Fill in every field to complete your profile; you get your registration number when it is complete.", Tone.Info)
+        ProfilePhoto(p, gender, state.photoBusy) { bytes, mime -> vm.photo(bytes, mime) }
+        if (!p.profileComplete) Banner("$PROFILE_INCOMPLETE_TITLE. $PROFILE_INCOMPLETE_TEXT", Tone.Warning)
         state.error?.let { Banner(it, Tone.Danger) }
         if (state.saved) Banner("Profile saved.", Tone.Success)
         Field(name, "Full name") { name = it }
@@ -411,6 +409,24 @@ private fun ProfileForm(p: Profile, state: EditState, vm: EditProfileViewModel) 
                 country = if (whatsapp.isNotBlank()) country else null, whatsapp = whatsapp.ifBlank { null },
             ))
         }, loading = state.saving)
+    }
+}
+
+/** The website's "Your profile is complete" notice with its "Browse courses" link. */
+@Composable
+private fun ProfileCompleteStep(onBrowseCourses: () -> Unit) {
+    Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        AppCard(Modifier.fillMaxWidth()) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.CheckCircle, null, tint = Brand.success)
+                Spacer(Modifier.width(8.dp))
+                Text(PROFILE_COMPLETE_TITLE, style = MaterialTheme.typography.titleMedium)
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(PROFILE_COMPLETE_TEXT, style = MaterialTheme.typography.bodyMedium)
+            Spacer(Modifier.height(12.dp))
+            PrimaryButton("Browse courses", onBrowseCourses)
+        }
     }
 }
 

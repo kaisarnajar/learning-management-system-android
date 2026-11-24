@@ -381,7 +381,7 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                 }
                 composable<ForgotPasswordRoute> { ForgotPasswordScreen(nav::popBackStack) }
                 composable<NotificationsRoute> { NotificationsScreen(nav::popBackStack) { href -> openHref(href) } }
-                composable<EditProfileRoute> { EditProfileScreen(nav::popBackStack) }
+                composable<EditProfileRoute> { EditProfileScreen(nav::popBackStack) { nav.switchTab(CoursesTab) } }
                 composable<PaymentsRoute> { PaymentsScreen(nav::popBackStack) }
                 composable<WaiversRoute> { WaiversScreen(nav::popBackStack) }
                 composable<ReviewsRoute> { ReviewsScreen(nav::popBackStack) }
