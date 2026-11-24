@@ -29,6 +29,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.darsequran.academy.data.staff.content.BlogDetail
+import com.darsequran.academy.data.staff.content.BlogResponse
+import com.darsequran.academy.data.staff.content.BlogRow
+import com.darsequran.academy.data.staff.content.ContentApi
 import com.darsequran.academy.data.staff.formOf
 import com.darsequran.academy.ui.common.Banner
 import com.darsequran.academy.ui.common.HtmlText
@@ -42,6 +46,7 @@ import com.darsequran.academy.ui.common.openWeb
 import com.darsequran.academy.ui.manage.common.AddFab
 import com.darsequran.academy.ui.manage.common.ConfirmDialog
 import com.darsequran.academy.ui.manage.common.DetailCard
+import com.darsequran.academy.ui.manage.common.FeaturedSwitch
 import com.darsequran.academy.ui.manage.common.Field
 import com.darsequran.academy.ui.manage.common.FormScreen
 import com.darsequran.academy.ui.manage.common.FormSection
@@ -54,10 +59,9 @@ import com.darsequran.academy.ui.manage.common.RecordCard
 import com.darsequran.academy.ui.manage.common.RichTextField
 import com.darsequran.academy.ui.manage.common.RowIcon
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
+import com.darsequran.academy.ui.manage.common.rememberFormFiles
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
-import com.darsequran.academy.ui.manage.common.rememberFormFiles
-import com.darsequran.academy.ui.manage.common.FeaturedSwitch
 
 // Website: /admin/blogs (+ new, [id]/edit), /admin/blog-approvals (+ [id]), /teacher/blogs (+ new, [id]/edit).
 

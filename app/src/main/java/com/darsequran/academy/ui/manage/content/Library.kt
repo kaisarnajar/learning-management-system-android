@@ -7,9 +7,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.PictureAsPdf
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,6 +30,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.darsequran.academy.data.staff.content.ContentApi
+import com.darsequran.academy.data.staff.content.LibraryItemDto
 import com.darsequran.academy.data.staff.formOf
 import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.ReloadOnReturn
@@ -41,6 +43,7 @@ import com.darsequran.academy.ui.common.openWeb
 import com.darsequran.academy.ui.manage.common.AddFab
 import com.darsequran.academy.ui.manage.common.ConfirmDialog
 import com.darsequran.academy.ui.manage.common.DetailCard
+import com.darsequran.academy.ui.manage.common.FeaturedSwitch
 import com.darsequran.academy.ui.manage.common.Field
 import com.darsequran.academy.ui.manage.common.FormDropdown
 import com.darsequran.academy.ui.manage.common.FormImageField
@@ -53,10 +56,9 @@ import com.darsequran.academy.ui.manage.common.ManageListScreen
 import com.darsequran.academy.ui.manage.common.ManageScaffold
 import com.darsequran.academy.ui.manage.common.RecordCard
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
+import com.darsequran.academy.ui.manage.common.rememberFormFiles
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
-import com.darsequran.academy.ui.manage.common.rememberFormFiles
-import com.darsequran.academy.ui.manage.common.FeaturedSwitch
 import com.darsequran.academy.ui.manage.common.withOther
 
 // Website: /admin/library (list, delete), /[id] (view, delete), /new and /[id]/edit (cover image upload).

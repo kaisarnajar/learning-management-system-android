@@ -23,6 +23,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.darsequran.academy.data.staff.ActionResponse
+import com.darsequran.academy.data.staff.EmailOutcome
+import com.darsequran.academy.data.staff.content.ContentApi
+import com.darsequran.academy.data.staff.content.FatwaRow
 import com.darsequran.academy.data.staff.formOf
 import com.darsequran.academy.ui.common.Banner
 import com.darsequran.academy.ui.common.HtmlText
@@ -35,6 +38,7 @@ import com.darsequran.academy.ui.common.formatDate
 import com.darsequran.academy.ui.common.openWeb
 import com.darsequran.academy.ui.manage.common.ConfirmDialog
 import com.darsequran.academy.ui.manage.common.DetailCard
+import com.darsequran.academy.ui.manage.common.FeaturedSwitch
 import com.darsequran.academy.ui.manage.common.FilterOption
 import com.darsequran.academy.ui.manage.common.LoadedColumn
 import com.darsequran.academy.ui.manage.common.ManageListScreen
@@ -45,8 +49,6 @@ import com.darsequran.academy.ui.manage.common.RowIcon
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
-import com.darsequran.academy.ui.manage.common.FeaturedSwitch
-import com.darsequran.academy.data.staff.EmailOutcome
 
 // Website: /admin/fatwa (+ [id]) for admins, /teacher/fatwa (+ [id]) for teachers. Both answer with the same editor.
 

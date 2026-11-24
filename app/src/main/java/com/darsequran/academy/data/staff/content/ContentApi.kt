@@ -1,8 +1,7 @@
-package com.darsequran.academy.ui.manage.content
+package com.darsequran.academy.data.staff.content
 
 import com.darsequran.academy.data.remote.Paged
 import com.darsequran.academy.data.staff.ActionResponse
-import com.darsequran.academy.ui.common.Tone
 import kotlinx.serialization.Serializable
 import okhttp3.MultipartBody
 import retrofit2.http.DELETE
@@ -13,14 +12,6 @@ import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
-
-/*
- * Content management: site announcements, blogs and blog approvals, fatwa Q&A, the digital library and the
- * verse & hadith of the day (/api/v1/admin/...), and the teacher's own blog posts and fatwa answers
- * (/api/v1/teacher/...). Writes run the website's server actions, so their bodies are the website forms' fields.
- */
-
-// ------------------------------------------------------------------ shared
 
 @Serializable
 data class ContentImage(val id: String, val imagePath: String, val caption: String? = null, val sortOrder: Int? = null)
@@ -65,7 +56,7 @@ data class AnnouncementDetail(
 )
 
 @Serializable
-data class AnnouncementResponse(val announcement: AnnouncementDetail, val featuredCount: Int = 0, val featuredMax: Int = 4, val maxImages: Int = 5)
+data class SiteAnnouncementAdminResponse(val announcement: AnnouncementDetail, val featuredCount: Int = 0, val featuredMax: Int = 4, val maxImages: Int = 5)
 
 // --------------------------------------------------------------------- blogs
 
@@ -223,7 +214,7 @@ interface ContentApi {
     // Site announcements
     @GET("admin/announcements") suspend fun announcements(@Query("page") page: Int, @Query("q") q: String?): Paged<AnnouncementRow>
     @GET("admin/announcements?pageSize=1") suspend fun announcementLimits(): ContentLimits
-    @GET("admin/announcements/{id}") suspend fun announcement(@Path("id") id: String): AnnouncementResponse
+    @GET("admin/announcements/{id}") suspend fun announcement(@Path("id") id: String): SiteAnnouncementAdminResponse
     @Multipart @POST("admin/announcements") suspend fun createAnnouncement(@Part parts: List<MultipartBody.Part>): ActionResponse
     @Multipart @PATCH("admin/announcements/{id}") suspend fun updateAnnouncement(@Path("id") id: String, @Part parts: List<MultipartBody.Part>): ActionResponse
     @DELETE("admin/announcements/{id}") suspend fun deleteAnnouncement(@Path("id") id: String): ActionResponse
@@ -279,12 +270,3 @@ interface ContentApi {
 }
 
 // ------------------------------------------------------------- status tones
-
-/** Chip colours matching the website's badges. */
-fun contentTone(label: String): Tone = when (label) {
-    "Published", "Answered" -> Tone.Success
-    "Home + Public", "On homepage", "Approved" -> Tone.Info
-    "Pending approval", "Pending Review" -> Tone.Warning
-    "Rejected" -> Tone.Danger
-    else -> Tone.Neutral
-}

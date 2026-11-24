@@ -12,7 +12,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable data object AnnouncementsAdminRoute
 /** [id] null: a new announcement. */
-@Serializable data class AnnouncementFormRoute(val id: String? = null)
+@Serializable data class SiteAnnouncementFormRoute(val id: String? = null)
 
 @Serializable data object BlogsAdminRoute
 @Serializable data class BlogFormRoute(val id: String? = null)
@@ -39,9 +39,9 @@ fun NavGraphBuilder.contentGraph(nav: NavHostController) {
 
     // Site announcements
     composable<AnnouncementsAdminRoute> {
-        AnnouncementsListScreen(back, onOpen = { nav.navigate(AnnouncementFormRoute(it)) }, onNew = { nav.navigate(AnnouncementFormRoute()) })
+        AnnouncementsListScreen(back, onOpen = { nav.navigate(SiteAnnouncementFormRoute(it)) }, onNew = { nav.navigate(SiteAnnouncementFormRoute()) })
     }
-    composable<AnnouncementFormRoute> { AnnouncementFormScreen(it.toRoute<AnnouncementFormRoute>().id, back) }
+    composable<SiteAnnouncementFormRoute> { SiteAnnouncementFormScreen(it.toRoute<SiteAnnouncementFormRoute>().id, back) }
 
     // Blogs and approvals (admin)
     composable<BlogsAdminRoute> { BlogsListScreen(back, onOpen = { nav.navigate(BlogFormRoute(it)) }, onNew = { nav.navigate(BlogFormRoute()) }) }

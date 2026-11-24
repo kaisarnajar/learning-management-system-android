@@ -13,6 +13,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.darsequran.academy.data.staff.content.AnnouncementDetail
+import com.darsequran.academy.data.staff.content.AnnouncementRow
+import com.darsequran.academy.data.staff.content.ContentApi
+import com.darsequran.academy.data.staff.content.SiteAnnouncementAdminResponse
 import com.darsequran.academy.data.staff.formOf
 import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.ReloadOnReturn
@@ -20,6 +24,7 @@ import com.darsequran.academy.ui.common.formatDate
 import com.darsequran.academy.ui.common.openWeb
 import com.darsequran.academy.ui.manage.common.AddFab
 import com.darsequran.academy.ui.manage.common.ConfirmDialog
+import com.darsequran.academy.ui.manage.common.FeaturedSwitch
 import com.darsequran.academy.ui.manage.common.FormDateField
 import com.darsequran.academy.ui.manage.common.FormScreen
 import com.darsequran.academy.ui.manage.common.FormSection
@@ -29,10 +34,9 @@ import com.darsequran.academy.ui.manage.common.ManageListScreen
 import com.darsequran.academy.ui.manage.common.RecordCard
 import com.darsequran.academy.ui.manage.common.RowIcon
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
+import com.darsequran.academy.ui.manage.common.rememberFormFiles
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.manage.common.rememberPaged
-import com.darsequran.academy.ui.manage.common.rememberFormFiles
-import com.darsequran.academy.ui.manage.common.FeaturedSwitch
 
 // Website: /admin/announcements (list, homepage toggle, delete), /new and /[id]/edit.
 
@@ -103,11 +107,11 @@ fun AnnouncementsListScreen(onBack: () -> Unit, onOpen: (String) -> Unit, onNew:
 
 /** New ([id] null) or edit announcement. */
 @Composable
-fun AnnouncementFormScreen(id: String?, onBack: () -> Unit) {
+fun SiteAnnouncementFormScreen(id: String?, onBack: () -> Unit) {
     val loader = rememberLoader("admin-announcement-form-${id ?: "new"}") {
         val api = service<ContentApi>()
         if (id != null) api.announcement(id)
-        else api.announcementLimits().let { AnnouncementResponse(AnnouncementDetail(id = ""), it.featuredCount, it.featuredMax, it.maxImages) }
+        else api.announcementLimits().let { SiteAnnouncementAdminResponse(AnnouncementDetail(id = ""), it.featuredCount, it.featuredMax, it.maxImages) }
     }
     val runner = rememberActionRunner()
     val state by loader.state.collectAsStateWithLifecycle()

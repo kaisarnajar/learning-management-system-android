@@ -30,6 +30,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.darsequran.academy.data.staff.content.ContentApi
+import com.darsequran.academy.data.staff.content.InspirationDto
 import com.darsequran.academy.data.staff.formOf
 import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.ArabicText
