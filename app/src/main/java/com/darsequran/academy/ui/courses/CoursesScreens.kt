@@ -70,6 +70,7 @@ import com.darsequran.academy.data.remote.Enrollment
 import com.darsequran.academy.data.repo.AcademyRepository
 import com.darsequran.academy.data.repo.AuthRepository
 import com.darsequran.academy.ui.common.ReloadOnReturn
+import com.darsequran.academy.ui.common.formatCalendarDate
 import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.Avatar
 import com.darsequran.academy.ui.common.Banner
@@ -402,7 +403,7 @@ fun CourseDetailScreen(
                         if (!detail.enrollmentOpen && detail.enrollment == null) Banner("This course is not accepting new students right now.", Tone.Warning)
 
                         AppCard(Modifier.fillMaxWidth()) {
-                            InfoRow(Icons.Rounded.CalendarMonth, "Starts", course.startDate.ifBlank { "To be announced" })
+                            InfoRow(Icons.Rounded.CalendarMonth, "Starts", course.startDate.ifBlank { null }?.let(::formatCalendarDate) ?: "To be announced")
                             InfoRow(Icons.Rounded.Schedule, "Duration", course.duration.ifBlank { "—" })
                             InfoRow(Icons.Rounded.SignalCellularAlt, "Level", course.level.ifBlank { "All levels" })
                             InfoRow(Icons.Rounded.Payments, "Enrollment fee", if (course.priceInrPaise > 0) rupees(course.priceInrPaise) else "Free")
