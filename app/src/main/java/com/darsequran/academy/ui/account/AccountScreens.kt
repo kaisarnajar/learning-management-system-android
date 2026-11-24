@@ -686,8 +686,8 @@ fun ChangePasswordScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val auth = remember { (context.applicationContext as com.darsequran.academy.AcademyApp).container.auth }
     val scope = rememberCoroutineScope()
-    var current by rememberSaveable { mutableStateOf("") }
-    var new by rememberSaveable { mutableStateOf("") }
+    var current by remember { mutableStateOf("") }
+    var new by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     Scaffold(topBar = { BackTopBar("Change password", onBack) }) { padding ->
@@ -718,7 +718,7 @@ fun DeleteAccountScreen(onBack: () -> Unit, onDeleted: () -> Unit) {
     val container = remember { (context.applicationContext as com.darsequran.academy.AcademyApp).container }
     val scope = rememberCoroutineScope()
     var hasPassword by remember { mutableStateOf<Boolean?>(null) }
-    var password by rememberSaveable { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var confirm by rememberSaveable { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }

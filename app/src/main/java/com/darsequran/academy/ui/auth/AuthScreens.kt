@@ -50,6 +50,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -160,7 +161,7 @@ fun SignInScreen(
     val state by vm.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.done) { if (state.done) onDone() }
     var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
+    var password by remember { mutableStateOf("") } // not saveable: saved state can be written to disk
 
     AuthFrame("Welcome back", "Sign in to follow your courses, pay fees and more.", onBack) {
         state.error?.let { Banner(it, Tone.Danger) }
@@ -212,7 +213,7 @@ fun RegisterScreen(
     val context = LocalContext.current
     var name by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var accepted by rememberSaveable { mutableStateOf(false) }
 
     if (state.done) {
