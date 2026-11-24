@@ -256,7 +256,11 @@ fun statusLabel(status: String, kind: StatusKind = StatusKind.Enrollment): Pair<
 /** Payments, book orders, waivers and reviews. */
 private fun recordStatusLabel(status: String, kind: StatusKind): Pair<String, Tone> = when (status.lowercase()) {
     "pending_verification" -> "Pending Verification" to Tone.Warning
-    "pending" -> (if (kind == StatusKind.Waiver) "Pending Review" else "Pending") to Tone.Warning
+    "pending" -> when (kind) {
+        StatusKind.Waiver -> "Pending Review"
+        StatusKind.Review -> "Pending approval"
+        else -> "Pending"
+    } to Tone.Warning
     "approved" -> "Approved" to Tone.Success
     "rejected" -> "Rejected" to Tone.Danger
     // A declined fee payment reads "Rejected" on the website; a declined book order "Declined".

@@ -23,8 +23,9 @@ class StatusLabelTest {
     }
 
     @Test
-    fun aPendingWaiverIsUnderReviewAndAPendingReviewIsPending() {
+    fun aPendingWaiverIsUnderReviewAndAPendingReviewAwaitsApproval() {
         assertEquals("Pending Review" to Tone.Warning, statusLabel("PENDING", StatusKind.Waiver))
-        assertEquals("Pending" to Tone.Warning, statusLabel("PENDING", StatusKind.Review))
+        assertEquals("Pending approval" to Tone.Warning, statusLabel("PENDING", StatusKind.Review))
+        assertEquals("Pending" to Tone.Warning, statusLabel("PENDING"))
     }
 }
