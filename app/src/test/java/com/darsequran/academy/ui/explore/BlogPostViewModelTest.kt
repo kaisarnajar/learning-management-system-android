@@ -23,7 +23,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.Collections
 import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
@@ -32,7 +31,7 @@ class BlogPostViewModelTest {
 
     private val app = ApplicationProvider.getApplicationContext<AcademyApp>()
     private val server = MockWebServer()
-    private val requests = Collections.synchronizedList(mutableListOf<String>())
+    private val requests = java.util.concurrent.CopyOnWriteArrayList<String>()
 
     @Before fun setUp() {
         server.dispatcher = object : Dispatcher() {
