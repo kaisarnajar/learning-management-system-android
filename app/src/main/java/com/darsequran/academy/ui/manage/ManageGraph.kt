@@ -14,6 +14,13 @@ import com.darsequran.academy.ui.manage.people.TeachersAdminRoute
 import com.darsequran.academy.ui.manage.people.peopleGraph
 import com.darsequran.academy.ui.manage.courses.CoursesAdminRoute
 import com.darsequran.academy.ui.manage.courses.coursesGraph
+import com.darsequran.academy.ui.manage.content.contentGraph
+import com.darsequran.academy.ui.manage.content.AnnouncementsAdminRoute
+import com.darsequran.academy.ui.manage.content.BlogApprovalsRoute
+import com.darsequran.academy.ui.manage.content.BlogsAdminRoute
+import com.darsequran.academy.ui.manage.content.FatwaAdminRoute
+import com.darsequran.academy.ui.manage.content.InspirationAdminRoute
+import com.darsequran.academy.ui.manage.content.LibraryAdminRoute
 import com.darsequran.academy.ui.manage.students.StudentsAdminRoute
 import com.darsequran.academy.ui.manage.students.studentsAdminGraph
 import com.darsequran.academy.ui.teach.teachGraph
@@ -35,6 +42,7 @@ fun NavGraphBuilder.manageGraph(nav: NavHostController) {
     bookstoreAdminGraph(nav)
     peopleGraph(nav)
     coursesGraph(nav)
+    contentGraph(nav)
 }
 
 /** Website admin page → the app screen that does the same job. */
@@ -49,6 +57,12 @@ val adminHrefRoutes: Map<String, Any> = mapOf(
     "/admin/contact-inquiries" to InquiriesAdminRoute,
     "/admin/audit-log" to AuditLogRoute,
     "/admin/courses" to CoursesAdminRoute,
+    "/admin/announcements" to AnnouncementsAdminRoute,
+    "/admin/blogs" to BlogsAdminRoute,
+    "/admin/blog-approvals" to BlogApprovalsRoute,
+    "/admin/fatwa" to FatwaAdminRoute,
+    "/admin/library" to LibraryAdminRoute,
+    "/admin/daily-inspiration" to InspirationAdminRoute,
 )
 
 /** The app screen for a website admin path, or null when the app has none. */
