@@ -22,6 +22,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.HttpException
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 /** Absolute URL for an image or file path the API returns ("/uploads/x.png" or "https://..."). */
@@ -136,8 +137,14 @@ class Network(private val sessionStore: SessionSource, val json: Json) {
 
     val api: AcademyApi = retrofit.create(AcademyApi::class.java)
 
-    /** A Retrofit service for one part of the API (the admin and teacher areas each have their own). */
-    fun <T> create(service: Class<T>): T = retrofit.create(service)
+    private val services = ConcurrentHashMap<Class<*>, Any>()
+
+    /**
+     * A Retrofit service for one part of the API (the admin and teacher areas each have their own). Made once per
+     * interface: screens ask for one on every call, and each proxy re-reads the interface's annotations.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T> create(service: Class<T>): T = services.getOrPut(service) { retrofit.create(service) } as T
 
     private fun retrofit(client: OkHttpClient): Retrofit = Retrofit.Builder()
         .baseUrl(PLACEHOLDER_BASE)

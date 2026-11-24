@@ -108,6 +108,12 @@ class NetworkAuthTest {
     private fun network(session: Session?) = FakeSession(session).let { it to Network(it, json).create(TestApi::class.java) }
 
     @Test
+    fun aServiceIsMadeOncePerInterface() {
+        val network = Network(FakeSession(null), json)
+        assertTrue(network.create(TestApi::class.java) === network.create(TestApi::class.java))
+    }
+
+    @Test
     fun signedInRequestsCarryTheBearerToken() = runBlocking {
         val (_, api) = network(session())
         api.ping()
