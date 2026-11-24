@@ -79,7 +79,6 @@ class AcademyRepository(private val api: AcademyApi) {
     suspend fun paymentQuote(courseId: String, type: String) = apiCall { api.paymentQuote(courseId, type) }
     suspend fun paymentHistory() = apiCall { api.paymentHistory() }
     // The body streams, so read it off the main thread.
-    suspend fun receipt(recordId: String) = apiCall { withContext(Dispatchers.IO) { api.receipt(recordId).use { it.bytes() } } }
     suspend fun waiverRequests() = apiCall { api.waiverRequests().data }
     suspend fun requestWaiver(courseId: String, feeType: String, reason: String) =
         apiCall { api.requestWaiver(WaiverRequestBody(courseId, feeType, reason)) }

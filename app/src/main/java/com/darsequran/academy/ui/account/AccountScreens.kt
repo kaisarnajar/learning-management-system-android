@@ -98,6 +98,8 @@ import com.darsequran.academy.data.remote.ContactRequest
 import com.darsequran.academy.data.remote.Enrollment
 import com.darsequran.academy.data.remote.Notification
 import com.darsequran.academy.data.remote.PaymentHistory
+import com.darsequran.academy.data.remote.PaymentSubmission
+import com.darsequran.academy.ui.common.StatusKind
 import com.darsequran.academy.data.remote.Profile
 import com.darsequran.academy.data.remote.ProfileUpdate
 import com.darsequran.academy.data.remote.Review
@@ -127,7 +129,6 @@ import com.darsequran.academy.ui.common.StatusChip
 import com.darsequran.academy.ui.common.SubmitResult
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.formatDate
-import com.darsequran.academy.ui.common.openBytes
 import com.darsequran.academy.ui.common.openWeb
 import com.darsequran.academy.ui.common.relativeTime
 import com.darsequran.academy.ui.common.rememberSubmitter
@@ -243,7 +244,7 @@ fun AccountScreen(
         if (session != null) {
             item { Group("My learning") }
             item { Entry(Icons.Rounded.Notifications, "Notifications", onNotifications) }
-            item { Entry(Icons.Rounded.Payments, "Payments & receipts", onPayments) }
+            item { Entry(Icons.Rounded.Payments, "Payments", onPayments) }
             item { Entry(Icons.Rounded.RequestQuote, "Fee waiver requests", onWaivers) }
             item { Entry(Icons.Rounded.Star, "My reviews", onReviews) }
             item { Entry(Icons.Rounded.ShoppingBag, "Book orders", onOrders) }
@@ -427,22 +428,6 @@ private fun Field(value: String, label: String, keyboard: KeyboardType = Keyboar
 // =============================================================== payments
 
 @Composable
-fun rememberReceiptOpener(): (String) -> Unit {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val repo = rememberContainer().repo
-    return { id ->
-        android.widget.Toast.makeText(context, "Preparing your receipt…", android.widget.Toast.LENGTH_SHORT).show()
-        scope.launch {
-            when (val r = repo.receipt(id)) {
-                is ApiResult.Ok -> openBytes(context, r.value, "receipt-$id.pdf", "application/pdf")
-                is ApiResult.Err -> android.widget.Toast.makeText(context, r.message, android.widget.Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-}
-
-@Composable
 fun PaymentsScreen(onBack: () -> Unit) {
     val vm: LoaderViewModel<Pair<PaymentHistory, List<Enrollment>>> = viewModel(key = "payments", factory = vmFactory { c ->
         LoaderViewModel<Pair<PaymentHistory, List<Enrollment>>> {
@@ -453,17 +438,45 @@ fun PaymentsScreen(onBack: () -> Unit) {
         }
     })
     val state by vm.state.collectAsStateWithLifecycle()
-    val openReceipt = rememberReceiptOpener()
-    Scaffold(topBar = { BackTopBar("Payments & receipts", onBack) }) { padding ->
+    Scaffold(topBar = { BackTopBar("Payments", onBack) }) { padding ->
         Box(Modifier.padding(padding)) {
             LoadContent(state, vm::load) { (history, enrollments) ->
                 val titles = enrollments.associate { it.courseId to (it.course?.title ?: "") }
-                val records = history.records.associateBy { it.id }
                 if (history.submissions.isEmpty() && history.records.isEmpty()) EmptyState("No payments yet", "Fees you pay in the app or on the website appear here.")
                 else LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(history.submissions.sortedByDescending { it.createdAt }, key = { it.id }) { s ->
-                        val (label, tone) = statusLabel(s.status)
-                        val record = s.paymentRecordId?.let { records[it] }
+                    // As on the website: receipts are not shown here; the academy e-mails them once issued.
+                    item { Banner(RECEIPT_BY_EMAIL, Tone.Info) }
+                    val (awaiting, settled) = history.submissions.sortedByDescending { it.createdAt }
+                        .partition { it.status.equals("pending_verification", ignoreCase = true) }
+                    if (awaiting.isNotEmpty()) item { Spacer(Modifier.height(4.dp)); Overline("Awaiting Approval") }
+                    if (awaiting.isNotEmpty()) items(awaiting, key = { it.id }) { s -> SubmissionCard(s, titles) }
+                    if (settled.isNotEmpty()) item { Spacer(Modifier.height(4.dp)); Overline("Payment History") }
+                    items(settled, key = { it.id }) { s -> SubmissionCard(s, titles) }
+                    val recordsWithoutSubmission = history.records.filter { r -> history.submissions.none { it.paymentRecordId == r.id } }
+                    if (recordsWithoutSubmission.isNotEmpty()) item { Spacer(Modifier.height(8.dp)); Overline("Other payments recorded by the academy") }
+                    items(recordsWithoutSubmission, key = { "r" + it.id }) { r ->
+                        AppCard(Modifier.fillMaxWidth()) {
+                            Row {
+                                Column(Modifier.weight(1f)) {
+                                    Text(r.description ?: titleCase(r.paymentType ?: "Payment"), style = MaterialTheme.typography.titleMedium)
+                                    Text(formatDate(r.paidAt), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Text(rupees(r.amountInrPaise), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private const val RECEIPT_BY_EMAIL =
+    "The academy e-mails your receipt once your payment is verified and the receipt is issued."
+
+@Composable
+private fun SubmissionCard(s: PaymentSubmission, titles: Map<String, String>) {
+                        val (label, tone) = statusLabel(s.status, StatusKind.Payment)
                         AppCard(Modifier.fillMaxWidth()) {
                             Row(verticalAlignment = Alignment.Top) {
                                 Column(Modifier.weight(1f)) {
@@ -476,34 +489,7 @@ fun PaymentsScreen(onBack: () -> Unit) {
                                     Spacer(Modifier.height(4.dp)); StatusChip(label, tone)
                                 }
                             }
-                            if (record?.receiptGeneratedAt != null) {
-                                HorizontalDivider(Modifier.padding(vertical = 8.dp), color = Brand.outlineSoft)
-                                Row(Modifier.fillMaxWidth().clickable { openReceipt(record.id) }, verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Rounded.ReceiptLong, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-                                    Spacer(Modifier.width(8.dp))
-                                    Text("Receipt ${record.invoiceNumber ?: ""}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                                }
-                            }
                         }
-                    }
-                    val recordsWithoutSubmission = history.records.filter { r -> history.submissions.none { it.paymentRecordId == r.id } }
-                    if (recordsWithoutSubmission.isNotEmpty()) item { Spacer(Modifier.height(8.dp)); Overline("Other payments recorded by the academy") }
-                    items(recordsWithoutSubmission, key = { "r" + it.id }) { r ->
-                        AppCard(Modifier.fillMaxWidth(), onClick = if (r.receiptGeneratedAt != null) ({ openReceipt(r.id) }) else null) {
-                            Row {
-                                Column(Modifier.weight(1f)) {
-                                    Text(r.description ?: titleCase(r.paymentType ?: "Payment"), style = MaterialTheme.typography.titleMedium)
-                                    Text(formatDate(r.paidAt), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                                Text(rupees(r.amountInrPaise), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                            }
-                            if (r.receiptGeneratedAt != null) Text("Tap for the receipt", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
 // ================================================================ waivers
@@ -547,7 +533,7 @@ fun WaiversScreen(onBack: () -> Unit) {
                     if (showForm) item { WaiverForm(enrollments, sending, { showForm = false }) { c, t, r -> vm.request(c, t, r) { showForm = false } } }
                     if (requests.isEmpty() && !showForm) item { EmptyState("No waiver requests", "If paying the fee is difficult, you can ask the academy for a full or partial waiver.") }
                     items(requests, key = { it.id }) { w ->
-                        val (label, tone) = statusLabel(w.status)
+                        val (label, tone) = statusLabel(w.status, StatusKind.Waiver)
                         AppCard(Modifier.fillMaxWidth()) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(w.course?.title ?: "Course", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
@@ -639,7 +625,7 @@ fun ReviewsScreen(onBack: () -> Unit) {
                         }
                     }
                     items(reviews, key = { it.id }) { r ->
-                        val (label, tone) = statusLabel(r.status ?: "pending")
+                        val (label, tone) = statusLabel(r.status ?: "pending", StatusKind.Review)
                         AppCard(Modifier.fillMaxWidth()) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Row(Modifier.weight(1f)) { repeat(r.rating) { Icon(Icons.Rounded.Star, null, Modifier.size(16.dp), tint = Brand.goldSoft) } }

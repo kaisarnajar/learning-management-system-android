@@ -68,7 +68,6 @@ interface AcademyApi {
     @GET("payments/quote") suspend fun paymentQuote(@Query("courseId") courseId: String, @Query("type") type: String): PaymentQuote
     @Multipart @POST("payments/submit") suspend fun submitPayment(@PartMap fields: Map<String, @JvmSuppressWildcards RequestBody>, @Part screenshot: MultipartBody.Part?): OkResponse
     @GET("payments/history") suspend fun paymentHistory(): PaymentHistory
-    @Streaming @GET("payments/{id}/receipt") suspend fun receipt(@Path("id") id: String): ResponseBody
     @GET("waiver-requests") suspend fun waiverRequests(): WaiverRequestsResponse
     @POST("waiver-requests") suspend fun requestWaiver(@Body body: WaiverRequestBody): OkResponse
     @GET("reviews") suspend fun myReviews(): ReviewsResponse

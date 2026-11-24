@@ -223,19 +223,30 @@ fun StatusChip(label: String, tone: Tone, modifier: Modifier = Modifier) {
 }
 
 /** Enrollment / payment / order status → label and tone. */
-fun statusLabel(status: String): Pair<String, Tone> = when (status.lowercase()) {
-    "active" -> "Active" to Tone.Success
-    "completed" -> "Completed" to Tone.Info
+fun statusLabel(status: String, kind: StatusKind = StatusKind.Enrollment): Pair<String, Tone> = when (status.lowercase()) {
+    // Enrolments, as the website's enrollments.ts words and colours them
+    "active" -> "Active" to Tone.Info
+    "completed" -> "Completed" to Tone.Success
     "pending_approval" -> "Awaiting approval" to Tone.Warning
-    "awaiting_enrollment_fee" -> "Enrollment fee due" to Tone.Warning
-    "rejected", "declined" -> "Declined" to Tone.Danger
+    "awaiting_enrollment_fee" -> "Awaiting enrollment fee" to Tone.Warning
+    else -> recordStatusLabel(status, kind)
+}
+
+/** Payments, book orders, waivers and reviews. */
+private fun recordStatusLabel(status: String, kind: StatusKind): Pair<String, Tone> = when (status.lowercase()) {
+    "pending_verification" -> "Pending Verification" to Tone.Warning
+    "pending" -> (if (kind == StatusKind.Waiver) "Pending Review" else "Pending") to Tone.Warning
     "approved" -> "Approved" to Tone.Success
-    "pending_verification" -> "Under review" to Tone.Warning
+    "rejected" -> "Rejected" to Tone.Danger
+    // A declined fee payment reads "Rejected" on the website; a declined book order "Declined".
+    "declined" -> (if (kind == StatusKind.Order) "Declined" else "Rejected") to Tone.Danger
     "shipped" -> "Shipped" to Tone.Info
     "refunded" -> "Refunded" to Tone.Neutral
-    "pending" -> "Pending" to Tone.Warning
     else -> titleCase(status) to Tone.Neutral
 }
+
+/** What a status belongs to, where the website words the same status differently. */
+enum class StatusKind { Enrollment, Payment, Order, Waiver, Review }
 
 // ----------------------------------------------------------- states
 

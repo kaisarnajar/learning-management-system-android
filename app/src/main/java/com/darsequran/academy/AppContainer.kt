@@ -37,7 +37,7 @@ class AppContainer(context: Context) {
     val cart = CartStore(repo)
 
     init {
-        // A different user (sign-out, another account, another environment) must not find the last one's receipts.
+        // A different user (sign-out, another account, another environment) must not find the last one's documents.
         val appContext = context.applicationContext
         appScope.launch {
             sessionStore.session.map { it?.user?.id }.distinctUntilChanged().drop(1).collect {

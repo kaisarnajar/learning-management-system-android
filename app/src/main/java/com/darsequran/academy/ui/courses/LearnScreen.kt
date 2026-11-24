@@ -71,6 +71,7 @@ import com.darsequran.academy.ui.common.formatCalendarDate
 import com.darsequran.academy.ui.common.formatDate
 import com.darsequran.academy.ui.common.relativeTime
 import com.darsequran.academy.ui.common.rupees
+import com.darsequran.academy.ui.common.StatusKind
 import com.darsequran.academy.ui.common.statusLabel
 import com.darsequran.academy.ui.common.toLoad
 import com.darsequran.academy.ui.common.vmFactory
@@ -115,7 +116,6 @@ fun LearnScreen(
     onBack: () -> Unit,
     onPayFee: () -> Unit,
     onCourseInfo: () -> Unit,
-    onReceipt: (String) -> Unit,
     vm: LearnViewModel = viewModel(key = "learn-$courseId", factory = vmFactory { LearnViewModel(it.repo, courseId) }),
 ) {
     ReloadOnReturn(vm::loadAll)
@@ -135,7 +135,7 @@ fun LearnScreen(
                 0 -> UpdatesTab(vm, snackbar)
                 1 -> AttendanceTab(vm)
                 2 -> GradesTab(vm)
-                else -> FeesTab(vm, onPayFee, onReceipt)
+                else -> FeesTab(vm, onPayFee)
             }
         }
     }
@@ -276,19 +276,17 @@ internal fun canPayCourseFee(enrollment: Enrollment?, submissions: List<PaymentS
 private fun fmt(value: Double): String = if (value % 1.0 == 0.0) value.toInt().toString() else "%.2f".format(value)
 
 @Composable
-private fun FeesTab(vm: LearnViewModel, onPayFee: () -> Unit, onReceipt: (String) -> Unit) {
+private fun FeesTab(vm: LearnViewModel, onPayFee: () -> Unit) {
     val state by vm.fees.collectAsStateWithLifecycle()
     val enrollment by vm.enrollment.collectAsStateWithLifecycle()
     LoadContent(state, vm::loadAll) { history ->
         val submissions = history.submissions.filter { it.courseId == vm.courseId }.sortedByDescending { it.createdAt }
         val canPay = canPayCourseFee(enrollment, submissions)
-        val records = history.records.associateBy { it.id }
         LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (canPay) item { PrimaryButton("Pay course fee", onPayFee); Spacer(Modifier.height(8.dp)) }
             if (submissions.isEmpty()) item { EmptyState("No payments yet", "Payments you submit for this course are listed here.") }
             items(submissions, key = { it.id }) { s ->
-                val (label, tone) = statusLabel(s.status)
-                val record = s.paymentRecordId?.let { records[it] }
+                val (label, tone) = statusLabel(s.status, StatusKind.Payment)
                 AppCard(Modifier.fillMaxWidth()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
@@ -300,10 +298,6 @@ private fun FeesTab(vm: LearnViewModel, onPayFee: () -> Unit, onReceipt: (String
                             Spacer(Modifier.height(4.dp))
                             StatusChip(label, tone)
                         }
-                    }
-                    if (record?.receiptGeneratedAt != null) {
-                        Spacer(Modifier.height(8.dp))
-                        androidx.compose.material3.TextButton({ onReceipt(record.id) }) { Text("Download receipt") }
                     }
                 }
             }

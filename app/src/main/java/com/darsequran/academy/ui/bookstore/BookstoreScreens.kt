@@ -100,6 +100,7 @@ import com.darsequran.academy.ui.common.StatusChip
 import com.darsequran.academy.ui.common.Tone
 import com.darsequran.academy.ui.common.formatDate
 import com.darsequran.academy.ui.common.rupees
+import com.darsequran.academy.ui.common.StatusKind
 import com.darsequran.academy.ui.common.statusLabel
 import com.darsequran.academy.ui.common.toLoad
 import com.darsequran.academy.ui.common.vmFactory
@@ -433,7 +434,7 @@ fun OrdersScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
 
 @Composable
 private fun OrderCard(o: BookOrder, onClick: () -> Unit) {
-    val (label, tone) = statusLabel(o.status)
+    val (label, tone) = statusLabel(o.status, StatusKind.Order)
     AppCard(Modifier.fillMaxWidth(), onClick = onClick) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.ShoppingBag, null, tint = Brand.gold)
@@ -449,14 +450,14 @@ private fun OrderCard(o: BookOrder, onClick: () -> Unit) {
 }
 
 @Composable
-fun OrderScreen(id: String, onBack: () -> Unit, onReceipt: (String) -> Unit) {
+fun OrderScreen(id: String, onBack: () -> Unit) {
     val vm: LoaderViewModel<BookOrder> = viewModel(key = "order-$id", factory = vmFactory { c -> LoaderViewModel { c.repo.order(id) } })
     val state by vm.state.collectAsStateWithLifecycle()
     Scaffold(topBar = { BackTopBar("Order #${id.takeLast(6).uppercase()}", onBack) }) { padding ->
         Box(Modifier.padding(padding)) {
             LoadContent(state, vm::load) { o ->
                 Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    val (label, tone) = statusLabel(o.status)
+                    val (label, tone) = statusLabel(o.status, StatusKind.Order)
                     Row(verticalAlignment = Alignment.CenterVertically) { StatusChip(label, tone); Spacer(Modifier.width(10.dp)); Text("Placed ${formatDate(o.createdAt)}", style = MaterialTheme.typography.bodySmall) }
                     if (o.status == "SHIPPED") Banner("Shipped with ${o.courierServiceName ?: "the courier"}${o.trackingId?.let { " · tracking $it" } ?: ""}", Tone.Info, icon = Icons.Rounded.LocalShipping)
                     AppCard(Modifier.fillMaxWidth()) {
@@ -478,7 +479,6 @@ fun OrderScreen(id: String, onBack: () -> Unit, onReceipt: (String) -> Unit) {
                         Text(o.deliveryAddress ?: "", style = MaterialTheme.typography.bodyMedium)
                         Text(listOfNotNull(o.deliveryPinCode, o.deliveryPhoneNumber).joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    if (o.paymentRecordId != null && o.receiptGeneratedAt != null) SecondaryButton("Download receipt", { onReceipt(o.paymentRecordId) })
                 }
             }
         }

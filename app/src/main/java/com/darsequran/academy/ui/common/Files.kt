@@ -39,10 +39,6 @@ suspend fun cacheDocument(context: Context, fileName: String, source: InputStrea
     cacheFile(context, fileName).also { file -> source.use { input -> file.outputStream().use { input.copyTo(it) } } }
 }
 
-/** Saves [bytes] (a receipt rendered by the server) to the cache and opens it; see [openDocument]. */
-suspend fun openBytes(context: Context, bytes: ByteArray, fileName: String, mime: String) =
-    openDocument(context, cacheDocument(context, fileName, bytes.inputStream()), mime)
-
 /**
  * Opens a cached document with the system viewer for [mime]. When the phone has no app for that type (no PDF viewer,
  * say), the file goes to Downloads instead so it is not lost. Call on the main thread.

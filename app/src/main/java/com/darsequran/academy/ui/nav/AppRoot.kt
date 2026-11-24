@@ -83,7 +83,6 @@ import com.darsequran.academy.ui.account.NotificationsScreen
 import com.darsequran.academy.ui.account.PaymentsScreen
 import com.darsequran.academy.ui.account.ReviewsScreen
 import com.darsequran.academy.ui.account.WaiversScreen
-import com.darsequran.academy.ui.account.rememberReceiptOpener
 import com.darsequran.academy.ui.auth.ForgotPasswordScreen
 import com.darsequran.academy.ui.auth.RegisterScreen
 import com.darsequran.academy.ui.auth.SignInScreen
@@ -203,7 +202,6 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
             if (config != null) break
         }
     }
-    val openReceipt = rememberReceiptOpener()
 
     val backStack by nav.currentBackStackEntryAsState()
     val destination = backStack?.destination
@@ -333,7 +331,11 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                 }
                 composable<LearnRoute> { entry ->
                     val r = entry.toRoute<LearnRoute>()
-                    LearnScreen(r.courseId, r.title, nav::popBackStack, onPayFee = { nav.navigate(PayRoute(r.courseId, "course", r.title)) }, onCourseInfo = { nav.navigate(CourseRoute(r.courseId)) }, onReceipt = openReceipt)
+                    LearnScreen(
+                        r.courseId, r.title, nav::popBackStack,
+                        onPayFee = { nav.navigate(PayRoute(r.courseId, "course", r.title)) },
+                        onCourseInfo = { nav.navigate(CourseRoute(r.courseId)) },
+                    )
                 }
                 composable<PayRoute> { entry ->
                     val r = entry.toRoute<PayRoute>()
@@ -359,7 +361,7 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                 composable<CartRoute> { CartScreen(nav::popBackStack, { nav.navigate(CheckoutRoute) }, { nav.popBackStack() }) }
                 composable<CheckoutRoute> { CheckoutScreen(nav::popBackStack) { nav.popBackStack(BookstoreRoute, inclusive = false); nav.navigate(OrdersRoute) } }
                 composable<OrdersRoute> { OrdersScreen(nav::popBackStack) { nav.navigate(OrderRoute(it)) } }
-                composable<OrderRoute> { OrderScreen(it.toRoute<OrderRoute>().id, nav::popBackStack, openReceipt) }
+                composable<OrderRoute> { OrderScreen(it.toRoute<OrderRoute>().id, nav::popBackStack) }
 
                 // ---- account
                 composable<SignInRoute> {
