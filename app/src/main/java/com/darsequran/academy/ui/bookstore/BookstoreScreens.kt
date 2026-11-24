@@ -299,8 +299,14 @@ class CheckoutViewModel(private val repo: AcademyRepository, private val cart: C
         _state.update { it.copy(quote = repo.checkoutQuote(lines).toLoad(), settings = (settings.await() as? ApiResult.Ok)?.value) }
     }
 
-    fun place(method: String, reference: String, address: String, pin: String, phone: String, notes: String, screenshot: Pair<ByteArray, String>?) = viewModelScope.launch {
+    /** One order per checkout: a second tap (even in the same frame) or a tap after success is ignored. */
+    fun place(method: String, reference: String, address: String, pin: String, phone: String, notes: String, screenshot: Pair<ByteArray, String>?) {
+        if (_state.value.submitting || _state.value.done) return
         _state.update { it.copy(submitting = true, error = null) }
+        viewModelScope.launch { send(method, reference, address, pin, phone, notes, screenshot) }
+    }
+
+    private suspend fun send(method: String, reference: String, address: String, pin: String, phone: String, notes: String, screenshot: Pair<ByteArray, String>?) {
         val fields = mapOf(
             "items" to kotlinx.serialization.json.Json.encodeToString(kotlinx.serialization.builtins.ListSerializer(CartLine.serializer()), lines),
             "paymentMethod" to method,

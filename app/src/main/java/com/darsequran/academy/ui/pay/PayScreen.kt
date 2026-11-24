@@ -143,10 +143,16 @@ class PayViewModel(private val repo: AcademyRepository, val courseId: String, va
     fun selectMonth(m: Int) = _state.update { it.copy(month = m) }
     fun selectYear(y: String) = _state.update { it.copy(year = y) }
 
-    fun submit(method: String, reference: String, screenshot: Pair<ByteArray, String>?) = viewModelScope.launch {
+    /** One submission per payment: a second tap (even in the same frame) or a tap after success is ignored. */
+    fun submit(method: String, reference: String, screenshot: Pair<ByteArray, String>?) {
         val s = _state.value
-        val quote = s.quote ?: return@launch
+        if (s.submitting || s.done) return
+        val quote = s.quote ?: return
         _state.update { it.copy(submitting = true, submitError = null) }
+        viewModelScope.launch { send(s, quote, method, reference, screenshot) }
+    }
+
+    private suspend fun send(s: PayState, quote: PaymentQuote, method: String, reference: String, screenshot: Pair<ByteArray, String>?) {
         val fields = buildMap {
             put("courseId", courseId)
             put("paymentType", if (type == "enrollment") "enrollment" else "monthly")
