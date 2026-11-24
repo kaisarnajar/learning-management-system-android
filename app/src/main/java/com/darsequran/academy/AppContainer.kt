@@ -14,7 +14,8 @@ import kotlinx.serialization.json.Json
 /** Manual dependency container: one instance per process, created by [AcademyApp]. */
 class AppContainer(context: Context) {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    val json = Json { ignoreUnknownKeys = true; explicitNulls = false; coerceInputValues = true; isLenient = true }
+    // encodeDefaults sends fields like acceptPolicies = true; explicitNulls = false still leaves nulls out.
+    val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; explicitNulls = false; coerceInputValues = true; isLenient = true }
     val sessionStore = SessionStore(context, appScope, json)
     val network = Network(sessionStore, json)
     val auth = AuthRepository(network.api, sessionStore)
