@@ -39,6 +39,7 @@ import com.darsequran.academy.ui.manage.common.RecordCard
 import com.darsequran.academy.ui.manage.common.RowIcon
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
+import com.darsequran.academy.ui.common.formatInr
 
 /** /admin/payment-settings: UPI and bank details shown to students when they pay, and the receipt / waiver switches. */
 @Composable
@@ -132,7 +133,7 @@ fun ShippingChargesScreen(onBack: () -> Unit) {
                 item(key = slab.id) {
                     RecordCard(
                         title = "${slab.minWeightGrams} g – ${slab.maxWeightGrams} g",
-                        subtitle = rupeesExact(slab.chargeInrPaise),
+                        subtitle = formatInr(slab.chargeInrPaise.toLong(), exact = true),
                         leading = { RowIcon(Icons.Rounded.LocalShipping) },
                         trailing = { IconButton(onClick = { deleting = slab }) { Icon(Icons.Rounded.Delete, "Delete slab", tint = MaterialTheme.colorScheme.error) } },
                     )
@@ -164,6 +165,4 @@ fun ShippingChargesScreen(onBack: () -> Unit) {
     }
 }
 
-/** ₹ with paise always shown ("₹50.00"), as the shipping page prints charges. */
-private fun rupeesExact(paise: Int): String = "₹" + java.text.NumberFormat.getNumberInstance(java.util.Locale("en", "IN")).apply { minimumFractionDigits = 2; maximumFractionDigits = 2 }.format(paise / 100.0)
 

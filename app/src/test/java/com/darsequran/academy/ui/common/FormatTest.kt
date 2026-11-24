@@ -26,4 +26,22 @@ class FormatTest {
         assertEquals("₹349", rupees(34_900))
         assertEquals("₹123.50", rupees(12_350))
     }
+
+    @Test
+    fun oneFormatterForAllAmounts() {
+        assertEquals("₹0", formatInr(0))
+        assertEquals("₹0.01", formatInr(1))
+        assertEquals("₹0.99", formatInr(99))
+        assertEquals("₹1", formatInr(100))
+        assertEquals("₹10.50", formatInr(1050))
+        assertEquals("-₹10.50", formatInr(-1050))
+        assertEquals("₹50.00", formatInr(5000, exact = true))
+        assertEquals("₹10.50", formatInr(1050, exact = true))
+    }
+
+    @Test
+    fun hugeTotalsKeepTheirPaise() {
+        // A Double can't hold every paise of a very large Long; BigDecimal can.
+        assertEquals("₹92233720368547758.07", formatInr(Long.MAX_VALUE).replace(",", ""))
+    }
 }

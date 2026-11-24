@@ -69,10 +69,9 @@ import com.darsequran.academy.ui.manage.common.rememberContainer
 import com.darsequran.academy.data.staff.students.StudentRow
 import com.darsequran.academy.data.staff.students.StudentsAdminApi
 import com.darsequran.academy.ui.theme.Brand
+import com.darsequran.academy.ui.common.formatInr
 import java.net.URLDecoder
 import java.net.URLEncoder
-import java.text.NumberFormat
-import java.util.Locale
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -84,18 +83,11 @@ import kotlinx.coroutines.launch
 
 // ------------------------------------------------------------------ amounts
 
-private val inr = NumberFormat.getNumberInstance(Locale("en", "IN")).apply { minimumFractionDigits = 0; maximumFractionDigits = 0 }
-private val inrPaise = NumberFormat.getNumberInstance(Locale("en", "IN")).apply { minimumFractionDigits = 2; maximumFractionDigits = 2 }
 
-/** ₹ amount from paise for totals that can pass Int (and be negative): -158475350 → "-₹15,84,753.50". */
-fun money(paise: Long): String {
-    val sign = if (paise < 0) "-" else ""
-    val abs = kotlin.math.abs(paise)
-    val text = if (abs % 100 == 0L) inr.format(abs / 100) else inrPaise.format(abs / 100.0)
-    return "$sign₹$text"
-}
+/** ₹ amount from paise for totals that can pass Int (and be negative); see [formatInr]. */
+fun money(paise: Long): String = formatInr(paise)
 
-fun money(paise: Int): String = money(paise.toLong())
+fun money(paise: Int): String = formatInr(paise.toLong())
 
 // ------------------------------------------------------------------ filters
 
