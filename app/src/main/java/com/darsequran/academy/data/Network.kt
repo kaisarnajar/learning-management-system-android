@@ -43,7 +43,7 @@ class Network(private val sessionStore: SessionSource, val json: Json) {
         level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE
     }
 
-    /** Sends API calls to the environment chosen now (production, staging or a local server). */
+    /** Sends API calls to the environment chosen now (production or staging). */
     private val environmentHost = Interceptor { chain ->
         val request = chain.request()
         if (request.url.host != "api.invalid") return@Interceptor chain.proceed(request)

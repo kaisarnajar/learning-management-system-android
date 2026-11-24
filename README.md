@@ -63,30 +63,21 @@ Optional settings go in `local.properties` (not committed):
 ```properties
 # The Web client ID from Google Cloud (OAuth). Without it the "Continue with Google" button is hidden.
 GOOGLE_WEB_CLIENT_ID=1234567890-abc.apps.googleusercontent.com
-# Where the debug build finds the website. Default: http://10.0.2.2:3000 (the emulator's alias for your computer).
-DEBUG_BASE_URL=http://localhost:3000
 # The staging website developers can switch to (default: the current Vercel staging deployment).
 STAGING_BASE_URL=https://staging.example.com
 ```
 
-Release builds always use `https://darsequranacademy.com`. Debug builds install next to the release app as
-"DQA (debug)" (`com.darsequran.academy.debug`).
+Release builds start on `https://darsequranacademy.com`. Debug builds install next to the release app as
+"DQA (debug)" (`com.darsequran.academy.debug`), and the minified test build as "DQA (minified)".
 
-### Running against a local copy of the website
+### Which server a build talks to
 
-1. Start the website on your computer: `npx next dev --hostname 0.0.0.0 --port 3000`.
-2. If the emulator can't reach `10.0.2.2:3000` (a firewall can block it), forward the port instead and set
-   `DEBUG_BASE_URL=http://localhost:3000`:
+Debug and minified builds start on **staging** and are the builds to test with: never test against production. A
+debug build can still switch to production from the developer screen (tap the orange staging strip); release builds
+offer the switch only to a signed-in developer. There is no local-server setup.
 
-   ```bash
-   adb reverse tcp:3000 tcp:3000
-   ```
-
-   Re-run it after reinstalling the app or restarting the emulator; the forward does not always survive.
-3. `./gradlew :app:installDebug`.
-
-The website's demo seed (`ALLOW_DEMO_SEED`) gives you students, courses, payments and content to try the app with.
-To try paying, set a UPI ID in the website's admin payment settings; for checkout, books need stock.
+Staging's demo seed (`ALLOW_DEMO_SEED` on the website) gives you students, courses, payments and content to try the
+app with. To try paying, set a UPI ID in the website's admin payment settings; for checkout, books need stock.
 
 ### Release builds
 

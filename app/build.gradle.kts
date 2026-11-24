@@ -34,9 +34,6 @@ val stagingBaseUrl: String = setting("STAGING_BASE_URL") ?: "https://staging-lea
  */
 val appVersionCode: Int = (findProperty("versionCode") as String?)?.toIntOrNull() ?: 2
 
-/** The "Local" environment of debug builds; the emulator reaches the Mac's localhost at 10.0.2.2. */
-val debugBaseUrl: String = localProperties.getProperty("DEBUG_BASE_URL") ?: "http://10.0.2.2:3000"
-
 android {
     namespace = "com.darsequran.academy"
     compileSdk = 37
@@ -63,15 +60,13 @@ android {
 
     buildTypes {
         debug {
-            // Debug builds start on the local server and can switch to staging or production.
-            buildConfigField("String", "LOCAL_BASE_URL", "\"$debugBaseUrl\"")
-            buildConfigField("String", "DEFAULT_ENVIRONMENT", "\"local\"")
+            // Debug builds start on staging and can switch to production. There is no local server.
+            buildConfigField("String", "DEFAULT_ENVIRONMENT", "\"staging\"")
             applicationIdSuffix = ".debug"
             resValue("string", "app_name", "DQA (debug)")
         }
         release {
             // Release builds start on production; developers can switch to staging.
-            buildConfigField("String", "LOCAL_BASE_URL", "\"\"")
             buildConfigField("String", "DEFAULT_ENVIRONMENT", "\"production\"")
             resValue("string", "app_name", "Darse Quran Academy")
             isMinifyEnabled = true
@@ -88,6 +83,8 @@ android {
             applicationIdSuffix = ".minified"
             resValue("string", "app_name", "DQA (minified)")
             matchingFallbacks += "release"
+            // A testing build: starts on staging, never on production.
+            buildConfigField("String", "DEFAULT_ENVIRONMENT", "\"staging\"")
         }
     }
 

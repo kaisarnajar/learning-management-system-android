@@ -170,7 +170,7 @@ serif face; images in a gallery; blog likes and comments at the end.
   use), and signs the user out when refresh fails.
 - Session: DataStore.
 - Images: Coil.
-- `BASE_URL` per build type: debug points at a local server
-  (`http://10.0.2.2:3000`), release at `https://darsequranacademy.com`.
+- Server per build type: debug and minified builds start on staging (debug can
+  switch to production); release starts on `https://darsequranacademy.com`.
 - Google sign-in through Credential Manager, using `GOOGLE_WEB_CLIENT_ID` from
   `local.properties`; the button is hidden while that ID is not set.

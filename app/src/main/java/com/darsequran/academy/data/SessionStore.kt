@@ -36,7 +36,7 @@ interface SessionSource {
 /**
  * Persists the session. [session] is the single source of truth for "am I signed in?".
  *
- * Each environment (production, staging, local) keeps its own session, so a developer who switches keeps being
+ * Each environment (production, staging) keeps its own session, so a developer who switches keeps being
  * signed in on each. Production uses the original key names, so sessions from before environments existed survive.
  */
 class SessionStore(

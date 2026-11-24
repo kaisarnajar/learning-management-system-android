@@ -387,7 +387,6 @@
     <ID>MagicNumber:CourseAnnouncements.kt:3</ID>
     <ID>MagicNumber:CourseAttendance.kt:404</ID>
     <ID>MagicNumber:CoursesScreens.kt:1.4f</ID>
-    <ID>MagicNumber:DeveloperScreens.kt:0xFF1D4ED8</ID>
     <ID>MagicNumber:DeveloperScreens.kt:0xFFB45309</ID>
     <ID>MagicNumber:DeveloperScreens.kt:1_000_000</ID>
     <ID>MagicNumber:DeveloperScreens.kt:8</ID>
@@ -1169,7 +1168,6 @@
     <ID>MaxLineLength:DashboardApi.kt:DashboardResponse</ID>
     <ID>MaxLineLength:DeveloperScreens.kt:Banner("The app talks to one copy of the website at a time. You stay signed in separately on each.", Tone.Info)</ID>
     <ID>MaxLineLength:DeveloperScreens.kt:Column</ID>
-    <ID>MaxLineLength:DeveloperScreens.kt:Modifier.fillMaxWidth().background(color).windowInsetsPadding(WindowInsets.statusBars).clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 3.dp)</ID>
     <ID>MaxLineLength:DeveloperScreens.kt:Text(env.host, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
     <ID>MaxLineLength:DeveloperScreens.kt:if (r.isSuccessful) Health.Up((System.nanoTime() - started) / 1_000_000) else Health.Down("HTTP ${r.code}")</ID>
     <ID>MaxLineLength:DeveloperScreens.kt:pingClient.newCall(Request.Builder().url(env.baseUrl.trimEnd('/') + "/api/v1/app-config").build()).execute()</ID>

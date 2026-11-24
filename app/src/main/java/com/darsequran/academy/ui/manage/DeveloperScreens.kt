@@ -120,9 +120,9 @@ fun EnvironmentScreen(onBack: () -> Unit) {
 @Composable
 fun EnvironmentStrip(env: AppEnvironment, onClick: () -> Unit) {
     if (env == AppEnvironment.PRODUCTION) return
-    val color = if (env == AppEnvironment.STAGING) Color(0xFFB45309) else Color(0xFF1D4ED8)
     Row(
-        Modifier.fillMaxWidth().background(color).windowInsetsPadding(WindowInsets.statusBars).clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 3.dp),
+        Modifier.fillMaxWidth().background(Color(0xFFB45309)).windowInsetsPadding(WindowInsets.statusBars)
+            .clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {

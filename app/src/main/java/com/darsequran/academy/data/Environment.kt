@@ -16,15 +16,20 @@ import kotlinx.coroutines.runBlocking
 /** A copy of the website the app can talk to. Developers switch between them; everyone else stays on the default. */
 enum class AppEnvironment(val key: String, val label: String, val baseUrl: String) {
     PRODUCTION("production", "Production", "https://darsequranacademy.com"),
-    STAGING("staging", "Staging", BuildConfig.STAGING_BASE_URL),
-    LOCAL("local", "Local", BuildConfig.LOCAL_BASE_URL);
+    STAGING("staging", "Staging", BuildConfig.STAGING_BASE_URL);
 
     val host: String get() = baseUrl.substringAfter("://").trimEnd('/')
 
     companion object {
-        /** Local needs cleartext HTTP to a computer on the desk, so only debug builds offer it. */
-        val available: List<AppEnvironment> = entries.filter { it != LOCAL || BuildConfig.LOCAL_BASE_URL.isNotBlank() }
-        val default: AppEnvironment = available.firstOrNull { it.key == BuildConfig.DEFAULT_ENVIRONMENT } ?: PRODUCTION
+        val available: List<AppEnvironment> = entries
+
+        /** Debug and minified (testing) builds start on staging, so testing never touches production by default. */
+        val default: AppEnvironment = defaultFor(BuildConfig.DEFAULT_ENVIRONMENT)
+
+        @VisibleForTesting
+        internal fun defaultFor(key: String): AppEnvironment = fromKey(key) ?: PRODUCTION
+
+        /** A remembered key of an environment that no longer exists (the old "local") gives null: use the default. */
         fun fromKey(key: String?): AppEnvironment? = available.firstOrNull { it.key == key }
     }
 }
