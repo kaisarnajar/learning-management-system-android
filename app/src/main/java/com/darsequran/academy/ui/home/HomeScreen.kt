@@ -1,5 +1,6 @@
 package com.darsequran.academy.ui.home
 
+import com.darsequran.academy.ui.common.ctaButtonColors
 import com.darsequran.academy.ui.theme.HeroUnderStatusBar
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -444,7 +445,9 @@ private fun JoinCard(onSignIn: () -> Unit, onBrowse: () -> Unit) {
         }
         Spacer(Modifier.height(14.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            androidx.compose.material3.Button(onClick = onSignIn, modifier = Modifier.weight(1f)) { Text("Sign in") }
+            androidx.compose.material3.Button(
+                onClick = onSignIn, modifier = Modifier.weight(1f), colors = ctaButtonColors(),
+            ) { Text("Sign in") }
             androidx.compose.material3.OutlinedButton(onClick = onBrowse, modifier = Modifier.weight(1f)) { Text("Browse courses") }
         }
     }
