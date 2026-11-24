@@ -29,9 +29,12 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.darsequran.academy.data.remote.Paged
 import com.darsequran.academy.ui.common.AppCard
-import com.darsequran.academy.ui.common.Load
 import com.darsequran.academy.ui.common.ReloadOnReturn
 import com.darsequran.academy.ui.common.StatusChip
 import com.darsequran.academy.ui.common.Tone
@@ -149,13 +152,22 @@ fun NavGraphBuilder.teachGraph(nav: NavHostController) {
 
 // ------------------------------------------------------------------ home (/teacher)
 
+/** The teacher's name and counts from the first page's response, kept across rotation. */
+class TeachHeader : ViewModel() {
+    var home by mutableStateOf<TeacherHome?>(null)
+}
+
 /** The teacher's tab: welcome and counts, shortcuts to their fatwa questions and blog posts, then their courses. */
 @Composable
 fun TeachHomeScreen(nav: NavHostController) {
-    val vm = rememberPaged("teacher-courses") { page, _, _ -> service<TeachApi>().courses(page) }
-    val home = rememberLoader("teacher-home") { service<TeachApi>().home() }
-    ReloadOnReturn { vm.refresh(); home.reload() }
-    val homeState by home.state.collectAsStateWithLifecycle()
+    // The first page of courses and the welcome header come in one response: one request, not the same one twice.
+    val header: TeachHeader = viewModel()
+    val vm = rememberPaged("teacher-courses") { page, _, _ ->
+        if (page == 1) service<TeachApi>().home().also { header.home = it }.let { Paged(it.data, it.totalCount, 1, it.data.size) }
+        else service<TeachApi>().courses(page)
+    }
+    ReloadOnReturn { vm.refresh() }
+    val home = header.home
 
     ManageListScreen(
         title = "Teach",
@@ -165,7 +177,7 @@ fun TeachHomeScreen(nav: NavHostController) {
         emptyTitle = "No courses are assigned to you yet. Contact the academy admin.",
         searchHint = null,
         header = {
-            (homeState as? Load.Ready)?.value?.let { h ->
+            home?.let { h ->
                 item {
                     DetailCard {
                         Text("Welcome back", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
