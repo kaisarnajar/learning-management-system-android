@@ -37,6 +37,8 @@ import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -133,7 +135,7 @@ class CartViewModel(val cart: CartStore, private val auth: AuthRepository) : Vie
     val session: StateFlow<Session?> get() = auth.session
     val message = MutableStateFlow<String?>(null)
     init { viewModelScope.launch { auth.session.collect { if (it != null) cart.refresh() else cart.clearLocal() } } }
-    fun set(bookId: String, qty: Int) = viewModelScope.launch { message.value = cart.set(bookId, qty) }
+    fun change(bookId: String, delta: Int) = viewModelScope.launch { message.value = cart.change(bookId, delta) }
 }
 
 // ================================================================== list
@@ -191,8 +193,8 @@ fun BookScreen(id: String, onBack: () -> Unit, onCart: () -> Unit, onSignIn: () 
                     when {
                         !available -> PrimaryButton(if (book.status == "COMING_SOON") "Coming soon" else "Out of stock", {}, Modifier.width(180.dp), enabled = false)
                         session == null -> PrimaryButton("Sign in to buy", onSignIn, Modifier.width(180.dp))
-                        inCart > 0 -> QuantityStepper(inCart, { cartVm.set(id, it) }, Modifier.width(180.dp))
-                        else -> PrimaryButton("Add to cart", { cartVm.set(id, 1) }, Modifier.width(180.dp))
+                        inCart > 0 -> CartStepper(book.title, inCart, { cartVm.change(id, it) }, Modifier.width(180.dp))
+                        else -> PrimaryButton("Add to cart", { cartVm.change(id, 1) }, Modifier.width(180.dp))
                     }
                 }
             }
@@ -220,14 +222,23 @@ fun BookScreen(id: String, onBack: () -> Unit, onCart: () -> Unit, onSignIn: () 
 }
 
 @Composable
-fun QuantityStepper(quantity: Int, onChange: (Int) -> Unit, modifier: Modifier = Modifier) {
+fun CartStepper(title: String, quantity: Int, onChange: (delta: Int) -> Unit, modifier: Modifier = Modifier) {
+    var confirmRemove by remember { mutableStateOf(false) }
     Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.primaryContainer, modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            IconButton({ onChange(quantity - 1) }) { Icon(Icons.Rounded.Remove, "Fewer") }
+            // Taking the last copy out removes the book from the cart, so ask first.
+            IconButton({ if (quantity == 1) confirmRemove = true else onChange(-1) }) { Icon(Icons.Rounded.Remove, "Fewer") }
             Text("$quantity", style = MaterialTheme.typography.titleMedium)
-            IconButton({ onChange(quantity + 1) }, enabled = quantity < 20) { Icon(Icons.Rounded.Add, "More") }
+            IconButton({ onChange(1) }, enabled = quantity < CartStore.MAX_PER_BOOK) { Icon(Icons.Rounded.Add, "More") }
         }
     }
+    if (confirmRemove) AlertDialog(
+        onDismissRequest = { confirmRemove = false },
+        title = { Text("Remove from cart?") },
+        text = { Text("\"$title\" will be taken out of your cart.") },
+        confirmButton = { TextButton({ confirmRemove = false; onChange(-1) }) { Text("Remove") } },
+        dismissButton = { TextButton({ confirmRemove = false }) { Text("Keep") } },
+    )
 }
 
 // ================================================================== cart
@@ -263,7 +274,7 @@ fun CartScreen(onBack: () -> Unit, onCheckout: () -> Unit, onBrowse: () -> Unit)
                             Text(item.author, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             PriceLine(item.priceInrPaise, item.mrpInrPaise)
                         }
-                        QuantityStepper(item.quantity, { vm.set(item.bookId, it) }, Modifier.width(130.dp))
+                        CartStepper(item.title, item.quantity, { vm.change(item.bookId, it) }, Modifier.width(130.dp))
                     }
                 }
             }
