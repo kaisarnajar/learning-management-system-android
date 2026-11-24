@@ -26,9 +26,9 @@ class AppContainer(context: Context) {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     // encodeDefaults sends fields like acceptPolicies = true; explicitNulls = false still leaves nulls out.
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; explicitNulls = false; coerceInputValues = true; isLenient = true }
-    // Created first: it decides which environment (and so which saved session) the app starts on.
+    // Decides which environment (and so which saved session) the app starts on.
     val environments = EnvironmentStore(context)
-    val sessionStore = SessionStore(context, appScope, json)
+    val sessionStore = SessionStore(context, appScope, json, initialEnvironment = environments.environment.value)
     val network = Network(sessionStore, json)
     val auth = AuthRepository(network.api, sessionStore)
     val repo = AcademyRepository(network.api)

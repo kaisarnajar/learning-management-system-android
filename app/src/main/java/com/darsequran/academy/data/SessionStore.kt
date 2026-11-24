@@ -39,8 +39,13 @@ interface SessionSource {
  * Each environment (production, staging, local) keeps its own session, so a developer who switches keeps being
  * signed in on each. Production uses the original key names, so sessions from before environments existed survive.
  */
-class SessionStore(private val context: Context, scope: CoroutineScope, private val json: Json) : SessionSource {
-    @Volatile private var env: AppEnvironment = CurrentEnvironment.value
+class SessionStore(
+    private val context: Context,
+    scope: CoroutineScope,
+    private val json: Json,
+    initialEnvironment: AppEnvironment,
+) : SessionSource {
+    @Volatile private var env: AppEnvironment = initialEnvironment
 
     private class Keys(private val env: AppEnvironment) {
         private fun key(name: String) = stringPreferencesKey(if (env == AppEnvironment.PRODUCTION) name else "${env.key}_$name")
