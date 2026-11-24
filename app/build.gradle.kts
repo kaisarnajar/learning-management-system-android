@@ -65,6 +65,15 @@ android {
         resValues = true
     }
 
+    lint {
+        // Today's warnings are frozen in the baseline; anything new fails the build.
+        baseline = file("lint-baseline.xml")
+        abortOnError = true
+        warningsAsErrors = true
+        // "A newer version exists" changes with every library release, not with this code.
+        disable += setOf("NewerVersionAvailable", "GradleDependency", "AndroidGradlePluginVersion")
+    }
+
     packaging {
         resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" }
     }
