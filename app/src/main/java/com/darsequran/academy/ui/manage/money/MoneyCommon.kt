@@ -24,12 +24,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +51,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.darsequran.academy.data.ApiResult
+import com.darsequran.academy.data.apiCall
 import com.darsequran.academy.data.staff.formOf
 import com.darsequran.academy.ui.common.AppCard
 import com.darsequran.academy.ui.common.RemoteImage
@@ -57,13 +63,17 @@ import com.darsequran.academy.ui.manage.common.FilterChips
 import com.darsequran.academy.ui.manage.common.FilterOption
 import com.darsequran.academy.ui.manage.common.FormDateField
 import com.darsequran.academy.ui.manage.common.FormDropdown
+import com.darsequran.academy.ui.manage.common.rememberContainer
+import com.darsequran.academy.ui.manage.students.StudentRow
+import com.darsequran.academy.ui.manage.students.StudentsAdminApi
 import com.darsequran.academy.ui.theme.Brand
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.text.NumberFormat
 import java.util.Locale
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 
 /*
  * Pieces shared by the money screens: amounts, list filters kept as one string, the date range bar, summary tiles,
@@ -310,4 +320,41 @@ fun moneyStatus(status: String?, label: String? = null): Pair<String, Tone> {
         else -> com.darsequran.academy.ui.common.titleCase(s.ifBlank { "unknown" })
     }
     return text to tone
+}
+
+/**
+ * The finance lists' "Student" filter, as a search: type part of a name or e-mail and pick from the matches. It used
+ * to be a menu of every student in the academy, loaded in full each time, which grows without limit.
+ */
+@Composable
+fun StudentFilter(filter: String?, onChange: (String?) -> Unit) {
+    val container = rememberContainer()
+    val selectedId = decodeFilters(filter)["studentId"]
+    var selectedLabel by rememberSaveable { mutableStateOf<String?>(null) }
+    var query by rememberSaveable { mutableStateOf("") }
+    var matches by remember { mutableStateOf<List<StudentRow>>(emptyList()) }
+    LaunchedEffect(query) {
+        val q = query.trim()
+        if (q.length < 2) { matches = emptyList(); return@LaunchedEffect }
+        delay(350) // wait for typing to pause
+        matches = (apiCall { container.service<StudentsAdminApi>().list(1, q, null) } as? ApiResult.Ok)?.value?.data.orEmpty().take(8)
+    }
+    if (selectedId != null) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Student: ${selectedLabel ?: "selected"}", Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+            TextButton(onClick = { selectedLabel = null; onChange(withFilters(filter, "studentId" to null)) }) { Text("Clear") }
+        }
+        return
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth(), label = { Text("Student (name or e-mail)") }, singleLine = true)
+        matches.forEach { s ->
+            val label = s.name?.let { "$it (${s.email})" } ?: s.email
+            Text(
+                label,
+                Modifier.fillMaxWidth().clickable { selectedLabel = label; query = ""; onChange(withFilters(filter, "studentId" to s.id)) }.padding(vertical = 10.dp, horizontal = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+    }
 }

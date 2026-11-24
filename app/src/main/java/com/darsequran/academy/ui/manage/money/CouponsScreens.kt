@@ -281,7 +281,7 @@ fun WaiverFinanceScreen(onBack: () -> Unit, onOpenReceipt: (String) -> Unit) {
         extras.value.value = WaiverMeta(r.range, r.stats)
         Paged(r.data, r.totalCount, r.page, r.pageSize)
     }
-    val options = rememberLoader("money-finance-options-all") { service<MoneyApi>().options(students = "all") }
+    val options = rememberLoader("money-finance-options") { service<MoneyApi>().options() }
     ReloadOnReturn(vm::refresh)
     val runner = rememberActionRunner()
     val state by vm.state.collectAsStateWithLifecycle()
@@ -311,7 +311,7 @@ fun WaiverFinanceScreen(onBack: () -> Unit, onOpenReceipt: (String) -> Unit) {
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilterDropdown("Course", "All courses", opts?.courses.orEmpty().map { it.id to it.title }, state.filter, "courseId", vm::filter)
-                        FilterDropdown("Student", "All students", opts?.students.orEmpty().map { it.id to (it.name?.let { n -> "$n (${it.email})" } ?: it.email) }, state.filter, "studentId", vm::filter)
+                        StudentFilter(state.filter, vm::filter)
                         FilterDropdown("Payment type", "All types", opts?.incomePaymentTypes.orEmpty().map { it.value to it.label }, state.filter, "paymentType", vm::filter)
                     }
                 }
