@@ -52,6 +52,8 @@ import com.darsequran.academy.ui.manage.common.StatTile
 import com.darsequran.academy.ui.manage.common.rememberActionRunner
 import com.darsequran.academy.ui.manage.common.rememberLoader
 import com.darsequran.academy.ui.theme.Brand
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.LocalDate
 
 /*
@@ -59,9 +61,12 @@ import java.time.LocalDate
  * for admins, the grade card PDF). Shared by the admin course pages and the teacher portal.
  */
 
-/** Marks with at most two decimals, without trailing zeros on whole numbers (as the website shows them). */
+/**
+ * Marks with at most two decimals, without trailing zeros (as the website shows them). Always ASCII digits and a
+ * "." whatever the phone's language: the text goes back into the marks field, which parses it with toDouble().
+ */
 fun formatMarks(marks: Double): String =
-    if (marks % 1.0 == 0.0) marks.toLong().toString() else "%.2f".format(marks).trimEnd('0').trimEnd('.')
+    BigDecimal.valueOf(marks).setScale(2, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString()
 
 @Composable
 fun GradeListScreen(portal: Portal, courseId: String, onBack: () -> Unit, onAdd: () -> Unit, onEdit: (String) -> Unit) {
