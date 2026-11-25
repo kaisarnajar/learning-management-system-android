@@ -98,7 +98,41 @@ RELEASE_KEY_PASSWORD=...
 ```
 
 Without them `./gradlew :app:assembleRelease` stops with a message instead of signing with the debug key.
-Give each published build a higher version code: `./gradlew :app:bundleRelease -PversionCode=3`.
+Give each published build a higher version code; use the commit count, as `scripts/distribute.sh` does, so a Play
+Store build is never lower than one testers already have: `./gradlew :app:bundleRelease -PversionCode=$(git rev-list --count HEAD)`.
 `./gradlew :app:minifyReleaseWithR8` runs the R8 shrink on its own, without the upload key (CI does this).
 Create the key once with Android Studio (**Build → Generate Signed App Bundle / APK → Create new**) or `keytool`,
 and keep it and its passwords somewhere safe: Play Store updates must be signed with the same key.
+
+### Sending builds to testers
+
+`scripts/distribute.sh` builds the release app (production, signed with the upload key) and uploads it to Firebase
+App Distribution. Testers get an e-mail and install it with the Firebase App Tester app.
+
+```bash
+scripts/distribute.sh                    # release notes: the commits since the last upload
+scripts/distribute.sh "Fixed checkout"   # release notes: this text
+```
+
+Set up once:
+
+1. In the [Firebase console](https://console.firebase.google.com), create a project (or use one) and add an Android
+   app with the package name `com.darsequran.academy`. Skip downloading `google-services.json`; the app doesn't use it.
+2. Open **App Distribution**, click **Get started**, and under **Testers & Groups** make a group (say `testers`) with
+   your testers' e-mails.
+3. In **Project settings → Service accounts**, open the Google Cloud link, create a service account with the
+   **Firebase App Distribution Admin** role, and download a JSON key for it. Keep it **outside this project**: it is a
+   password.
+4. Add to `local.properties`:
+
+```properties
+# Project settings → General → Your apps → App ID. Not secret.
+FIREBASE_APP_ID=1:1234567890:android:0123456789abcdef
+FIREBASE_SERVICE_ACCOUNT_FILE=/absolute/path/to/firebase-service-account.json
+# Comma-separated group aliases from App Distribution → Testers & Groups.
+FIREBASE_TESTER_GROUPS=testers
+```
+
+Instead of the service account you can run `firebase login` once (the Firebase CLI) and leave
+`FIREBASE_SERVICE_ACCOUNT_FILE` out. The release-signing settings above are needed too. Each upload gets the commit
+count as its version code and moves the local `firebase-latest` tag, where the next upload's notes start.

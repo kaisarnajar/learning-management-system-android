@@ -1,3 +1,4 @@
+import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
 import java.util.Properties
 
 plugins {
@@ -5,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.firebase.appdistribution)
 }
 
 val localProperties = Properties().apply {
@@ -24,6 +26,14 @@ fun setting(name: String): String? = localProperties.getProperty(name) ?: System
 val releaseSigning = listOf("RELEASE_STORE_FILE", "RELEASE_STORE_PASSWORD", "RELEASE_KEY_ALIAS", "RELEASE_KEY_PASSWORD")
     .associateWith { setting(it) }
 val hasReleaseSigning = releaseSigning.values.all { !it.isNullOrBlank() }
+
+/**
+ * Firebase App Distribution, for the release build (scripts/distribute.sh). The app ID is not secret; the service
+ * account file is, and lives outside the project. Without the file, the Firebase CLI's login is used instead.
+ */
+val firebaseAppId: String? = setting("FIREBASE_APP_ID")
+val firebaseServiceAccountFile: String? = setting("FIREBASE_SERVICE_ACCOUNT_FILE")
+val firebaseTesterGroups: String? = setting("FIREBASE_TESTER_GROUPS")
 
 /** The staging copy of the website, which only the debug build can switch to. */
 val stagingBaseUrl: String = setting("STAGING_BASE_URL") ?: "https://staging-learning-management-system-teal-ten.vercel.app"
@@ -73,6 +83,14 @@ android {
             resValue("string", "app_name", "Darse Quran Academy")
             // Only the upload key signs it: checkReleaseSigning stops it without one.
             signingConfig = if (hasReleaseSigning) signingConfigs.getByName("release") else null
+            firebaseAppDistribution {
+                appId = firebaseAppId
+                artifactType = "APK"
+                serviceCredentialsFile = firebaseServiceAccountFile?.let { rootProject.file(it).path }
+                groups = firebaseTesterGroups
+                // Written by scripts/distribute.sh.
+                releaseNotesFile = layout.buildDirectory.file("firebase/release-notes.txt").get().asFile.path
+            }
         }
     }
 

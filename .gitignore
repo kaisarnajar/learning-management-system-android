@@ -36,3 +36,6 @@ local.properties
 # OS specific files
 .DS_Store
 Thumbs.db
+
+# Firebase service account keys (scripts/distribute.sh): keep them outside the project, never commit one
+*service-account*.json
