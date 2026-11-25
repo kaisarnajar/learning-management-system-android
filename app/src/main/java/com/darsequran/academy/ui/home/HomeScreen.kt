@@ -174,7 +174,22 @@ class HomeViewModel(private val repo: AcademyRepository, private val auth: AuthR
         val profile = async { if (signedIn) auth.profile().orNull() else null }
         val unread = async { if (signedIn) repo.notifications(1, unreadOnly = true).orNull()?.unreadCount ?: 0 else 0 }
 
+        // A cold start shows the last run's home screen while the new one loads.
+        if (_state.value.content == null) {
+            repo.lastHome()?.let { saved ->
+                _state.update { if (it.content == null) it.copy(content = saved, loading = false) else it }
+            }
+        }
+        // The page shows as soon as its content arrives; the student's own cards follow when their calls answer.
         val homeResult = home.await()
+        _state.update {
+            it.copy(
+                loading = false,
+                content = (homeResult as? ApiResult.Ok)?.value ?: it.content,
+                error = (homeResult as? ApiResult.Err)?.message?.takeIf { _ -> it.content == null },
+            )
+        }
+
         val list = enrollments.await()
         val submissions = history.await()?.submissions.orEmpty()
         val me = profile.await()
@@ -198,10 +213,7 @@ class HomeViewModel(private val repo: AcademyRepository, private val auth: AuthR
 
         _state.update {
             it.copy(
-                loading = false,
                 refreshing = false,
-                content = (homeResult as? ApiResult.Ok)?.value ?: it.content,
-                error = (homeResult as? ApiResult.Err)?.message?.takeIf { _ -> it.content == null },
                 enrollments = list,
                 actions = actions,
                 unread = unread.await(),

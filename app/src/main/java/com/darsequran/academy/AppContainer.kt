@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.SystemClock
 import com.darsequran.academy.data.AppEnvironment
 import com.darsequran.academy.data.Network
+import com.darsequran.academy.data.SavedHome
 import com.darsequran.academy.data.SessionStore
 import com.darsequran.academy.data.clearDocumentCache
 import com.darsequran.academy.data.repo.AcademyRepository
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import kotlinx.serialization.json.Json
 
 /** Manual dependency container: one instance per process, created by [AcademyApp]. */
@@ -30,7 +32,10 @@ class AppContainer(context: Context) {
     val sessionStore = SessionStore(context, appScope, json, initialEnvironment = AppEnvironment.current)
     val network = Network(sessionStore, json)
     val auth = AuthRepository(network.api, sessionStore)
-    val repo = AcademyRepository(network.api)
+    val repo = AcademyRepository(
+        network.api,
+        SavedHome(File(context.cacheDir, "home-${AppEnvironment.current.key}.json"), json),
+    )
     val cart = CartStore(repo)
 
     init {

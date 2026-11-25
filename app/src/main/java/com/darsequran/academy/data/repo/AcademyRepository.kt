@@ -1,6 +1,7 @@
 package com.darsequran.academy.data.repo
 
 import com.darsequran.academy.data.ApiResult
+import com.darsequran.academy.data.SavedHome
 import com.darsequran.academy.data.apiCall
 import com.darsequran.academy.data.remote.AcademyApi
 import com.darsequran.academy.data.remote.AppConfig
@@ -24,7 +25,7 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 
 /** Everything the app reads and writes apart from sign-in. Thin: errors become [ApiResult.Err]. */
-class AcademyRepository(private val api: AcademyApi) {
+class AcademyRepository(private val api: AcademyApi, private val savedHome: SavedHome? = null) {
 
     private val configLock = Mutex()
     private var config: AppConfig? = null
@@ -39,7 +40,12 @@ class AcademyRepository(private val api: AcademyApi) {
     private var homeCache: HomeResponse? = null
     fun cachedHome() = homeCache
 
-    suspend fun home() = apiCall { api.home() }.also { if (it is ApiResult.Ok) homeCache = it.value }
+    suspend fun home() = apiCall { api.home() }.also {
+        if (it is ApiResult.Ok) { homeCache = it.value; savedHome?.write(it.value) }
+    }
+
+    /** The home screen to show while [home] loads: this run's, else the one saved by the last run. */
+    suspend fun lastHome(): HomeResponse? = homeCache ?: savedHome?.read()
 
     // ---- catalogue & content
     suspend fun courses(page: Int, search: String?, category: String? = null) = apiCall { api.courses(page, search?.ifBlank { null }, category) }

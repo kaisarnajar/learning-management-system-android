@@ -3,7 +3,11 @@ package com.darsequran.academy.ui.home
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.darsequran.academy.AcademyApp
+import com.darsequran.academy.data.AppEnvironment
 import com.darsequran.academy.data.CurrentEnvironment
+import com.darsequran.academy.data.SavedHome
+import com.darsequran.academy.data.remote.Course
+import com.darsequran.academy.data.remote.HomeResponse
 import com.darsequran.academy.data.remote.SessionUser
 import com.darsequran.academy.data.remote.TokenResponse
 import com.darsequran.academy.testing.MainDispatcherRule
@@ -27,6 +31,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -37,6 +42,8 @@ class HomeViewModelTest {
     private val app = ApplicationProvider.getApplicationContext<AcademyApp>()
     private val server = MockWebServer()
     @Volatile private var resendFails = false
+    @Volatile private var homeDelayMs = 0L
+    @Volatile private var homeTitle = "Tajweed"
     private val resends = AtomicInteger()
 
     @Before fun setUp() {
@@ -46,6 +53,9 @@ class HomeViewModelTest {
                 "/api/v1/enrollments" -> MockResponse.Builder()
                     .body("""{"data":[{"id":"e1","courseId":"c1","status":"active"}]}""")
                     .headersDelay(800, TimeUnit.MILLISECONDS).build()
+                "/api/v1/home" -> MockResponse.Builder()
+                    .body("""{"success":true,"courses":[{"id":"c1","title":"$homeTitle"}]}""")
+                    .headersDelay(homeDelayMs, TimeUnit.MILLISECONDS).build()
                 "/api/v1/auth/resend-verification" -> {
                     resends.incrementAndGet()
                     if (resendFails) MockResponse(code = 429, body = """{"error":"Too many requests."}""")
@@ -78,7 +88,7 @@ class HomeViewModelTest {
     @Test
     fun aTokenRefreshForTheSameUserDoesNotReload() = runBlocking {
         val vm = HomeViewModel(app.container.repo, app.container.auth)
-        withTimeout(5_000) { vm.state.first { !it.loading } }
+        withTimeout(5_000) { vm.state.first { it.enrollments.isNotEmpty() } } // the whole load, slowest call included
         val homeCalls = { server.requestCount }
         val before = homeCalls()
         app.container.sessionStore.save(TokenResponse("a2", "r2", user = SessionUser("u1", "student@example.test")))
@@ -115,5 +125,26 @@ class HomeViewModelTest {
     fun resendWordingFollowsTheWebsite() {
         assertEquals("Failed to resend verification email.", resendOutcome(ApiResult.Err("")).message)
         assertEquals("Too many requests.", resendOutcome(ApiResult.Err("Too many requests.")).message)
+    }
+
+    @Test
+    fun theHomeContentShowsWithoutWaitingForTheStudentsSlowerCalls() = runBlocking {
+        val vm = HomeViewModel(app.container.repo, app.container.auth)
+        val shown = withTimeout(5_000) { vm.state.first { it.content?.courses?.isNotEmpty() == true } }
+        assertEquals(emptyList<Any>(), shown.enrollments) // the enrollments (800 ms) are still on the way
+        withTimeout(5_000) { vm.state.first { it.enrollments.isNotEmpty() } }
+        Unit
+    }
+
+    @Test
+    fun aColdStartShowsTheSavedHomeUntilTheNewOneArrives() = runBlocking {
+        val saved = SavedHome(File(app.cacheDir, "home-${AppEnvironment.current.key}.json"), app.container.json)
+        saved.write(HomeResponse(courses = listOf(Course(id = "c0", title = "Saved"))))
+        homeDelayMs = 1_500
+        homeTitle = "Fresh"
+        val vm = HomeViewModel(app.container.repo, app.container.auth)
+        withTimeout(1_000) { vm.state.first { it.content?.courses?.firstOrNull()?.title == "Saved" } }
+        withTimeout(5_000) { vm.state.first { it.content?.courses?.firstOrNull()?.title == "Fresh" } }
+        assertEquals("Fresh", saved.read()?.courses?.firstOrNull()?.title) // and the new one is saved for next time
     }
 }
