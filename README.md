@@ -106,18 +106,24 @@ and keep it and its passwords somewhere safe: Play Store updates must be signed 
 
 ### Sending builds to testers
 
-`scripts/distribute.sh` builds the release app (production, signed with the upload key) and uploads it to Firebase
-App Distribution. Testers get an e-mail and install it with the Firebase App Tester app.
+`scripts/distribute.sh` builds the app and uploads it to Firebase App Distribution. Testers get an e-mail and install
+it with the Firebase App Tester app.
 
 ```bash
-scripts/distribute.sh                    # release notes: the commits since the last upload
-scripts/distribute.sh "Fixed checkout"   # release notes: this text
+scripts/distribute.sh                         # the release build (production, upload key)
+scripts/distribute.sh debug                   # the debug build (staging, can switch to production)
+scripts/distribute.sh both                    # both
+scripts/distribute.sh both "Fixed checkout"   # release notes: this text instead of the commits
 ```
+
+Send the debug build only to developers: it can switch to production. Upload it from one machine only, because
+each machine has its own debug key and a phone won't update a debug build signed with a different one.
 
 Set up once:
 
-1. In the [Firebase console](https://console.firebase.google.com), create a project (or use one) and add an Android
-   app with the package name `com.darsequran.academy`. Skip downloading `google-services.json`; the app doesn't use it.
+1. In the [Firebase console](https://console.firebase.google.com), create a project (or use one) and add two Android
+   apps: `com.darsequran.academy` (release) and `com.darsequran.academy.debug` (debug). Skip the
+   `google-services.json` and SDK steps; the app doesn't use them.
 2. Open **App Distribution**, click **Get started**, and under **Testers & Groups** make a group (say `testers`) with
    your testers' e-mails.
 3. In **Project settings → Service accounts**, open the Google Cloud link, create a service account with the
@@ -126,13 +132,15 @@ Set up once:
 4. Add to `local.properties`:
 
 ```properties
-# Project settings → General → Your apps → App ID. Not secret.
+# Project settings → General → Your apps → App ID, one per app. Not secret.
 FIREBASE_APP_ID=1:1234567890:android:0123456789abcdef
+FIREBASE_DEBUG_APP_ID=1:1234567890:android:fedcba9876543210
 FIREBASE_SERVICE_ACCOUNT_FILE=/absolute/path/to/firebase-service-account.json
 # Comma-separated group aliases from App Distribution → Testers & Groups.
 FIREBASE_TESTER_GROUPS=testers
 ```
 
 Instead of the service account you can run `firebase login` once (the Firebase CLI) and leave
-`FIREBASE_SERVICE_ACCOUNT_FILE` out. The release-signing settings above are needed too. Each upload gets the commit
-count as its version code and moves the local `firebase-latest` tag, where the next upload's notes start.
+`FIREBASE_SERVICE_ACCOUNT_FILE` out. The release build needs the release-signing settings above too. Each upload
+gets the commit count as its version code and moves the build's local tag (`firebase-latest-release` or
+`firebase-latest-debug`), where that build's next notes start.

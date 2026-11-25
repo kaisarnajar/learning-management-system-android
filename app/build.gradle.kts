@@ -28,10 +28,12 @@ val releaseSigning = listOf("RELEASE_STORE_FILE", "RELEASE_STORE_PASSWORD", "REL
 val hasReleaseSigning = releaseSigning.values.all { !it.isNullOrBlank() }
 
 /**
- * Firebase App Distribution, for the release build (scripts/distribute.sh). The app ID is not secret; the service
- * account file is, and lives outside the project. Without the file, the Firebase CLI's login is used instead.
+ * Firebase App Distribution (scripts/distribute.sh). Each build is its own Firebase app, as their package names
+ * differ. The app IDs are not secret; the service account file is, and lives outside the project. Without the file,
+ * the Firebase CLI's login is used instead.
  */
 val firebaseAppId: String? = setting("FIREBASE_APP_ID")
+val firebaseDebugAppId: String? = setting("FIREBASE_DEBUG_APP_ID")
 val firebaseServiceAccountFile: String? = setting("FIREBASE_SERVICE_ACCOUNT_FILE")
 val firebaseTesterGroups: String? = setting("FIREBASE_TESTER_GROUPS")
 
@@ -74,6 +76,7 @@ android {
             applicationIdSuffix = ".debug"
             buildConfigField("String", "STAGING_BASE_URL", "\"$stagingBaseUrl\"")
             resValue("string", "app_name", "DQA (debug)")
+            firebaseAppDistribution { distributionSettings(firebaseDebugAppId) }
         }
         release {
             isMinifyEnabled = true
@@ -83,14 +86,7 @@ android {
             resValue("string", "app_name", "Darse Quran Academy")
             // Only the upload key signs it: checkReleaseSigning stops it without one.
             signingConfig = if (hasReleaseSigning) signingConfigs.getByName("release") else null
-            firebaseAppDistribution {
-                appId = firebaseAppId
-                artifactType = "APK"
-                serviceCredentialsFile = firebaseServiceAccountFile?.let { rootProject.file(it).path }
-                groups = firebaseTesterGroups
-                // Written by scripts/distribute.sh.
-                releaseNotesFile = layout.buildDirectory.file("firebase/release-notes.txt").get().asFile.path
-            }
+            firebaseAppDistribution { distributionSettings(firebaseAppId) }
         }
     }
 
@@ -175,6 +171,16 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+/** Where scripts/distribute.sh sends a build: the same testers and notes for both, each to its own Firebase app. */
+fun com.google.firebase.appdistribution.gradle.AppDistributionExtension.distributionSettings(firebaseApp: String?) {
+    appId = firebaseApp
+    artifactType = "APK"
+    serviceCredentialsFile = firebaseServiceAccountFile?.let { rootProject.file(it).path }
+    groups = firebaseTesterGroups
+    // Written by scripts/distribute.sh.
+    releaseNotesFile = layout.buildDirectory.file("firebase/release-notes.txt").get().asFile.path
 }
 
 val checkReleaseSigning by tasks.registering {
