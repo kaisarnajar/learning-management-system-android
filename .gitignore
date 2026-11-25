@@ -39,3 +39,5 @@ Thumbs.db
 
 # Firebase service account keys (scripts/distribute.sh): keep them outside the project, never commit one
 *service-account*.json
+# Firebase app config: not used by the app (no Firebase SDK), and it holds an API key
+google-services.json
