@@ -183,8 +183,9 @@ serif face; images in a gallery; blog likes and comments at the end.
   use), and signs the user out when refresh fails.
 - Session: DataStore.
 - Images: Coil.
-- Server per flavor, fixed at build time: `staging` builds talk to staging,
-  `production` builds to `https://darsequranacademy.com`; there is no switch
-  in the app.
+- Two builds. Release always talks to `https://darsequranacademy.com` and
+  doesn't contain the staging URL. Debug (the developer's own, never shared)
+  starts on staging and switches in Account → Server; each server keeps its
+  own sign-in.
 - Google sign-in through Credential Manager, using `GOOGLE_WEB_CLIENT_ID` from
   `local.properties`; the button is hidden while that ID is not set.

@@ -77,6 +77,7 @@ import com.darsequran.academy.ui.account.DeleteAccountScreen
 import com.darsequran.academy.ui.account.EditProfileScreen
 import com.darsequran.academy.ui.account.NotificationsScreen
 import com.darsequran.academy.ui.account.PaymentsScreen
+import com.darsequran.academy.ui.account.ServerScreen
 import com.darsequran.academy.ui.account.ReviewsScreen
 import com.darsequran.academy.ui.account.WaiversScreen
 import com.darsequran.academy.ui.auth.ForgotPasswordScreen
@@ -165,19 +166,19 @@ fun AppRoot() {
     val context = LocalContext.current
     val container = rememberContainer()
     val session by container.sessionStore.session.collectAsStateWithLifecycle()
-    val env = AppEnvironment.current
+    val env by container.environments.environment.collectAsStateWithLifecycle()
     val shell = Shell.of(session?.user?.role)
 
-    // A new role or user starts a fresh navigation graph: nothing from the previous one carries over.
+    // A new server, role or user starts a fresh navigation graph: nothing from the previous one carries over.
     // The user matters even within one role: after a student signs out (or another signs in on the phone), the tab
     // stacks saved by switchTab would otherwise bring back the previous student's screens and data.
-    key(shell, session?.user?.id) {
+    key(env, shell, session?.user?.id) {
         GraphScope("${env.key}-$shell-${session?.user?.id}") {
             val nav = rememberNavController()
             Column(Modifier.fillMaxSize()) {
                 if (env != AppEnvironment.PRODUCTION) {
                     HeroUnderStatusBar()
-                    EnvironmentStrip(env)
+                    EnvironmentStrip(env) { nav.navigate(ServerRoute) }
                 }
                 Box(Modifier.weight(1f).then(if (env != AppEnvironment.PRODUCTION) Modifier.consumeWindowInsets(WindowInsets.statusBars) else Modifier)) {
                     AppContent(nav, shell)
@@ -305,6 +306,8 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                         onWaivers = { nav.navigate(WaiversRoute) }, onReviews = { nav.navigate(ReviewsRoute) }, onOrders = { nav.navigate(OrdersRoute) },
                         onNotifications = { nav.navigate(NotificationsRoute) }, onChangePassword = { nav.navigate(ChangePasswordRoute) },
                         onDeleteAccount = { nav.navigate(DeleteAccountRoute) }, onContact = { nav.navigate(ContactRoute) }, onAbout = { nav.navigate(AboutRoute) },
+                        // Only the debug build can switch servers; the release build has just production.
+                        onServer = if (BuildConfig.DEBUG) ({ nav.navigate(ServerRoute) }) else null,
                     )
                 }
 
@@ -399,6 +402,7 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                 composable<ChangePasswordRoute> { ChangePasswordScreen(nav::popBackStack) }
                 composable<DeleteAccountRoute> { DeleteAccountScreen(nav::popBackStack) { nav.switchTab(HomeTab) } }
                 composable<ContactRoute> { ContactScreen(nav::popBackStack) }
+                if (BuildConfig.DEBUG) composable<ServerRoute> { ServerScreen(nav::popBackStack) }
                 composable<AboutRoute> { AboutScreen(nav::popBackStack) { nav.navigate(TeachersRoute) } }
             }
         }

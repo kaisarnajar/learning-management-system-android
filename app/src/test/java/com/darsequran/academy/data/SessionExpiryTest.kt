@@ -23,7 +23,7 @@ class SessionExpiryTest {
     private var now = 5_000_000L
 
     private fun store() =
-        SessionStore(app, CoroutineScope(Dispatchers.Unconfined), json, AppEnvironment.current) { now }
+        SessionStore(app, CoroutineScope(Dispatchers.Unconfined), json, AppEnvironment.default) { now }
 
     @After fun tearDown() = runBlocking { store().clear() }
 

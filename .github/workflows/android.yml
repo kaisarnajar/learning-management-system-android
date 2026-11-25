@@ -32,12 +32,12 @@ jobs:
 
       - name: Build, lint and unit-test
         run: >-
-          ./gradlew :app:assembleStagingDebug :app:assembleProductionDebug :app:lintStagingDebug :app:detekt
-          :app:testStagingDebugUnitTest :app:assembleStagingDebugAndroidTest
+          ./gradlew :app:assembleDebug :app:lintDebug :app:detekt :app:testDebugUnitTest :app:assembleDebugAndroidTest
 
-      # The shrunk release app on staging, signed with the debug key; productionRelease needs the upload key.
-      - name: Release build on staging (R8)
-        run: ./gradlew :app:assembleStagingRelease
+      # Shrinks the release app with R8 (catches missing keep rules). Stops before packaging and signing, so it
+      # needs no upload key.
+      - name: Release shrink (R8)
+        run: ./gradlew :app:minifyReleaseWithR8
 
       - name: Upload reports
         if: always()

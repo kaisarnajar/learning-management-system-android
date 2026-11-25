@@ -3,6 +3,7 @@ package com.darsequran.academy
 import android.content.Context
 import android.os.SystemClock
 import com.darsequran.academy.data.AppEnvironment
+import com.darsequran.academy.data.EnvironmentStore
 import com.darsequran.academy.data.Network
 import com.darsequran.academy.data.SavedHome
 import com.darsequran.academy.data.SessionStore
@@ -29,12 +30,14 @@ class AppContainer(context: Context) {
     // Lenient parsing (unquoted strings and keys) only in release: a debug build fails on such an answer, so
     // drift in the website's API shows up while developing instead of being quietly accepted.
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; explicitNulls = false; coerceInputValues = true; isLenient = !BuildConfig.DEBUG }
-    val sessionStore = SessionStore(context, appScope, json, initialEnvironment = AppEnvironment.current)
+    // Decides which environment (and so which saved session) the app starts on.
+    val environments = EnvironmentStore(context)
+    val sessionStore = SessionStore(context, appScope, json, initialEnvironment = environments.environment.value)
     val network = Network(sessionStore, json)
     val auth = AuthRepository(network.api, sessionStore)
     val repo = AcademyRepository(
         network.api,
-        SavedHome(File(context.cacheDir, "home-${AppEnvironment.current.key}.json"), json),
+        { env -> SavedHome(File(context.cacheDir, "home-${env.key}.json"), json) },
     )
     val cart = CartStore(repo)
 
@@ -46,10 +49,11 @@ class AppContainer(context: Context) {
                 withContext(Dispatchers.IO) { clearDocumentCache(appContext) }
             }
         }
-        // The cart belongs to the signed-in student: fetch it when they sign in, empty it when they leave, whichever
-        // screen is open.
+        // The cart belongs to the signed-in student on the current server: fetch it when they sign in, empty it when
+        // they leave, whichever screen is open. Keyed on the published environment, which changes only once requests
+        // go to the new server.
         appScope.launch {
-            sessionStore.session.map { it?.user?.id }
+            combine(environments.environment, sessionStore.session) { env, s -> s?.takeIf { it.env == env }?.user?.id?.let { env to it } }
                 .distinctUntilChanged()
                 .collect { owner -> if (owner == null) cart.clearLocal() else cart.refresh() }
         }
@@ -66,6 +70,19 @@ class AppContainer(context: Context) {
         if (lastUserCheck != 0L && now - lastUserCheck < USER_CHECK_INTERVAL_MS) return
         lastUserCheck = now
         appScope.launch { auth.profile() }
+    }
+
+    /**
+     * Points the app at another copy of the website (debug build only); that environment's own session becomes
+     * current.
+     */
+    suspend fun switchEnvironment(env: AppEnvironment) {
+        // Session first: until requests point at the new server, its token isn't attached to the old one (and the
+        // old token never reaches the new one), because a session is only sent to the environment that issued it.
+        sessionStore.useEnvironment(env)
+        environments.select(env)
+        repo.clearCaches()
+        environments.publish(env)
     }
 
     /** A Retrofit service for one part of the API, e.g. `container.service<StudentsAdminApi>()`. */

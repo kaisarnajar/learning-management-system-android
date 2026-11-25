@@ -1,6 +1,7 @@
 package com.darsequran.academy.ui.common
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -21,26 +22,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.darsequran.academy.data.AppEnvironment
-import com.darsequran.academy.data.CurrentEnvironment
 
 private val StagingAmber = Color(0xFFB45309)
 
 /**
- * A thin band above everything in a staging build, so test data is never mistaken for real. Only a label: the
- * server is fixed when the app is built.
+ * A thin band above everything while the debug build is on staging, so test data is never mistaken for real.
+ * Tapping it opens the Server screen.
  */
 @Composable
-fun EnvironmentStrip(env: AppEnvironment) {
+fun EnvironmentStrip(env: AppEnvironment, onClick: () -> Unit) {
     if (env == AppEnvironment.PRODUCTION) return
     Row(
         Modifier.fillMaxWidth().background(StagingAmber).windowInsetsPadding(WindowInsets.statusBars)
+            .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
         Icon(Icons.Rounded.Dns, null, tint = Color.White, modifier = Modifier.padding(end = 6.dp).width(14.dp))
         Text(
-            "${env.label.uppercase()} · ${CurrentEnvironment.host}", style = MaterialTheme.typography.labelSmall,
+            "${env.label.uppercase()} · ${env.host}", style = MaterialTheme.typography.labelSmall,
             color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis,
         )
     }

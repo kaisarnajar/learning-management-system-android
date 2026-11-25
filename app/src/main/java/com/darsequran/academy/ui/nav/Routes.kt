@@ -47,3 +47,4 @@ import kotlinx.serialization.Serializable
 @Serializable data object DeleteAccountRoute
 @Serializable data object ContactRoute
 @Serializable data object AboutRoute
+@Serializable data object ServerRoute

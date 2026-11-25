@@ -51,8 +51,8 @@ interface SessionSource {
 /**
  * Persists the session. [session] is the single source of truth for "am I signed in?".
  *
- * The keys carry the environment (production keeps the original names, so sessions from before environments existed
- * survive), although each build now talks to one server only.
+ * Each environment (production, staging) keeps its own session, so switching servers in the debug build keeps you
+ * signed in on each. Production uses the original key names, so sessions from before environments existed survive.
  */
 class SessionStore(
     private val context: Context,
@@ -61,7 +61,7 @@ class SessionStore(
     initialEnvironment: AppEnvironment,
     private val clock: () -> Long = System::currentTimeMillis,
 ) : SessionSource {
-    private val env: AppEnvironment = initialEnvironment
+    @Volatile private var env: AppEnvironment = initialEnvironment
 
     private class Keys(private val env: AppEnvironment) {
         private fun key(name: String) = stringPreferencesKey(if (env == AppEnvironment.PRODUCTION) name else "${env.key}_$name")
@@ -76,6 +76,12 @@ class SessionStore(
     // refresh authenticator is visible to the very next request.
     private val _session = MutableStateFlow(runBlocking { readOnce(env) })
     override val session: StateFlow<Session?> = _session.asStateFlow()
+
+    /** Loads the session of [environment]; called before requests are pointed at it. */
+    suspend fun useEnvironment(environment: AppEnvironment) {
+        env = environment
+        _session.value = readOnce(environment)
+    }
 
     /** "system", "light" or "dark". */
     val theme: StateFlow<String> = context.sessionDataStore.data

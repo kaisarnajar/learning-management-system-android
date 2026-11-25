@@ -55,7 +55,7 @@ app/src/main/java/com/darsequran/academy/
 You need Android Studio (or its bundled JDK) and the Android SDK.
 
 ```bash
-./gradlew :app:assembleStagingDebug
+./gradlew :app:assembleDebug
 ```
 
 Optional settings go in `local.properties` (not committed):
@@ -63,23 +63,23 @@ Optional settings go in `local.properties` (not committed):
 ```properties
 # The Web client ID from Google Cloud (OAuth). Without it the "Continue with Google" button is hidden.
 GOOGLE_WEB_CLIENT_ID=1234567890-abc.apps.googleusercontent.com
-# The staging website the staging flavor talks to (default: the current Vercel staging deployment).
+# The staging website the debug build talks to (default: the current Vercel staging deployment).
 STAGING_BASE_URL=https://staging.example.com
 ```
 
 ### Which server a build talks to
 
-The server is fixed when the app is built, by its **flavor**; nothing inside the app can change it. Two flavors times
-two build types make four apps, which can all be installed side by side:
+There are two builds, which can be installed side by side:
 
-| Variant | Server | Signed with | App name (`applicationId`) | Used for |
+| Build | Server | Signed with | App name (`applicationId`) | Used for |
 |---|---|---|---|---|
-| `stagingDebug` | staging | debug key | DQA Staging (debug) (`com.darsequran.academy.staging.debug`) | everyday development |
-| `productionDebug` | production | debug key | DQA (debug) (`com.darsequran.academy.debug`) | rare debugging against live data |
-| `stagingRelease` | staging | debug key | DQA Staging (`com.darsequran.academy.staging`) | trying the shrunk (R8) release app |
-| `productionRelease` | production | upload key | Darse Quran Academy (`com.darsequran.academy`) | the Play Store |
+| `debug` | staging, or production after switching | debug key | DQA (debug) (`com.darsequran.academy.debug`) | development; never shared |
+| `release` | production only | upload key | Darse Quran Academy (`com.darsequran.academy`) | the published app |
 
-Test with the **staging** apps: never test against production. Staging builds show an orange STAGING strip at the
+The debug build starts on staging. Switch servers in **Account → Server** (or tap the STAGING strip); you stay signed
+in separately on each. The release build has no switch and doesn't even contain the staging URL.
+
+Test on **staging**: never test against production. While on staging, the app shows an orange STAGING strip at the
 top. There is no local-server setup.
 
 Staging's demo seed (`ALLOW_DEMO_SEED` on the website) gives you students, courses, payments and content to try the
@@ -97,9 +97,8 @@ RELEASE_KEY_ALIAS=upload
 RELEASE_KEY_PASSWORD=...
 ```
 
-Without them `./gradlew :app:assembleProductionRelease` stops with a message instead of signing with the debug key.
-Give each published build a higher version code: `./gradlew :app:bundleProductionRelease -PversionCode=3`.
-`./gradlew :app:assembleStagingRelease` builds the same shrunk app on staging, signed with the debug key, to try it
-without the upload key.
+Without them `./gradlew :app:assembleRelease` stops with a message instead of signing with the debug key.
+Give each published build a higher version code: `./gradlew :app:bundleRelease -PversionCode=3`.
+`./gradlew :app:minifyReleaseWithR8` runs the R8 shrink on its own, without the upload key (CI does this).
 Create the key once with Android Studio (**Build → Generate Signed App Bundle / APK → Create new**) or `keytool`,
 and keep it and its passwords somewhere safe: Play Store updates must be signed with the same key.

@@ -3,7 +3,6 @@ package com.darsequran.academy.ui.home
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.darsequran.academy.AcademyApp
-import com.darsequran.academy.data.AppEnvironment
 import com.darsequran.academy.data.CurrentEnvironment
 import com.darsequran.academy.data.SavedHome
 import com.darsequran.academy.data.remote.Course
@@ -138,7 +137,7 @@ class HomeViewModelTest {
 
     @Test
     fun aColdStartShowsTheSavedHomeUntilTheNewOneArrives() = runBlocking {
-        val saved = SavedHome(File(app.cacheDir, "home-${AppEnvironment.current.key}.json"), app.container.json)
+        val saved = SavedHome(File(app.cacheDir, "home-${CurrentEnvironment.value.key}.json"), app.container.json)
         saved.write(HomeResponse(courses = listOf(Course(id = "c0", title = "Saved"))))
         homeDelayMs = 1_500
         homeTitle = "Fresh"

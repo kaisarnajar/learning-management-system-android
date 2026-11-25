@@ -1,6 +1,8 @@
 package com.darsequran.academy.data.repo
 
 import com.darsequran.academy.data.ApiResult
+import com.darsequran.academy.data.AppEnvironment
+import com.darsequran.academy.data.CurrentEnvironment
 import com.darsequran.academy.data.SavedHome
 import com.darsequran.academy.data.apiCall
 import com.darsequran.academy.data.remote.AcademyApi
@@ -25,7 +27,8 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 
 /** Everything the app reads and writes apart from sign-in. Thin: errors become [ApiResult.Err]. */
-class AcademyRepository(private val api: AcademyApi, private val savedHome: SavedHome? = null) {
+/** [savedHome] gives the file that keeps the home screen between runs, one per server. */
+class AcademyRepository(private val api: AcademyApi, private val savedHome: ((AppEnvironment) -> SavedHome)? = null) {
 
     private val configLock = Mutex()
     private var config: AppConfig? = null
@@ -40,12 +43,19 @@ class AcademyRepository(private val api: AcademyApi, private val savedHome: Save
     private var homeCache: HomeResponse? = null
     fun cachedHome() = homeCache
 
-    suspend fun home() = apiCall { api.home() }.also {
-        if (it is ApiResult.Ok) { homeCache = it.value; savedHome?.write(it.value) }
+    /** Forgets what was cached from the previous environment. */
+    fun clearCaches() { config = null; homeCache = null }
+
+    suspend fun home(): ApiResult<HomeResponse> {
+        // An answer that arrives after a server switch belongs to the old server: don't keep it for the new one.
+        val env = CurrentEnvironment.value
+        return apiCall { api.home() }.also {
+            if (it is ApiResult.Ok && env == CurrentEnvironment.value) { homeCache = it.value; savedHome?.invoke(env)?.write(it.value) }
+        }
     }
 
-    /** The home screen to show while [home] loads: this run's, else the one saved by the last run. */
-    suspend fun lastHome(): HomeResponse? = homeCache ?: savedHome?.read()
+    /** The home screen to show while [home] loads: this run's, else the one saved by the last run on this server. */
+    suspend fun lastHome(): HomeResponse? = homeCache ?: savedHome?.invoke(CurrentEnvironment.value)?.read()
 
     // ---- catalogue & content
     suspend fun courses(page: Int, search: String?, category: String? = null) = apiCall { api.courses(page, search?.ifBlank { null }, category) }

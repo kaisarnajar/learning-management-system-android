@@ -25,7 +25,7 @@ val releaseSigning = listOf("RELEASE_STORE_FILE", "RELEASE_STORE_PASSWORD", "REL
     .associateWith { setting(it) }
 val hasReleaseSigning = releaseSigning.values.all { !it.isNullOrBlank() }
 
-/** The staging copy of the website, which the staging flavor talks to. */
+/** The staging copy of the website, which only the debug build can switch to. */
 val stagingBaseUrl: String = setting("STAGING_BASE_URL") ?: "https://staging-learning-management-system-teal-ten.vercel.app"
 
 /**
@@ -48,23 +48,6 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // Which copy of the website the app talks to, fixed when it is built: there is no switch inside the app.
-    // staging: testing, never real data. production: the published app.
-    flavorDimensions += "server"
-    productFlavors {
-        create("staging") {
-            dimension = "server"
-            applicationIdSuffix = ".staging"
-            buildConfigField("String", "SERVER", "\"staging\"")
-            buildConfigField("String", "BASE_URL", "\"$stagingBaseUrl\"")
-        }
-        create("production") {
-            dimension = "server"
-            buildConfigField("String", "SERVER", "\"production\"")
-            buildConfigField("String", "BASE_URL", "\"https://darsequranacademy.com\"")
-        }
-    }
-
     signingConfigs {
         if (hasReleaseSigning) create("release") {
             storeFile = rootProject.file(releaseSigning.getValue("RELEASE_STORE_FILE")!!)
@@ -74,22 +57,24 @@ android {
         }
     }
 
+    // Two builds. debug: for the developer only, never shared; starts on staging and can switch to production in
+    // Account → Server. release: the published app, always on production; it doesn't even contain the staging URL.
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
+            buildConfigField("String", "STAGING_BASE_URL", "\"$stagingBaseUrl\"")
+            resValue("string", "app_name", "DQA (debug)")
         }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Signed per flavor below: stagingRelease with the debug key (anyone can install and test the shrunk app),
-            // productionRelease only with the upload key (checkReleaseSigning stops it without one).
-            signingConfig = null
+            buildConfigField("String", "STAGING_BASE_URL", "\"\"")
+            resValue("string", "app_name", "Darse Quran Academy")
+            // Only the upload key signs it: checkReleaseSigning stops it without one.
+            signingConfig = if (hasReleaseSigning) signingConfigs.getByName("release") else null
         }
     }
-    productFlavors.getByName("staging").signingConfig = signingConfigs.getByName("debug")
-    productFlavors.getByName("production").signingConfig =
-        if (hasReleaseSigning) signingConfigs.getByName("release") else null
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -183,22 +168,8 @@ val checkReleaseSigning by tasks.registering {
         )
     }
 }
-tasks.matching { it.name == "packageProductionRelease" || it.name == "bundleProductionRelease" }
+tasks.matching { it.name == "packageRelease" || it.name == "bundleRelease" }
     .configureEach { dependsOn(checkReleaseSigning) }
-
-// The launcher name says which app it is: four can sit side by side on one phone.
-androidComponents {
-    onVariants { variant ->
-        val server = variant.productFlavors.first { it.first == "server" }.second
-        val name = when {
-            server == "production" && variant.buildType == "release" -> "Darse Quran Academy"
-            server == "production" -> "DQA (debug)"
-            variant.buildType == "release" -> "DQA Staging"
-            else -> "DQA Staging (debug)"
-        }
-        variant.resValues.put(variant.makeResValueKey("string", "app_name"), com.android.build.api.variant.ResValue(name))
-    }
-}
 
 kotlin {
     compilerOptions {

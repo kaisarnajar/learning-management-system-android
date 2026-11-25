@@ -186,6 +186,7 @@ fun AccountScreen(
     onDeleteAccount: () -> Unit,
     onContact: () -> Unit,
     onAbout: () -> Unit,
+    onServer: (() -> Unit)? = null,
     vm: AccountViewModel = viewModel(factory = vmFactory { AccountViewModel(it.auth, it.repo, it.sessionStore) }),
 ) {
     val session by vm.session.collectAsStateWithLifecycle()
@@ -263,6 +264,10 @@ fun AccountScreen(
             if (profile?.hasPassword != false) item { Entry(Icons.Rounded.Key, "Change password", onChangePassword) }
         } else item { Group("Settings") }
         item { Entry(Icons.Rounded.Contrast, "Appearance", { themeDialog = true }, trailing = when (theme) { "light" -> "Light"; "dark" -> "Dark"; else -> "System" }) }
+        if (onServer != null) item {
+            val server = com.darsequran.academy.data.CurrentEnvironment.value.label
+            Entry(Icons.Rounded.Dns, "Server", onServer, trailing = server)
+        }
         item { Group("Academy") }
         item { Entry(Icons.Rounded.SupportAgent, "Contact us", onContact) }
         item { Entry(Icons.Rounded.Info, "About the academy", onAbout) }
