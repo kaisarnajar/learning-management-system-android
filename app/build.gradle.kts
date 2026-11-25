@@ -34,6 +34,8 @@ val hasReleaseSigning = releaseSigning.values.all { !it.isNullOrBlank() }
 val firebaseAppId: String? = setting("FIREBASE_APP_ID")
 val firebaseServiceAccountFile: String? = setting("FIREBASE_SERVICE_ACCOUNT_FILE")
 val firebaseTesterGroups: String? = setting("FIREBASE_TESTER_GROUPS")
+/** Testers' e-mails, comma-separated; kept in local.properties, out of this public repo. */
+val firebaseTesters: String? = setting("FIREBASE_TESTERS")
 
 /** The staging copy of the website, which only the debug build can switch to. */
 val stagingBaseUrl: String = setting("STAGING_BASE_URL") ?: "https://staging-learning-management-system-teal-ten.vercel.app"
@@ -88,6 +90,7 @@ android {
                 artifactType = "APK"
                 serviceCredentialsFile = firebaseServiceAccountFile?.let { rootProject.file(it).path }
                 groups = firebaseTesterGroups
+                testers = firebaseTesters
                 // Written by scripts/distribute.sh.
                 releaseNotesFile = layout.buildDirectory.file("firebase/release-notes.txt").get().asFile.path
             }
