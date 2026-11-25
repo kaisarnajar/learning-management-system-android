@@ -53,4 +53,4 @@ cat "$notes_file"
 
 # Mark this commit, so the next upload's notes start here. Local only: never pushed.
 git tag -f firebase-latest HEAD >/dev/null
-echo "Uploaded. The chosen testers get an e-mail; the build is also in the Firebase console."
+echo "Uploaded. Testers in the chosen groups get an e-mail; the build is also in the Firebase console."

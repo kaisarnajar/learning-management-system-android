@@ -118,8 +118,8 @@ Set up once:
 
 1. In the [Firebase console](https://console.firebase.google.com), create a project (or use one) and add an Android
    app with the package name `com.darsequran.academy`. Skip downloading `google-services.json`; the app doesn't use it.
-2. Open **App Distribution** and click **Get started**. List your testers' e-mails in `FIREBASE_TESTERS` below, or
-   make a group under **Testers & Groups** and use `FIREBASE_TESTER_GROUPS`.
+2. Open **App Distribution**, click **Get started**, and under **Testers & Groups** make a group (say `testers`) with
+   your testers' e-mails.
 3. In **Project settings → Service accounts**, open the Google Cloud link, create a service account with the
    **Firebase App Distribution Admin** role, and download a JSON key for it. Keep it **outside this project**: it is a
    password.
@@ -129,8 +129,7 @@ Set up once:
 # Project settings → General → Your apps → App ID. Not secret.
 FIREBASE_APP_ID=1:1234567890:android:0123456789abcdef
 FIREBASE_SERVICE_ACCOUNT_FILE=/absolute/path/to/firebase-service-account.json
-# Who gets each build: testers' e-mails, or group aliases from App Distribution → Testers & Groups (or both).
-FIREBASE_TESTERS=me@example.com,other@example.com
+# Comma-separated group aliases from App Distribution → Testers & Groups.
 FIREBASE_TESTER_GROUPS=testers
 ```
 
