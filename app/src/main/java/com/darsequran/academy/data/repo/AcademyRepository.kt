@@ -50,7 +50,10 @@ class AcademyRepository(private val api: AcademyApi, private val savedHome: ((Ap
         // An answer that arrives after a server switch belongs to the old server: don't keep it for the new one.
         val env = CurrentEnvironment.value
         return apiCall { api.home() }.also {
-            if (it is ApiResult.Ok && env == CurrentEnvironment.value) { homeCache = it.value; savedHome?.invoke(env)?.write(it.value) }
+            if (it is ApiResult.Ok && env == CurrentEnvironment.value) {
+                homeCache = it.value
+                savedHome?.invoke(env)?.write(it.value)
+            }
         }
     }
 
