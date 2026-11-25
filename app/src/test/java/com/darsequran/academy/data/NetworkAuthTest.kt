@@ -103,9 +103,14 @@ class NetworkAuthTest {
     private val elsewhere = AppEnvironment.entries.first { it != here }
     private var switchDuringRefresh = false
 
-    private fun session(env: AppEnvironment = here) = Session("access-1", "refresh-1", user, env)
+    private fun session(env: AppEnvironment = here, expiresAt: Long? = null) =
+        Session("access-1", "refresh-1", user, env, expiresAt)
 
-    private fun network(session: Session?) = FakeSession(session).let { it to Network(it, json).create(TestApi::class.java) }
+    /** The clock [Network] reads, so a token's remaining life is set by the test. */
+    private val now = 1_000_000_000L
+
+    private fun network(session: Session?) =
+        FakeSession(session).let { it to Network(it, json, clock = { now }).create(TestApi::class.java) }
 
     @Test
     fun aServiceIsMadeOncePerInterface() {
@@ -217,6 +222,58 @@ class NetworkAuthTest {
         val (_, api) = network(session())
         val failure = runCatching { api.absolute(otherHostUrl()) }.exceptionOrNull()
         assertTrue(failure is HttpException)
+        assertEquals(0, refreshCalls.get())
+    }
+
+    @Test
+    fun aTokenAboutToRunOutIsRefreshedBeforeTheRequestInsteadOfAfterA401() = runBlocking {
+        validAccess = "expired"
+        val (session, api) = network(session(expiresAt = now + 30_000))
+        api.ping()
+        assertEquals(1, refreshCalls.get())
+        assertEquals(listOf("Bearer access-2"), seenAuth.toList()) // the stale token was never sent
+        assertEquals("access-2", session.session.value?.accessToken)
+    }
+
+    @Test(timeout = 15_000)
+    fun concurrentRequestsWithAnExpiringTokenShareOneRefresh() = runBlocking {
+        validAccess = "expired"
+        val (_, api) = network(session(expiresAt = now - 1))
+        (1..10).map { async(Dispatchers.IO) { api.ping() } }.awaitAll()
+        assertEquals(1, refreshCalls.get())
+        assertEquals(List(10) { "Bearer access-2" }, seenAuth.toList())
+    }
+
+    @Test
+    fun aTokenWithTimeLeftIsNotRefreshed() = runBlocking {
+        val (_, api) = network(session(expiresAt = now + 10 * 60_000))
+        api.ping()
+        assertEquals(0, refreshCalls.get())
+        assertEquals(listOf("Bearer access-1"), seenAuth.toList())
+    }
+
+    @Test
+    fun aFailedEarlyRefreshStillSendsTheCurrentToken() = runBlocking {
+        refreshStatus = 500
+        val (session, api) = network(session(expiresAt = now))
+        api.ping() // access-1 is still accepted by the server
+        assertEquals(listOf("Bearer access-1"), seenAuth.toList())
+        assertEquals("access-1", session.session.value?.accessToken)
+    }
+
+    @Test
+    fun aRejectedEarlyRefreshSignsOutAndSendsNoToken() = runBlocking {
+        refreshStatus = 401
+        val (session, api) = network(session(expiresAt = now))
+        runCatching { api.ping() }
+        assertNull(session.session.value)
+        assertEquals(listOf<String?>(null), seenAuth.toList())
+    }
+
+    @Test
+    fun anotherHostIsNotAReasonToRefresh() = runBlocking {
+        val (_, api) = network(session(expiresAt = now))
+        runCatching { api.absolute(otherHostUrl()) }
         assertEquals(0, refreshCalls.get())
     }
 }

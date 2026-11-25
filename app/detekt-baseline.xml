@@ -153,7 +153,6 @@
     <ID>MagicNumber:MoneyCommon.kt:8</ID>
     <ID>MagicNumber:Network.kt:Network$20</ID>
     <ID>MagicNumber:Network.kt:Network$70</ID>
-    <ID>MagicNumber:Network.kt:Network.&lt;no name provided&gt;$401</ID>
     <ID>MagicNumber:PagedList.kt:3</ID>
     <ID>MagicNumber:PagedList.kt:4</ID>
     <ID>MagicNumber:PayScreen.kt:1.4f</ID>
@@ -1223,7 +1222,6 @@
     <ID>MaxLineLength:MoneyGraph.kt:BookstoreFinanceScreen(nav::popBackStack, onCourses = { nav.navigate(FinanceRoute) { popUpTo&lt;BookstoreFinanceRoute&gt; { inclusive = true } } })</ID>
     <ID>MaxLineLength:MoneyGraph.kt:composable&lt;CompletedPaymentsRoute&gt; { CompletedPaymentsScreen(nav::popBackStack, openReceipt) { nav.navigate(ReceiptsRoute) } }</ID>
     <ID>MaxLineLength:MoneyGraph.kt:composable&lt;CouponsRoute&gt; { CouponsScreen(nav::popBackStack, onEdit = { nav.navigate(it) }, onFinance = { nav.navigate(WaiverFinanceRoute) }) }</ID>
-    <ID>MaxLineLength:Network.kt:Network.&lt;no name provided&gt;$return@withLock response.request.newBuilder().header("Authorization", "Bearer ${current.accessToken}").build()</ID>
     <ID>MaxLineLength:NetworkAuthTest.kt:NetworkAuthTest$/** More 401s than OkHttp's per-host limit (5) once deadlocked: the refresh queued behind the requests awaiting it. */</ID>
     <ID>MaxLineLength:NetworkAuthTest.kt:NetworkAuthTest$private fun network(session: Session?)</ID>
     <ID>MaxLineLength:NetworkAuthTest.kt:NetworkAuthTest$return url.newBuilder().host(if (server.url("/").host == "127.0.0.1") "localhost" else "127.0.0.1").build().toString()</ID>
@@ -1487,12 +1485,12 @@
     <ID>SwallowedException:ApiCall.kt:e: IOException</ID>
     <ID>SwallowedException:Files.kt:e: ActivityNotFoundException</ID>
     <ID>SwallowedException:Files.kt:e: Exception</ID>
-    <ID>SwallowedException:Network.kt:Network.&lt;no name provided&gt;$e: Exception</ID>
+    <ID>SwallowedException:Network.kt:Network$e: Exception</ID>
     <ID>SwallowedException:Staff.kt:e: Exception</ID>
     <ID>TooGenericExceptionCaught:ApiCall.kt:e: Exception</ID>
     <ID>TooGenericExceptionCaught:AuthScreens.kt:e: Exception</ID>
     <ID>TooGenericExceptionCaught:Files.kt:e: Exception</ID>
-    <ID>TooGenericExceptionCaught:Network.kt:Network.&lt;no name provided&gt;$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:Network.kt:Network$e: Exception</ID>
     <ID>TooGenericExceptionCaught:Staff.kt:e: Exception</ID>
     <ID>TooManyFunctions:AcademyApi.kt:AcademyApi</ID>
     <ID>TooManyFunctions:AcademyRepository.kt:AcademyRepository</ID>

@@ -22,6 +22,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.HttpException
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.net.HttpURLConnection.HTTP_UNAUTHORIZED
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
@@ -36,7 +37,17 @@ fun resolveUrl(path: String?): String? = when {
 /** Retrofit needs a fixed base URL; requests are pointed at the current environment by [environmentHost]. */
 private const val PLACEHOLDER_BASE = "https://api.invalid/api/v1/"
 
-class Network(private val sessionStore: SessionSource, val json: Json) {
+/**
+ * An access token this close to running out is refreshed before a request is sent: sending it would only earn a 401
+ * and a second round trip. The margin also covers the time between the server issuing the token and the app saving it.
+ */
+private const val REFRESH_AHEAD_MS = 60_000L
+
+class Network(
+    private val sessionStore: SessionSource,
+    val json: Json,
+    private val clock: () -> Long = System::currentTimeMillis,
+) {
     private val refreshMutex = Mutex()
 
     private val logging = HttpLoggingInterceptor().apply {
@@ -67,22 +78,56 @@ class Network(private val sessionStore: SessionSource, val json: Json) {
     /**
      * Adds the Bearer token when signed in (a retry already carries the fresh one), but only for the academy's own
      * server: images and files can live elsewhere (the public upload bucket, Google avatars) and must not see it.
+     * A token about to run out is refreshed first (see [REFRESH_AHEAD_MS]); if that fails the current one is sent and
+     * a 401 goes through [refreshAuthenticator] as before.
      */
     private val authHeader = Interceptor { chain ->
         val original = chain.request()
+        if (original.header("Authorization") != null || !isAcademyServer(original.url)) {
+            return@Interceptor chain.proceed(original)
+        }
         // A session belongs to one environment: during a switch the old one must not reach the new server.
-        val token = sessionStore.session.value?.takeIf { it.env == CurrentEnvironment.value }?.accessToken
-        val request = if (token != null && original.header("Authorization") == null && isAcademyServer(original.url)) {
-            original.newBuilder().header("Authorization", "Bearer $token").build()
-        } else original
-        chain.proceed(request)
+        val session = currentSession()
+        val token = when {
+            session == null -> null
+            session.expiresAt != null && clock() >= session.expiresAt - REFRESH_AHEAD_MS ->
+                // Refreshed, or else whatever is current now (null when the refresh token was rejected: signed out).
+                freshToken(session.accessToken) ?: currentSession()?.accessToken
+            else -> session.accessToken
+        }
+        if (token == null) return@Interceptor chain.proceed(original)
+        chain.proceed(original.newBuilder().header("Authorization", "Bearer $token").build())
     }
 
+    private fun currentSession(): Session? = sessionStore.session.value?.takeIf { it.env == CurrentEnvironment.value }
+
     /**
-     * On a 401, refresh the token pair once and retry. Refresh tokens are single
-     * use, so concurrent 401s share one refresh behind a mutex: a request that
-     * waited simply retries with the token the first one obtained.
+     * The access token to use instead of [usedToken]: refreshes the pair, unless another request already did so while
+     * this one waited. Refresh tokens are single use, so callers share one refresh behind a mutex. Null when there is
+     * no session for the current environment or the refresh failed.
      */
+    private fun freshToken(usedToken: String?): String? = runBlocking {
+        refreshMutex.withLock {
+            val current = sessionStore.session.value ?: return@withLock null
+            if (current.env != CurrentEnvironment.value) return@withLock null
+            // Someone else already refreshed while this request waited.
+            if (current.accessToken != usedToken) return@withLock current.accessToken
+            try {
+                val tokens = refreshApi.refresh(RefreshRequest(current.refreshToken))
+                sessionStore.saveRefreshed(current, tokens)
+                // Switched environment while refreshing: don't send to the old server.
+                if (current.env != CurrentEnvironment.value) return@withLock null
+                tokens.accessToken
+            } catch (e: HttpException) {
+                if (e.code() == HTTP_UNAUTHORIZED) sessionStore.expire(current)
+                null
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+
+    /** On a 401, refresh the token pair once ([freshToken]) and retry with the new access token. */
     private val refreshAuthenticator = object : Authenticator {
         override fun authenticate(route: Route?, response: Response): Request? {
             if (response.request.header("Authorization") == null) return null
@@ -91,28 +136,8 @@ class Network(private val sessionStore: SessionSource, val json: Json) {
             // retrying would send the new environment's token to the old server.
             if (response.request.url.host != CurrentEnvironment.baseUrl.toHttpUrl().host) return null
             val usedToken = response.request.header("Authorization")?.removePrefix("Bearer ")
-            return runBlocking {
-                refreshMutex.withLock {
-                    val current = sessionStore.session.value ?: return@withLock null
-                    if (current.env != CurrentEnvironment.value) return@withLock null
-                    if (current.accessToken != usedToken) {
-                        // Someone else already refreshed while this request waited.
-                        return@withLock response.request.newBuilder().header("Authorization", "Bearer ${current.accessToken}").build()
-                    }
-                    try {
-                        val tokens = refreshApi.refresh(RefreshRequest(current.refreshToken))
-                        sessionStore.saveRefreshed(current, tokens)
-                        // Switched environment while refreshing: don't resend to the old server.
-                        if (current.env != CurrentEnvironment.value) return@withLock null
-                        response.request.newBuilder().header("Authorization", "Bearer ${tokens.accessToken}").build()
-                    } catch (e: HttpException) {
-                        if (e.code() == 401) sessionStore.expire(current)
-                        null
-                    } catch (e: Exception) {
-                        null
-                    }
-                }
-            }
+            val token = freshToken(usedToken) ?: return null
+            return response.request.newBuilder().header("Authorization", "Bearer $token").build()
         }
     }
 

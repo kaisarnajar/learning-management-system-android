@@ -18,11 +18,24 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import java.util.concurrent.TimeUnit
 
 private val Context.sessionDataStore by preferencesDataStore(name = "session")
 
-/** A signed-in session: the token pair, the user it belongs to, and the environment (server) that issued it. */
-data class Session(val accessToken: String, val refreshToken: String, val user: SessionUser, val env: AppEnvironment)
+/**
+ * A signed-in session: the token pair, the user it belongs to, and the environment (server) that issued it.
+ * [expiresAt] is when the access token runs out (epoch ms), or null for a session stored before the app kept it.
+ */
+data class Session(
+    val accessToken: String,
+    val refreshToken: String,
+    val user: SessionUser,
+    val env: AppEnvironment,
+    val expiresAt: Long? = null,
+)
+
+/** When an access token issued now with [TokenResponse.expiresIn] runs out. */
+fun TokenResponse.expiresAt(now: Long): Long = now + TimeUnit.SECONDS.toMillis(expiresIn.toLong())
 
 /** What the network layer needs from the session: read it, and record the outcome of a token refresh. */
 interface SessionSource {
@@ -46,6 +59,7 @@ class SessionStore(
     scope: CoroutineScope,
     private val json: Json,
     initialEnvironment: AppEnvironment,
+    private val clock: () -> Long = System::currentTimeMillis,
 ) : SessionSource {
     private val env: AppEnvironment = initialEnvironment
 
@@ -54,6 +68,7 @@ class SessionStore(
         val access = key("access_token")
         val refresh = key("refresh_token")
         val user = key("user")
+        val expiresAt = key("access_expires_at")
     }
     private val themeKey = stringPreferencesKey("theme")
 
@@ -71,20 +86,22 @@ class SessionStore(
         val keys = Keys(env)
         val prefs = context.sessionDataStore.data.first()
         val user = prefs[keys.user]?.let { runCatching { json.decodeFromString<SessionUser>(it) }.getOrNull() } ?: return null
-        return Session(prefs[keys.access] ?: return null, prefs[keys.refresh] ?: return null, user, env)
+        val expiresAt = prefs[keys.expiresAt]?.toLongOrNull()
+        return Session(prefs[keys.access] ?: return null, prefs[keys.refresh] ?: return null, user, env, expiresAt)
     }
 
     /** Signs in on the current environment. */
     suspend fun save(tokens: TokenResponse, user: SessionUser? = tokens.user) {
         val env = env
         val finalUser = user ?: _session.value?.user ?: return
-        write(Session(tokens.accessToken, tokens.refreshToken, finalUser, env))
+        write(Session(tokens.accessToken, tokens.refreshToken, finalUser, env, tokens.expiresAt(clock())))
     }
 
     override suspend fun saveRefreshed(old: Session, tokens: TokenResponse) {
         // Signed out, or signed in again, while the refresh was in flight: that newer state wins.
         if (stored(old.env)?.refreshToken != old.refreshToken) return
-        write(Session(tokens.accessToken, tokens.refreshToken, tokens.user ?: old.user, old.env))
+        val user = tokens.user ?: old.user
+        write(Session(tokens.accessToken, tokens.refreshToken, user, old.env, tokens.expiresAt(clock())))
     }
 
     private suspend fun stored(env: AppEnvironment): Session? = if (env == this.env) _session.value else readOnce(env)
@@ -98,6 +115,8 @@ class SessionStore(
             it[keys.access] = session.accessToken
             it[keys.refresh] = session.refreshToken
             it[keys.user] = json.encodeToString(SessionUser.serializer(), session.user)
+            val expiresAt = session.expiresAt
+            if (expiresAt != null) it[keys.expiresAt] = expiresAt.toString() else it.remove(keys.expiresAt)
         }
     }
 
@@ -122,7 +141,9 @@ class SessionStore(
     private suspend fun remove(env: AppEnvironment): Unit = withContext(NonCancellable) {
         if (env == this@SessionStore.env) _session.value = null
         val keys = Keys(env)
-        context.sessionDataStore.edit { it.remove(keys.access); it.remove(keys.refresh); it.remove(keys.user) }
+        context.sessionDataStore.edit {
+            it.remove(keys.access); it.remove(keys.refresh); it.remove(keys.user); it.remove(keys.expiresAt)
+        }
     }
 
     suspend fun setTheme(value: String) {
