@@ -25,8 +25,6 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.fillMaxSize
@@ -59,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -209,6 +208,7 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
     val backStack by nav.currentBackStackEntryAsState()
     val destination = backStack?.destination
     val showBar = tabs.any { tab -> destination?.hierarchy?.any { it.hasRoute(tab.type) } == true }
+    val isTab: (NavBackStackEntry) -> Boolean = { entry -> tabs.any { entry.destination.hasRoute(it.type) } }
 
     /** Runs [block] when signed in, otherwise opens sign-in first. */
     fun signedIn(block: () -> Unit) { if (container.sessionStore.session.value != null) block() else nav.navigate(SignInRoute) }
@@ -256,13 +256,15 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                 nav,
                 startDestination = shell.start,
                 modifier = Modifier.fillMaxSize().padding(bottom = if (showBar) padding.calculateBottomPadding() else 0.dp),
-                enterTransition = { slideInHorizontally { it / 3 } + fadeIn() },
-                exitTransition = { fadeOut() },
-                popEnterTransition = { fadeIn() },
-                popExitTransition = { slideOutHorizontally { it / 3 } + fadeOut() },
+                // Pages slide (Transitions.kt); switching between the bottom tabs, or Back from one tab to another,
+                // is instant.
+                enterTransition = { if (isTab(targetState)) EnterTransition.None else pageEnter },
+                exitTransition = { if (isTab(targetState)) ExitTransition.None else pageExit },
+                popEnterTransition = { if (isTab(initialState)) EnterTransition.None else pagePopEnter },
+                popExitTransition = { if (isTab(initialState)) ExitTransition.None else pagePopExit },
             ) {
                 // ---- tabs
-                composable<HomeTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
+                composable<HomeTab> {
                     HomeScreen(
                         onOpenCourse = { nav.navigate(CourseRoute(it)) },
                         onOpenLearn = { nav.navigate(LearnRoute(it.courseId, it.course?.title ?: "Course")) },
@@ -283,20 +285,20 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                         onWriteReview = { signedIn { nav.navigate(ReviewsRoute) } },
                     )
                 }
-                composable<CoursesTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
+                composable<CoursesTab> {
                     CoursesScreen(
                         onOpenCourse = { nav.navigate(CourseRoute(it)) },
                         onOpenLearn = { nav.navigate(LearnRoute(it.courseId, it.course?.title ?: "Course")) },
                         onSignIn = { nav.navigate(SignInRoute) },
                     )
                 }
-                composable<ExploreTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
+                composable<ExploreTab> {
                     ExploreScreen(
                         onBlog = { nav.navigate(BlogRoute) }, onFatwa = { nav.navigate(FatwaRoute) }, onLibrary = { nav.navigate(LibraryRoute) },
                         onAnnouncements = { nav.navigate(AnnouncementsRoute) }, onTeachers = { nav.navigate(TeachersRoute) }, onBookstore = { nav.navigate(BookstoreRoute) },
                     )
                 }
-                composable<AccountTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
+                composable<AccountTab> {
                     AccountScreen(
                         onSignIn = { nav.navigate(SignInRoute) }, onRegister = { nav.navigate(RegisterRoute) },
                         onEditProfile = { nav.navigate(EditProfileRoute) }, onPayments = { nav.navigate(PaymentsRoute) },
@@ -310,12 +312,12 @@ private fun AppContent(nav: NavHostController, shell: Shell) {
                 // link can open a staff screen in a student's app (the server checks roles as well)
                 if (shell.adminPanel) {
                     val openAdmin: (String) -> Unit = { href -> routeForAdminHref(href)?.let { nav.navigate(it) } ?: notAvailable(context) }
-                    composable<AdminDashboardTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
+                    composable<AdminDashboardTab> {
                         AdminDashboardScreen(session?.user?.name, session?.user?.role ?: Roles.ADMIN, openAdmin)
                     }
                 }
                 if (shell == Shell.Teacher) {
-                    composable<TeachTab>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { TeachHomeScreen(nav) }
+                    composable<TeachTab> { TeachHomeScreen(nav) }
                 }
                 if (shell != Shell.Student) manageGraph(nav)
 
