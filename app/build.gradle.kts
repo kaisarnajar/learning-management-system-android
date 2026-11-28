@@ -75,7 +75,7 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             buildConfigField("String", "STAGING_BASE_URL", "\"$stagingBaseUrl\"")
-            resValue("string", "app_name", "DQA (debug)")
+            resValue("string", "app_name", "DQA (Debug)")
             firebaseAppDistribution { distributionSettings(firebaseDebugAppId) }
         }
         release {
@@ -83,7 +83,7 @@ android {
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             buildConfigField("String", "STAGING_BASE_URL", "\"\"")
-            resValue("string", "app_name", "Darse Quran Academy")
+            resValue("string", "app_name", "DQA")
             // Only the upload key signs it: checkReleaseSigning stops it without one.
             signingConfig = if (hasReleaseSigning) signingConfigs.getByName("release") else null
             firebaseAppDistribution { distributionSettings(firebaseAppId) }
