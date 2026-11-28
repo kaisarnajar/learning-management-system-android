@@ -35,7 +35,7 @@ val SansFamily = FontFamily(
     Font(R.font.poppins_semibold, FontWeight.Bold),
 )
 
-/** Arabic (verses, hadith) and Urdu titles. */
+/** Amiri, the website's general right-to-left face. */
 val ArabicFamily = FontFamily(
     Font(R.font.amiri_regular, FontWeight.Normal),
     Font(R.font.amiri_bold, FontWeight.Bold),
@@ -82,4 +82,17 @@ val OverlineStyle = TextStyle(
     letterSpacing = 0.14.em,
 )
 
-val ArabicStyle = TextStyle(fontFamily = ArabicFamily, fontSize = 26.sp, lineHeight = 48.sp)
+/**
+ * Indo-Pak Nastaleeq, the script of South Asian printed Qurans: the face the website sets verses and hadith in
+ * (its .indo-pak-arabic class, on the homepage's Verse/Hadith of the Day). It has one weight only.
+ */
+val IndoPakFamily = FontFamily(Font(R.font.indopak_nastaleeq, FontWeight.Normal))
+
+/** Verses and hadith, as the website's .indo-pak-arabic: Indo-Pak Nastaleeq, line height twice the size. */
+val ArabicStyle = TextStyle(
+    fontFamily = IndoPakFamily,
+    fontWeight = FontWeight.Normal,
+    fontSize = 26.sp,
+    lineHeight = 52.sp,
+    fontFeatureSettings = "liga, calt",
+)

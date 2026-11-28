@@ -431,13 +431,13 @@ fun plainText(html: String?): String =
 @Composable
 fun rememberPlainText(html: String?): String = remember(html) { plainText(html) }
 
-/** Arabic text set in Amiri, right to left. */
+/** Arabic text set in the website's Indo-Pak Nastaleeq, right to left. */
 @Composable
 fun ArabicText(text: String, modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.onSurface, size: Int = 26) {
     Text(
         text,
         modifier = modifier,
-        style = ArabicStyle.copy(fontSize = size.sp, lineHeight = (size * 1.85).sp, textAlign = TextAlign.Center),
+        style = ArabicStyle.copy(fontSize = size.sp, lineHeight = (size * 2).sp, textAlign = TextAlign.Center),
         color = color,
     )
 }

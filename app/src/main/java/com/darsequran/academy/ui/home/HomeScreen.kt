@@ -388,7 +388,7 @@ fun InspirationCard(inspiration: Inspiration, modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Overline(if (inspiration.kind == "HADITH") "Hadith of the day" else "Verse of the day", color = Brand.goldSoft)
-        // Amiri's marks rise well above the cap height; leave them room.
+        // Nastaleeq's marks rise well above the cap height; leave them room.
         Spacer(Modifier.height(18.dp))
         ArabicText(inspiration.arabicText, color = Brand.onHero, size = 24)
         Spacer(Modifier.height(6.dp))
